@@ -1346,7 +1346,6 @@ if (referredBy) {
                 <button onClick={handleGenerateVideo} disabled={isGeneratingVideo || !videoPrompt.trim()} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2">{isGeneratingVideo ? 'Rendering...' : 'Generate Video (10 credits)'}</button>
                 <p className="text-center mt-3 text-xs text-indigo-400 font-bold uppercase tracking-widest">Coming Soon</p>
               </div>
-              </div>
             </div>
           )}
 
