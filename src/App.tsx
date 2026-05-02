@@ -1508,7 +1508,7 @@ if (referredBy) {
               </div>
             </div>
           )}
-
+          {activeTab === 'admin' && (
             <div className="max-w-3xl mx-auto">
               <AdminPanel />
             </div>
