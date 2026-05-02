@@ -1318,10 +1318,6 @@ if (referredBy) {
                 </div>
               )}
               
-              <div className="mt-12 pt-12 border-t border-slate-800">
-                <p className="text-center text-[10px] uppercase font-bold text-slate-600 tracking-[0.3em] mb-4">Advertisement</p>
-                <AdBanner />
-              </div>
             </div>
           )}
 
@@ -1335,7 +1331,7 @@ if (referredBy) {
                 <button onClick={handleGenerateVideo} disabled={isGeneratingVideo || !videoPrompt.trim()} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2">{isGeneratingVideo ? 'Rendering...' : 'Generate Video (10 credits)'}</button>
                 <p className="text-center mt-3 text-xs text-indigo-400 font-bold uppercase tracking-widest">Coming Soon</p>
               </div>
-              <div className="mt-6"><AdBanner /></div>
+              </div>
             </div>
           )}
 
@@ -1498,10 +1494,8 @@ if (referredBy) {
             </div>
           )}
 
-          {activeTab === 'admin' && (
             <div className="max-w-3xl mx-auto">
               <AdminPanel />
-              <AdBanner />
             </div>
           )}
         </div>
