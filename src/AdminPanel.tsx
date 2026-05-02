@@ -14,6 +14,11 @@ interface UserData {
   name: string;
   mobile: string;
   referCode: string;
+  referralCode: string;
+  referredBy: string;
+  referralRewarded: boolean;
+  deviceId: string;
+  referralEarnings: number;
 }
 
 export default function AdminPanel() {
@@ -23,18 +28,19 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [search, setSearch] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<'all' | 'Basic' | 'Pro' | 'Ultra'>('all');
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [newCredits, setNewCredits] = useState<number>(0);
+  const [newPlan, setNewPlan] = useState<string>('');
 
   useEffect(() => {
-    const data = localStorage.getItem('smartai_users');
-    if (data) setUsers(JSON.parse(data));
+    refreshData();
   }, []);
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
       setIsLoggedIn(true);
       setError('');
-      const data = localStorage.getItem('smartai_users');
-      if (data) setUsers(JSON.parse(data));
+      refreshData();
     } else {
       setError('Invalid admin password');
     }
@@ -45,11 +51,60 @@ export default function AdminPanel() {
     if (data) setUsers(JSON.parse(data));
   };
 
+  const saveAllUsers = (updatedUsers: UserData[]) => {
+    localStorage.setItem('smartai_users', JSON.stringify(updatedUsers));
+    setUsers(updatedUsers);
+    
+    // Also update session if the logged in user is the admin (though admin is usually separate)
+    // For this app, the current user might be in the users list
+    const session = localStorage.getItem('smartai_session');
+    if (session) {
+      const current = JSON.parse(session);
+      const updatedMatch = updatedUsers.find(u => (u.email && u.email === current.email) || (u.mobile && u.mobile === current.mobile));
+      if (updatedMatch) {
+        localStorage.setItem('smartai_session', JSON.stringify(updatedMatch));
+      }
+    }
+  };
+
+  const updateUser = () => {
+    if (!editingUser) return;
+    const updatedUsers = users.map(u => {
+      const isMatch = (u.email && u.email === editingUser.email) || (u.mobile && u.mobile === editingUser.mobile);
+      if (isMatch) {
+        return { ...u, credits: newCredits, plan: newPlan };
+      }
+      return u;
+    });
+    saveAllUsers(updatedUsers);
+    setEditingUser(null);
+    alert('User updated successfully!');
+  };
+
+  const deleteUser = (user: UserData) => {
+    if (window.confirm(`Are you sure you want to delete ${user.displayName || user.email}?`)) {
+      const updatedUsers = users.filter(u => !((u.email && u.email === user.email) || (u.mobile && u.mobile === user.mobile)));
+      saveAllUsers(updatedUsers);
+      alert('User deleted.');
+    }
+  };
+
+  const exportData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(users, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "smartai_users_export.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
   const filteredUsers = users.filter(u => {
     const matchesSearch = !search || 
       u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      u.mobile?.includes(search);
+      u.mobile?.includes(search) ||
+      u.referralCode?.toLowerCase().includes(search.toLowerCase());
     const matchesPlan = selectedPlan === 'all' || u.plan === selectedPlan;
     return matchesSearch && matchesPlan;
   });
@@ -116,6 +171,9 @@ export default function AdminPanel() {
             </div>
           </div>
           <div className="flex gap-2">
+            <button onClick={exportData} className="px-4 py-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 border border-indigo-600/30 rounded-lg text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2">
+              <Download className="w-4 h-4" /> Export Data
+            </button>
             <button onClick={refreshData} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs uppercase tracking-widest font-bold transition-all">
               Refresh Data
             </button>
@@ -172,7 +230,7 @@ export default function AdminPanel() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name, email, or mobile..."
+              placeholder="Search by name, email, mobile, or referral code..."
               className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-indigo-500/50 transition-all"
             />
           </div>
@@ -197,18 +255,18 @@ export default function AdminPanel() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mb-10">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-800">
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">#</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">User</th>
-                  <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Email</th>
-                  <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Mobile</th>
+                  <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Contact Info</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Plan</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Credits</th>
-                  <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Refer Code</th>
+                  <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Referral Info</th>
+                  <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -225,11 +283,18 @@ export default function AdminPanel() {
                           <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
                             {user.avatar ? <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover" /> : user.displayName?.charAt(0).toUpperCase() || 'U'}
                           </div>
-                          <span className="text-sm text-white font-medium">{user.displayName || 'N/A'}</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm text-white font-medium">{user.displayName || 'N/A'}</span>
+                            <span className="text-[9px] text-slate-500 uppercase tracking-widest">{user.deviceId?.slice(0, 8)}...</span>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-400 font-mono">{user.email || '-'}</td>
-                      <td className="px-4 py-3 text-xs text-slate-400 font-mono">{user.mobile || '-'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-slate-300 font-mono">{user.email || '-'}</span>
+                          <span className="text-xs text-slate-500 font-mono">{user.mobile || '-'}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold ${
                           user.plan === 'Pro' ? 'bg-indigo-600/20 text-indigo-400' :
@@ -240,7 +305,35 @@ export default function AdminPanel() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-white font-bold">{(user.credits || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500 font-mono">{user.referCode || '-'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] text-indigo-400 font-bold tracking-widest">{user.referralCode || '-'}</span>
+                          {user.referredBy && <span className="text-[9px] text-slate-500">Ref By: {user.referredBy}</span>}
+                          {user.referralEarnings > 0 && <span className="text-[9px] text-emerald-500 font-bold">Earned: {user.referralEarnings}</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingUser(user);
+                              setNewCredits(user.credits || 0);
+                              setNewPlan(user.plan || 'Basic');
+                            }}
+                            className="p-1.5 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all"
+                            title="Edit User"
+                          >
+                            <User className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => deleteUser(user)}
+                            className="p-1.5 bg-rose-600/10 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-all"
+                            title="Delete User"
+                          >
+                            <Plus className="w-3.5 h-3.5 rotate-45" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -252,6 +345,56 @@ export default function AdminPanel() {
           </div>
         </div>
       </div>
+
+      {/* Edit User Modal */}
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-xl font-bold text-white overflow-hidden">
+                  {editingUser.avatar ? <img src={editingUser.avatar} className="w-full h-full object-cover" /> : editingUser.displayName?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Edit User</h3>
+                  <p className="text-sm text-slate-500">{editingUser.email || editingUser.mobile}</p>
+                </div>
+              </div>
+
+              <div className="space-y-6 mb-8">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Adjust Credits</label>
+                  <input
+                    type="number"
+                    value={newCredits}
+                    onChange={e => setNewCredits(parseInt(e.target.value) || 0)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-all font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Change Plan</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Basic', 'Pro', 'Ultra'].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setNewPlan(p)}
+                        className={`py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${newPlan === p ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-800 text-slate-500 hover:text-white'}`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={updateUser} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 uppercase tracking-widest text-[10px]">Save Changes</button>
+                <button onClick={() => setEditingUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold transition-all uppercase tracking-widest text-[10px]">Cancel</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
