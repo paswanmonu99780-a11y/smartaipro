@@ -1392,9 +1392,9 @@ export default function App() {
               <div className="flex flex-col lg:flex-row gap-6 xl:gap-8">
                 {/* Left Column: Creative Features List */}
                 {smartMode === 'creative' && (
-                  <div className="hidden xl:flex w-[260px] flex-col gap-4">
+                  <div className="hidden xl:flex w-[320px] flex-col gap-4">
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-sm sticky top-4">
-                      <div className="mb-3 flex flex-col items-center xl:items-start text-center xl:text-left">
+                      <div className="mb-4 flex flex-col items-center xl:items-start text-center xl:text-left">
                         <h2 className="text-base font-bold text-white mb-0.5 tracking-tight">Creative Features</h2>
                         <h3 className="text-indigo-400 font-bold uppercase tracking-[0.2em] text-[9px]">(FREE USER)</h3>
                       </div>
@@ -1720,7 +1720,7 @@ export default function App() {
 
                 {/* Right Column: Recent Creative Results - Only in Creative Mode */}
                 {smartMode === 'creative' && (
-                  <div className="hidden lg:flex w-96 flex-col gap-6">
+                  <div className="hidden lg:flex w-[320px] flex-col gap-6">
                     <div className="bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-6 flex-1 shadow-2xl backdrop-blur-sm sticky top-6 max-h-[calc(100vh-100px)] overflow-y-auto">
                       <div className="flex items-center justify-between mb-6">
                         <div>

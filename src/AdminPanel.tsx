@@ -22,7 +22,9 @@ interface UserData {
 }
 
 export default function AdminPanel() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('smartai_admin_session') === 'active';
+  });
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [users, setUsers] = useState<UserData[]>([]);
@@ -33,17 +35,25 @@ export default function AdminPanel() {
   const [newPlan, setNewPlan] = useState<string>('');
 
   useEffect(() => {
-    refreshData();
-  }, []);
+    if (isLoggedIn) {
+      refreshData();
+    }
+  }, [isLoggedIn]);
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
       setIsLoggedIn(true);
+      localStorage.setItem('smartai_admin_session', 'active');
       setError('');
       refreshData();
     } else {
       setError('Invalid admin password');
     }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('smartai_admin_session');
   };
 
   const refreshData = () => {
@@ -177,7 +187,7 @@ export default function AdminPanel() {
             <button onClick={refreshData} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs uppercase tracking-widest font-bold transition-all">
               Refresh Data
             </button>
-            <button onClick={() => setIsLoggedIn(false)} className="px-4 py-2 bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-600/30 rounded-lg text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2">
+            <button onClick={handleLogout} className="px-4 py-2 bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-600/30 rounded-lg text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2">
               <LogOut className="w-4 h-4" /> Logout
             </button>
           </div>
