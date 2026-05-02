@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 
@@ -107,6 +107,7 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -1091,8 +1092,20 @@ if (referredBy) {
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm">
-          <div className="flex items-center gap-4 md:hidden"><div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div><span className="font-medium tracking-tight">SmartAI Pro</span></div>
+        <header className="h-20 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm relative z-40">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-4 md:hidden">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
+              <span className="font-medium tracking-tight">SmartAI Pro</span>
+            </div>
+          </div>
+          
           <div className="hidden md:flex items-center gap-2 bg-slate-900 rounded-lg p-1 border border-slate-800">{(['normal','creative','expert'] as SmartMode[]).map(mode => {
             const locked = mode === 'expert' && plan === 'Basic';
             return (<button key={mode} onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)} className={`relative px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-widest transition-all ${smartMode === mode ? 'bg-indigo-600 text-white' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white'}`}>{mode}{locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-white text-[5px] px-1 rounded-full uppercase tracking-wider">PRO</span>}</button>);
@@ -1102,9 +1115,9 @@ if (referredBy) {
                   </div></div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 pb-44 md:pb-6">
+        <div className="flex-1 overflow-y-auto p-6 pb-72 md:pb-6">
 {activeTab === 'chat' && (
-            <div className="max-w-3xl mx-auto h-full flex flex-col">
+            <div className="max-w-3xl mx-auto flex flex-col">
               <div className="flex-1 space-y-6 mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Link</h2>
@@ -1134,7 +1147,9 @@ if (referredBy) {
                   </motion.div>
                 ))}
                 {isAiThinking && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start"><div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl"><div className="flex gap-1"><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-indigo-500 rounded-full" /><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-indigo-500 rounded-full" /><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-indigo-500 rounded-full" /></div></div></motion.div>)}
-<div ref={chatEndRef} /></div>
+<div ref={chatEndRef} />
+                <div className="h-32 md:hidden" aria-hidden="true" />
+              </div>
               {smartMode === 'expert' && plan !== 'Basic' && (
 
                 <div className="mb-2">
@@ -1158,7 +1173,7 @@ if (referredBy) {
                 </div>
               )}
 
-              <div className="fixed bottom-[4.5rem] left-0 right-0 md:sticky md:bottom-0 bg-transparent md:bg-slate-950/80 md:backdrop-blur-sm pb-2 md:pb-4 px-4 md:px-0 z-30">
+              <div className="fixed bottom-4 left-0 right-0 md:sticky md:bottom-0 bg-transparent md:bg-slate-950/80 md:backdrop-blur-sm pb-2 md:pb-4 px-4 md:px-0 z-30">
                 <div className="flex gap-2 items-end bg-slate-900 border border-slate-800 rounded-2xl p-2">
                   
                   {smartMode === 'expert' && plan !== 'Basic' && (
@@ -1462,28 +1477,81 @@ if (referredBy) {
         </div>
       )}
 
-      {/* Mobile Bottom Panel - Sidebar Content */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/30 backdrop-blur-md border-t border-slate-800/30 p-2 md:p-4">
-        <div className="flex items-center justify-between mb-1 md:mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 md:w-6 md:h-6 bg-indigo-600 rounded-md flex items-center justify-center font-bold text-white text-[10px] md:text-xs">S</div>
-            <span className="text-xs md:text-sm font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
-            <span className="text-sm md:text-lg font-bold text-white">{credits.toLocaleString()}</span>
-            <span className="text-[8px] md:text-[9px] text-slate-500 uppercase tracking-widest">credits</span>
-          </div>
-        </div>
-        <nav className="flex justify-around">
-          {SIDEBAR_ITEMS.map(item => (
-            <button key={item.tab} onClick={() => setActiveTab(item.tab)} className={`flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1 md:px-3 md:py-2 rounded-xl transition-all ${activeTab === item.tab ? 'text-indigo-400 bg-indigo-600/10 border border-indigo-600/20' : 'text-slate-400 hover:text-white'}`}>
-              <item.icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              <span className="text-[11px] md:text-sm font-medium">{item.name}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* Mobile Sidebar Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] md:hidden"
+            />
+            <motion.div 
+              initial={{ x: '-100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '-100%' }} 
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-72 bg-slate-950 border-r border-slate-800 z-[60] p-6 flex flex-col md:hidden shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
+                  <span className="text-xl font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="text-xs uppercase font-bold text-slate-500 tracking-widest">Credits</span>
+                  <div className="text-2xl font-bold text-white mt-1">{credits.toLocaleString()}</div>
+                </div>
+                <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-indigo-400" />
+                </div>
+              </div>
+
+              <nav className="space-y-2 flex-1">
+                {SIDEBAR_ITEMS.map(item => (
+                  <button 
+                    key={item.tab} 
+                    onClick={() => {
+                      setActiveTab(item.tab);
+                      setIsMobileMenuOpen(false);
+                    }} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="text-base font-medium">{item.name}</span>
+                  </button>
+                ))}
+              </nav>
+
+              <div className="mt-auto pt-6 border-t border-slate-800 space-y-4">
+                <button 
+                  onClick={() => {
+                    setIsPricingOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-all text-xs font-bold uppercase tracking-widest"
+                >
+                  <Sparkles className="w-4 h-4" /> Upgrade Plan
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all text-xs font-bold uppercase tracking-widest"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
