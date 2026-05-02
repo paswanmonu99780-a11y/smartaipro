@@ -1180,7 +1180,7 @@ if (referredBy) {
               )}
 
               <div className="fixed bottom-4 left-0 right-0 md:sticky md:bottom-0 bg-transparent md:bg-slate-950/80 md:backdrop-blur-sm pb-2 md:pb-4 px-4 md:px-0 z-30">
-                <div className="flex gap-2 items-end bg-slate-900 border border-slate-800 rounded-2xl p-2">
+                <div className="flex gap-1.5 items-center bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl">
                   
                   {smartMode === 'expert' && plan !== 'Basic' && (
                     <>
@@ -1195,7 +1195,7 @@ if (referredBy) {
                           }
                         }
                       }} />
-                      <button onClick={() => chatFileInput.current?.click()} className="bg-slate-800 hover:bg-slate-700 text-slate-400 p-3 rounded-xl transition-all">
+                      <button onClick={() => chatFileInput.current?.click()} className="bg-slate-800 hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all flex-shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                       </button>
                     </>
@@ -1207,15 +1207,17 @@ if (referredBy) {
                       e.stopPropagation();
                       handleSendMessage();
                     }
-                  }} placeholder="Enter your prompt..." className="flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-slate-600 z-[9999] pointer-events-auto cursor-text" autoComplete="off" />
+                  }} placeholder="Enter your prompt..." className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-slate-600 z-[9999] pointer-events-auto cursor-text min-w-0" autoComplete="off" />
                   
-                  <button onClick={startListening} title="Voice Input" className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                    <Mic className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5 pr-0.5">
+                    <button onClick={startListening} title="Voice Input" className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                      <Mic className="w-4 h-4" />
+                    </button>
 
-                  <button onClick={handleSendMessage} disabled={isAiThinking || !chatInput.trim()} title="Send Message" className="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"><Send className="w-4 h-4" /></button>
+                    <button onClick={handleSendMessage} disabled={isAiThinking || !chatInput.trim()} title="Send Message" className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"><Send className="w-4 h-4" /></button>
+                  </div>
                 </div>
-                {smartMode === 'expert' && plan !== 'Basic' && <div className="text-center mt-2"><span className="ml-3 text-green-500">✓ File Upload Enabled (PRO)</span></div>}
+                {smartMode === 'expert' && plan !== 'Basic' && <div className="text-center mt-2"><span className="ml-3 text-green-500 text-[10px]">✓ File Upload Enabled (PRO)</span></div>}
               </div>
             </div>
           )}
@@ -1390,8 +1392,28 @@ if (referredBy) {
                       <input type="text" value={tempDisplayName} onChange={e => setTempDisplayName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500/50 transition-all" />
                     </div>
                     <div>
-                      <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Avatar URL</label>
-                      <input type="text" value={tempAvatar} onChange={e => setTempAvatar(e.target.value)} placeholder="https://example.com/avatar.jpg" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500/50 transition-all" />
+                      <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Avatar</label>
+                      <div className="flex gap-4 items-center">
+                        <div className="w-16 h-16 bg-slate-800 rounded-full overflow-hidden flex-shrink-0">
+                          {tempAvatar ? <img src={tempAvatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-500"><User /></div>}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <input type="text" value={tempAvatar} onChange={e => setTempAvatar(e.target.value)} placeholder="Image URL (optional)" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all" />
+                          <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full bg-slate-800 hover:bg-slate-700 text-white text-[10px] uppercase font-bold tracking-widest py-2 rounded-lg transition-all border border-slate-700"
+                          >
+                            Upload from Gallery
+                          </button>
+                          <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleFileUpload} 
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-3">
@@ -1484,13 +1506,6 @@ if (referredBy) {
           )}
         </div>
       </main>
-
-      {/* Mobile Ad Banner - Only show when NOT on chat tab */}
-      {activeTab !== 'chat' && (
-        <div className="md:hidden fixed bottom-16 left-0 right-0 z-30 bg-slate-950 border-t border-slate-800">
-          <AdBanner />
-        </div>
-      )}
 
       {/* Mobile Sidebar Drawer */}
       <AnimatePresence>
