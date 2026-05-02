@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 
@@ -108,6 +108,7 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -1092,34 +1093,48 @@ if (referredBy) {
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm relative z-40">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="flex items-center gap-4 md:hidden">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
-              <span className="font-medium tracking-tight">SmartAI Pro</span>
+        <div className="relative">
+          <motion.header 
+            initial={false}
+            animate={{ height: isHeaderVisible ? 80 : 0, opacity: isHeaderVisible ? 1 : 0 }}
+            className="border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm relative z-40 overflow-hidden"
+          >
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div className="flex items-center gap-4 md:hidden">
+                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
+                <span className="font-medium tracking-tight">SmartAI Pro</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-2 bg-slate-900 rounded-lg p-1 border border-slate-800">{(['normal','creative','expert'] as SmartMode[]).map(mode => {
-            const locked = mode === 'expert' && plan === 'Basic';
-            return (<button key={mode} onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)} className={`relative px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-widest transition-all ${smartMode === mode ? 'bg-indigo-600 text-white' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white'}`}>{mode}{locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-white text-[5px] px-1 rounded-full uppercase tracking-wider">PRO</span>}</button>);
-          })}</div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-slate-500 font-mono hidden sm:block">{email}</span>
-            <button 
-              onClick={() => setActiveTab('profile')}
-              className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden hover:ring-2 hover:ring-indigo-500 transition-all active:scale-90"
-            >
-              {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
-            </button>
-          </div>
-        </header>
+            
+            <div className="hidden md:flex items-center gap-2 bg-slate-900 rounded-lg p-1 border border-slate-800">{(['normal','creative','expert'] as SmartMode[]).map(mode => {
+              const locked = mode === 'expert' && plan === 'Basic';
+              return (<button key={mode} onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)} className={`relative px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-widest transition-all ${smartMode === mode ? 'bg-indigo-600 text-white' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white'}`}>{mode}{locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-white text-[5px] px-1 rounded-full uppercase tracking-wider">PRO</span>}</button>);
+            })}</div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-slate-500 font-mono hidden sm:block">{email}</span>
+              <button 
+                onClick={() => setActiveTab('profile')}
+                className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden hover:ring-2 hover:ring-indigo-500 transition-all active:scale-90"
+              >
+                {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
+              </button>
+            </div>
+          </motion.header>
+
+          <button 
+            onClick={() => setIsHeaderVisible(!isHeaderVisible)}
+            className="absolute left-1/2 -translate-x-1/2 -bottom-3 z-50 w-8 h-6 bg-slate-800 border border-slate-700 rounded-b-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg"
+            title={isHeaderVisible ? "Hide Header" : "Show Header"}
+          >
+            {isHeaderVisible ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
 
         <div className="flex-1 overflow-y-auto p-6 pb-72 md:pb-6">
 {activeTab === 'chat' && (
