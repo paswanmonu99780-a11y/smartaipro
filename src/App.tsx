@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, FileText, Code, Lightbulb, PenTool } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 
@@ -23,13 +23,51 @@ const MOBILE_TABS = [
 ];
 
 const PLANS = [
-  { name: 'Basic', price: 'Free', features: ['100 Credits','Standard Response','720p Energy'], color: 'slate-400' },
-  { name: 'Pro', price: '₹99', features: ['10,000 Credits','Expert Mode Enabled','2K Intelligence'], color: 'indigo-500', popular: true },
-  { name: 'Ultra', price: '₹199', features: ['Unlimited Pixels','Zero Latency','4K Imagination'], color: 'emerald-500' },
+  { name: 'Basic', price: 'Free', features: ['100 Credits', 'Standard Response', '720p Energy'], color: 'slate-400' },
+  { name: 'Pro', price: '₹99', features: ['10,000 Credits', 'Expert Mode Enabled', '2K Intelligence'], color: 'indigo-500', popular: true },
+  { name: 'Ultra', price: '₹199', features: ['Unlimited Pixels', 'Zero Latency', '4K Imagination'], color: 'emerald-500' },
 ];
 
-const ASPECTS = ['1:1','16:9','9:16','4:3'] as const;
-const STYLES = ['realistic','anime','oil painting','cyberpunk','minimalist','3d render','minecraft'];
+const ASPECTS = ['1:1', '16:9', '9:16', '4:3'] as const;
+const STYLES = ['realistic', 'anime', 'oil painting', 'cyberpunk', 'minimalist', '3d render', 'minecraft'];
+
+const CREATIVE_TOOLS = [
+  { id: 'chat', name: 'AI Chat', desc: 'Chat with AI', icon: MessageSquare, free: true },
+  { id: 'templates', name: 'Templates', desc: '20+ Free Templates', icon: Copy, free: true },
+  { id: 'writer', name: 'AI Writer', desc: 'Blog, Essay, Stories', icon: PenTool, free: true },
+  { id: 'code', name: 'Code Generator', desc: 'Generate Code', icon: Code, free: true },
+  { id: 'summarizer', name: 'Summarizer', desc: 'Summarize Text', icon: FileText, free: true },
+  { id: 'idea', name: 'Idea Generator', desc: 'Generate Ideas', icon: Lightbulb, free: true },
+  { id: 'image', name: 'AI Image', desc: 'Generate Images', icon: ImageIcon, free: true },
+  { id: 'export', name: 'Export & Copy', desc: 'Download / Copy', icon: Download, free: true },
+];
+
+const TEMPLATES = [
+  { name: 'Blog Post', prompt: 'Write a detailed blog post about [topic] with an engaging title, introduction, subheadings, and conclusion.', icon: FileText },
+  { name: 'Instagram Caption', prompt: 'Create 5 catchy Instagram captions for a photo of [subject] using relevant hashtags and emojis.', icon: MessageSquare },
+  { name: 'Email Draft', prompt: 'Draft a professional email to [recipient] regarding [subject], maintaining a [tone] tone.', icon: MessageSquare },
+  { name: 'Code Debugger', prompt: 'Analyze and fix the following code: [code snippet]. Explain what was wrong and how to avoid it.', icon: Code },
+  { name: 'Product Description', prompt: 'Write a compelling product description for [product] that highlights its key benefits and features.', icon: PenTool },
+  { name: 'SEO Keywords', prompt: 'Generate a list of high-ranking SEO keywords for [niche] and explain how to use them.', icon: Search },
+  { name: 'YouTube Script', prompt: 'Write an engaging YouTube video script about [topic], including a strong hook, intro, main points, and outro.', icon: Video },
+  { name: 'Tweet Thread', prompt: 'Create a viral Twitter thread (5-7 tweets) about [topic] with a strong hook and relevant emojis.', icon: MessageSquare },
+  { name: 'Cover Letter', prompt: 'Write a professional cover letter for the role of [job title] at [company name], highlighting [skills].', icon: FileText },
+  { name: 'Resume Summary', prompt: 'Write a powerful resume summary for a [profession] with [X] years of experience in [skills].', icon: FileText },
+  { name: 'Business Idea', prompt: 'Generate 3 innovative business ideas in the [industry] sector with a low starting budget.', icon: Lightbulb },
+  { name: 'Marketing Strategy', prompt: 'Create a 30-day marketing strategy for a new [product/service] launching next month.', icon: Search },
+  { name: 'Interview Questions', prompt: 'List 10 tough interview questions for a [role] position and provide tips on how to answer them.', icon: User },
+  { name: 'Story Outline', prompt: 'Create a detailed outline for a short story in the [genre] genre, including character profiles and plot twists.', icon: PenTool },
+  { name: 'Poem Generator', prompt: 'Write a beautiful and emotional poem about [topic] in the style of [poet/style].', icon: PenTool },
+  { name: 'Diet Plan', prompt: 'Create a 7-day healthy diet plan for someone who wants to [goal] and prefers [diet type] food.', icon: Lightbulb },
+  { name: 'Workout Routine', prompt: 'Design a beginner-friendly [duration]-minute workout routine focusing on [body part/goal].', icon: Lightbulb },
+  { name: 'Study Schedule', prompt: 'Create an effective study schedule for a student preparing for [exam] in [timeframe].', icon: FileText },
+  { name: 'Joke Generator', prompt: 'Tell me 5 hilarious jokes about [topic] that are clean and family-friendly.', icon: MessageSquare },
+  { name: 'Travel Itinerary', prompt: 'Plan a [number]-day travel itinerary for a trip to [destination], including top sights and food spots.', icon: FileText },
+  { name: 'Recipe Creator', prompt: 'Give me a unique recipe using these ingredients: [ingredient 1, ingredient 2, ingredient 3].', icon: Lightbulb },
+  { name: 'Game Generator', prompt: 'Create an advanced, high-quality, and visually stunning [game type] game (e.g., Space Shooter, Platformer, Racing) using HTML, CSS, and JavaScript. Include professional graphics with CSS effects, smooth animations, and full keyboard/touch controls. Make it look modern and highly addictive!', icon: Zap },
+];
+
+const IconComponent = ({ icon: Icon, className }: { icon: any, className?: string }) => <Icon className={className || "w-full h-full"} />;
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -56,7 +94,7 @@ export default function App() {
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [currentChatId, setCurrentChatId] = useState<string>(Date.now().toString());
-  const [chatHistory, setChatHistory] = useState<Array<{id: string, title: string, messages: Message[]}>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{ id: string, title: string, messages: Message[] }>>([]);
   const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
   const chatFileInput = useRef<HTMLInputElement>(null);
   const [imgPrompt, setImgPrompt] = useState('');
@@ -78,12 +116,21 @@ export default function App() {
   const [showPrompts, setShowPrompts] = useState(true);
   const [negativePrompt, setNegativePrompt] = useState('');
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const [imageHistory, setImageHistory] = useState<Array<{url: string; prompt: string; style: string; quality: string; aspect: string; date: string}>>([]);
+  const [imageHistory, setImageHistory] = useState<Array<{ url: string; prompt: string; style: string; quality: string; aspect: string; date: string }>>([]);
   const [showHistory, setShowHistory] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [creativeSubTab, setCreativeSubTab] = useState<string>('image');
+  const [imagesLeftToday, setImagesLeftToday] = useState(18);
+  const [creativeToolInput, setCreativeToolInput] = useState('');
+  const [creativeToolResult, setCreativeToolResult] = useState('');
+  const [isCreativeToolThinking, setIsCreativeToolThinking] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [creativeHistory, setCreativeHistory] = useState<Array<{ tool: string; toolName: string; input: string; result: string; time: string }>>([]);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -153,11 +200,11 @@ export default function App() {
     }
     const hist = localStorage.getItem('smartai_image_history');
     if (hist) { setImageHistory(JSON.parse(hist)); }
-    
+
     // Load chat history
     const savedChats = localStorage.getItem('smartai_chat_history');
-    if (savedChats) { 
-      const chats = JSON.parse(savedChats); 
+    if (savedChats) {
+      const chats = JSON.parse(savedChats);
       setChatHistory(chats);
       if (chats.length > 0) {
         setCurrentChatId(chats[0].id);
@@ -167,11 +214,11 @@ export default function App() {
   }, []);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isAiThinking]);
 
-  const getUsers = (): Array<{email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number}> => {
+  const getUsers = (): Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }> => {
     const data = localStorage.getItem('smartai_users');
     return data ? JSON.parse(data) : [];
   };
-  const saveUsers = (users: Array<{email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number}>) => {
+  const saveUsers = (users: Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }>) => {
     localStorage.setItem('smartai_users', JSON.stringify(users));
   };
 
@@ -188,8 +235,8 @@ export default function App() {
         const userMobile = (u.mobile || '').trim();
         const inputEmail = (email || '').trim();
         const inputMobile = (loginMobile || '').trim();
-        const matchContact = loginContactType === 'email' 
-          ? userEmail === inputEmail 
+        const matchContact = loginContactType === 'email'
+          ? userEmail === inputEmail
           : userMobile === inputMobile;
         return matchContact && u.password === password;
       });
@@ -221,15 +268,15 @@ export default function App() {
       setIsAuthenticating(false);
     }, 800);
   };
-  const syncUserData = (updates: Partial<{credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number}>) => {
+  const syncUserData = (updates: Partial<{ credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number }>) => {
     const session = localStorage.getItem('smartai_session');
     if (session) {
       const d = JSON.parse(session);
       Object.assign(d, updates);
       localStorage.setItem('smartai_session', JSON.stringify(d));
-      
+
       const users = getUsers();
-      const idx = users.findIndex((u: any) => 
+      const idx = users.findIndex((u: any) =>
         (d.email && u.email === d.email) || (d.mobile && u.mobile === d.mobile)
       );
       if (idx !== -1) {
@@ -247,28 +294,28 @@ export default function App() {
     setIsAuthenticating(true);
     setTimeout(() => {
       const users = getUsers();
-      
+
       // Check for duplicate email
       if (signupContactType === 'email' && email && users.find((u: any) => u.email === email)) {
         alert('Account already exists with this email. Please login instead.');
         setIsAuthenticating(false);
         return;
       }
-      
+
       // Check for duplicate mobile
       if (signupContactType === 'mobile' && signupMobile && users.find((u: any) => u.mobile === signupMobile)) {
         alert('Account already exists with this mobile number. Please login instead.');
         setIsAuthenticating(false);
         return;
       }
-      
+
       // Check for duplicate display name
       if (users.find((u: any) => u.displayName?.toLowerCase() === signupName.toLowerCase())) {
         alert('This display name is already taken. Please choose a different name.');
         setIsAuthenticating(false);
         return;
       }
-      
+
       // Validate referral code if provided
       let referredBy = '';
       if (signupReferCode) {
@@ -289,15 +336,15 @@ export default function App() {
 
       const userEmail = signupContactType === 'email' ? email : '';
       const userMobile = signupContactType === 'mobile' ? signupMobile : '';
-      const newUser = { 
-        email: userEmail, 
-        password, 
-        credits: 100, 
-        plan: 'Basic', 
-        displayName: signupName, 
-        avatar: '', 
-        name: signupName, 
-        mobile: userMobile, 
+      const newUser = {
+        email: userEmail,
+        password,
+        credits: 100,
+        plan: 'Basic',
+        displayName: signupName,
+        avatar: '',
+        name: signupName,
+        mobile: userMobile,
         referCode: signupReferCode,
         referralCode: generateReferralCode(userEmail || userMobile || signupName),
         referredBy: referredBy,
@@ -313,8 +360,8 @@ export default function App() {
       setDisplayName(signupName);
       setAvatar('');
       setIsLoggedIn(true);
-      
-if (referredBy) {
+
+      if (referredBy) {
         alert("Account created successfully! You have been referred by a friend. Send your first message to claim +50 bonus credits!");
       } else {
         alert('Account created successfully!');
@@ -421,8 +468,8 @@ if (referredBy) {
       reader.readAsDataURL(file);
     }
   };
-  const avatarColors = ['bg-indigo-600','bg-emerald-600','bg-rose-600','bg-amber-600','bg-cyan-600','bg-violet-600'];
-  const PREMIUM_STYLES = ['anime','cyberpunk','minecraft'];
+  const avatarColors = ['bg-indigo-600', 'bg-emerald-600', 'bg-rose-600', 'bg-amber-600', 'bg-cyan-600', 'bg-violet-600'];
+  const PREMIUM_STYLES = ['anime', 'cyberpunk', 'minecraft'];
   const isStyleLocked = (style: string) => {
     if (style === 'realistic') return false;
     if (plan !== 'Basic') return false;
@@ -497,7 +544,7 @@ if (referredBy) {
     setDisplayName(tempDisplayName);
     setAvatar(tempAvatar);
     setIsEditingProfile(false);
-    
+
     // Persist to session
     const session = JSON.parse(localStorage.getItem('smartai_session') || '{}');
     if (session.user) {
@@ -555,119 +602,120 @@ if (referredBy) {
     return contextualPrompt.slice(-7000);
   };
 
-    // Streaming chat response (ChatGPT-style token-by-token UI)
-    const handleSendMessage = async () => {
-      const prompt = normalizePrompt(chatInput);
-      if (!prompt || isAiThinking) return;
+  // Streaming chat response (ChatGPT-style token-by-token UI)
+  const handleSendMessage = async (overridePrompt?: string | any) => {
+    const promptText = typeof overridePrompt === 'string' ? overridePrompt : chatInput;
+    const prompt = normalizePrompt(promptText);
+    if (!prompt || isAiThinking) return;
 
-      // Check and process referral reward on first message
-      processReferralReward();
+    // Check and process referral reward on first message
+    processReferralReward();
 
-      const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt };
-      const assistantId = (Date.now() + 1).toString();
-      const assistantMsg: Message = { id: assistantId, role: 'assistant' as const, content: '' };
-      const optimisticMessages = [...messages, userMsg, assistantMsg];
-      const title = prompt.length > 25 ? `${prompt.substring(0, 25)}...` : prompt;
+    const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt };
+    const assistantId = (Date.now() + 1).toString();
+    const assistantMsg: Message = { id: assistantId, role: 'assistant' as const, content: '' };
+    const optimisticMessages = [...messages, userMsg, assistantMsg];
+    const title = prompt.length > 25 ? `${prompt.substring(0, 25)}...` : prompt;
 
-      setMessages(optimisticMessages);
-      setChatInput('');
-      setIsAiThinking(true);
-      updateCurrentChatHistory(currentChatId, title, optimisticMessages);
+    setMessages(optimisticMessages);
+    setChatInput('');
+    setIsAiThinking(true);
+    updateCurrentChatHistory(currentChatId, title, optimisticMessages);
 
-      const systemPrompt = 'You are a helpful AI assistant. Provide accurate and useful answers. If you are unsure, say clearly that you are unsure.';
-      const contextualPrompt = buildContextualPrompt(messages, prompt);
+    const systemPrompt = 'You are a helpful AI assistant. Provide accurate and useful answers. If you are unsure, say clearly that you are unsure.';
+    const contextualPrompt = buildContextualPrompt(messages, prompt);
 
-      let renderedText = '';
-      const appendWithTyping = async (text: string) => {
-        const step = 6;
-        for (let i = 0; i < text.length; i += step) {
-          renderedText += text.slice(i, i + step);
-          const partialText = renderedText;
-          setIsAiThinking(false);
-          setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: partialText } : msg));
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
-      };
-
-      const fetchLegacyChatText = async (seed: number, promptText: string) => {
-        const legacyUrl = `/api/chat?prompt=${encodeURIComponent(promptText)}&seed=${seed}&system=${encodeURIComponent(systemPrompt)}&json=false`;
-        const legacyRes = await fetch(legacyUrl, { method: 'GET', cache: 'no-store' });
-        if (!legacyRes.ok) {
-          const errText = (await legacyRes.text()).trim();
-          throw new Error(errText || `Legacy chat request failed (${legacyRes.status})`);
-        }
-        return (await legacyRes.text()).trim();
-      };
-
-      const generateAssistantText = async (seed: number, promptText: string) => {
-        renderedText = '';
-        setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: '' } : msg));
-
-        try {
-          const response = await fetch('/api/chat/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: promptText, seed, system: systemPrompt })
-          });
-
-          if (response.ok && response.body) {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            while (true) {
-              const { value, done } = await reader.read();
-              if (done) break;
-              if (!value) continue;
-
-              const chunk = decoder.decode(value, { stream: true });
-              if (chunk) {
-                await appendWithTyping(chunk);
-              }
-            }
-
-            const tail = decoder.decode();
-            if (tail) {
-              await appendWithTyping(tail);
-            }
-
-            return renderedText.trim();
-          }
-
-          const legacyText = await fetchLegacyChatText(seed, promptText);
-          await appendWithTyping(legacyText);
-          return renderedText.trim();
-        } catch {
-          const legacyText = await fetchLegacyChatText(seed, promptText);
-          await appendWithTyping(legacyText);
-          return renderedText.trim();
-        }
-      };
-
-      try {
-        const seed = Math.floor(Math.random() * 0xFFFFFFFF);
-        let finalText = '';
-
-        try {
-          finalText = await generateAssistantText(seed, contextualPrompt);
-        } catch {
-          finalText = await generateAssistantText(seed + 1, prompt);
-        }
-
-        finalText = finalText || 'Sorry, I could not generate a response right now.';
-        const finalMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: finalText } : msg);
-
-        setMessages(finalMessages);
-        updateCurrentChatHistory(currentChatId, title, finalMessages);
-      } catch (error: any) {
-        console.error('Chat stream error:', error);
-        const fallbackText = `Maaf kijiye, abhi response generate nahi ho paaya. Aapka prompt: "${prompt}". Kripya dubara try karein.`;
-        const fallbackMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: fallbackText } : msg);
-        setMessages(fallbackMessages);
-        updateCurrentChatHistory(currentChatId, title, fallbackMessages);
-      } finally {
+    let renderedText = '';
+    const appendWithTyping = async (text: string) => {
+      const step = 6;
+      for (let i = 0; i < text.length; i += step) {
+        renderedText += text.slice(i, i + step);
+        const partialText = renderedText;
         setIsAiThinking(false);
+        setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: partialText } : msg));
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
     };
+
+    const fetchLegacyChatText = async (seed: number, promptText: string) => {
+      const legacyUrl = `/api/chat?prompt=${encodeURIComponent(promptText)}&seed=${seed}&system=${encodeURIComponent(systemPrompt)}&json=false`;
+      const legacyRes = await fetch(legacyUrl, { method: 'GET', cache: 'no-store' });
+      if (!legacyRes.ok) {
+        const errText = (await legacyRes.text()).trim();
+        throw new Error(errText || `Legacy chat request failed (${legacyRes.status})`);
+      }
+      return (await legacyRes.text()).trim();
+    };
+
+    const generateAssistantText = async (seed: number, promptText: string) => {
+      renderedText = '';
+      setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: '' } : msg));
+
+      try {
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptText, seed, system: systemPrompt })
+        });
+
+        if (response.ok && response.body) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (!value) continue;
+
+            const chunk = decoder.decode(value, { stream: true });
+            if (chunk) {
+              await appendWithTyping(chunk);
+            }
+          }
+
+          const tail = decoder.decode();
+          if (tail) {
+            await appendWithTyping(tail);
+          }
+
+          return renderedText.trim();
+        }
+
+        const legacyText = await fetchLegacyChatText(seed, promptText);
+        await appendWithTyping(legacyText);
+        return renderedText.trim();
+      } catch {
+        const legacyText = await fetchLegacyChatText(seed, promptText);
+        await appendWithTyping(legacyText);
+        return renderedText.trim();
+      }
+    };
+
+    try {
+      const seed = Math.floor(Math.random() * 0xFFFFFFFF);
+      let finalText = '';
+
+      try {
+        finalText = await generateAssistantText(seed, contextualPrompt);
+      } catch {
+        finalText = await generateAssistantText(seed + 1, prompt);
+      }
+
+      finalText = finalText || 'Sorry, I could not generate a response right now.';
+      const finalMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: finalText } : msg);
+
+      setMessages(finalMessages);
+      updateCurrentChatHistory(currentChatId, title, finalMessages);
+    } catch (error: any) {
+      console.error('Chat stream error:', error);
+      const fallbackText = `Maaf kijiye, abhi response generate nahi ho paaya. Aapka prompt: "${prompt}". Kripya dubara try karein.`;
+      const fallbackMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: fallbackText } : msg);
+      setMessages(fallbackMessages);
+      updateCurrentChatHistory(currentChatId, title, fallbackMessages);
+    } finally {
+      setIsAiThinking(false);
+    }
+  };
 
   const getDimensions = (quality: string, aspect: string): [number, number] => {
     const longEdge = { '720p': 512, '1080p': 768, '2K': 1024, '4K': 1024 }[quality] || 512;
@@ -681,7 +729,7 @@ if (referredBy) {
   const generateImageProxyUrl = (promptText: string, seedOverride?: number) => {
     const [w, h] = getDimensions(imgQuality, imgAspect);
     const fullPrompt = `${promptText}${imgStyle === 'realistic' ? '' : `, ${imgStyle} style`}${negativePrompt.trim() ? ` ### Negative: ${negativePrompt.trim()}` : ''}`;
-    const seed = seedOverride ?? Math.floor(Math.random()*999999);
+    const seed = seedOverride ?? Math.floor(Math.random() * 999999);
     const params = new URLSearchParams({
       width: String(w),
       height: String(h),
@@ -773,20 +821,122 @@ if (referredBy) {
     setTimeout(() => { setIsGeneratingVideo(false); alert('Demo: Real video generation is coming soon.'); }, 1500);
   };
 
+  const renderCreativeResult = (text: string) => {
+    if (!text.includes('```')) {
+      return <div className="text-left w-full text-slate-300 text-sm whitespace-pre-wrap flex-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar p-2">{text}</div>;
+    }
+
+    const parts = text.split(/(```[\w-]*\n[\s\S]*?```)/g);
+    return (
+      <div className="text-left w-full text-slate-300 text-sm flex-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        {parts.map((part, i) => {
+          if (part.startsWith('```')) {
+            const lines = part.split('\n');
+            const langInfo = lines[0].replace('```', '').trim() || 'code';
+            const code = lines.slice(1, -1).join('\n');
+            return (
+              <div key={i} className="my-4 rounded-xl overflow-hidden border border-slate-700 bg-[#0d1117] shadow-xl">
+                <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-slate-700">
+                  <span className="text-xs font-mono text-slate-400">{langInfo}</span>
+                  <div className="flex items-center gap-3">
+                    {(langInfo.toLowerCase().includes('html') || langInfo.toLowerCase().includes('svg') || langInfo.toLowerCase().includes('xml')) && (
+                      <button onClick={() => setPreviewHtml(code)} className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+                        <Eye className="w-3.5 h-3.5" /> Preview
+                      </button>
+                    )}
+                    <button onClick={() => copyToClipboard(code, 'code')} className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-300 hover:text-white transition-colors">
+                      <Copy className="w-3.5 h-3.5" /> {copiedCode ? 'Copied!' : 'Copy Code'}
+                    </button>
+                  </div>
+                </div>
+                <div className="p-4 overflow-x-auto text-[13px] font-mono text-slate-300 whitespace-pre">
+                  {code}
+                </div>
+              </div>
+            );
+          }
+          return <span key={i} className="whitespace-pre-wrap">{part}</span>;
+        })}
+      </div>
+    );
+  };
+
+  const handleCreativeToolSubmit = async () => {
+    if (!creativeToolInput.trim() || isCreativeToolThinking) return;
+    setIsCreativeToolThinking(true);
+    setCreativeToolResult('');
+    const inputSnapshot = creativeToolInput;
+    const toolSnapshot = creativeSubTab;
+    let finalResult = '';
+
+    let systemPrompt = 'You are a highly advanced, empathetic, and intelligent AI assistant. Always provide a high-level, extremely helpful response. Understand the deep intent of the user, offer valuable extra suggestions, and express emotion using appropriate emojis! 🌟 Make the user feel heard and supported! 💖';
+    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! ✍️✨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! 🌺';
+    else if (creativeSubTab === 'code') systemPrompt = 'You are a Master Game Developer and Elite Senior Software Engineer! 🎮💻 Your mission is to generate high-end, visually stunning, and fully functional code. When generating games or interactive UI: 1. Use advanced logic (physics, state machines, proper game loops). 2. Create "Good Looking" visuals with modern CSS (glassmorphism, neon glows, smooth 60fps animations, professional typography). 3. ALWAYS include intuitive controls (Keyboard ARROW keys/WASD, Mouse, or Mobile Touch). 4. Prefer self-contained, high-performance HTML/CSS/JS that can be previewed. For other code, be professional, optimized, and follow best practices. Always wrap code in ``` blocks. Be encouraging and use emojis! 🚀✨';
+    else if (creativeSubTab === 'summarizer') systemPrompt = 'You are an expert Speed-Reader and Analyst! 📚⚡ Summarize the provided text beautifully and concisely. Retain the absolute core information, provide a "Key Takeaways" section, and suggest why this information matters! Use engaging emojis and an empathetic tone! 🧠💡';
+    else if (creativeSubTab === 'idea') systemPrompt = 'You are a brilliant Idea Generator and Brainstorming Partner! 🤯🎯 Provide innovative, out-of-the-box, and highly practical ideas. Structure your response perfectly, give actionable next steps, and motivate the user with a highly emotional, enthusiastic tone and lots of inspiring emojis! 🚀🌟';
+
+    const seed = Math.floor(Math.random() * 0xFFFFFFFF);
+    try {
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: inputSnapshot, seed, system: systemPrompt })
+      });
+
+      if (response.ok && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let text = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) {
+            text += decoder.decode(value, { stream: true });
+            setCreativeToolResult(text);
+          }
+        }
+        text += decoder.decode();
+        setCreativeToolResult(text);
+        finalResult = text;
+      } else {
+        const legacyUrl = `/api/chat?prompt=${encodeURIComponent(inputSnapshot)}&seed=${seed}&system=${encodeURIComponent(systemPrompt)}&json=false`;
+        const legacyRes = await fetch(legacyUrl, { method: 'GET', cache: 'no-store' });
+        if (legacyRes.ok) {
+          const text = await legacyRes.text();
+          setCreativeToolResult(text);
+          finalResult = text;
+        } else {
+          setCreativeToolResult('Failed to generate. Please try again.');
+        }
+      }
+    } catch (e) {
+      setCreativeToolResult('Error connecting to the AI engine.');
+    } finally {
+      setIsCreativeToolThinking(false);
+      if (finalResult && !finalResult.startsWith('Error') && !finalResult.startsWith('Failed')) {
+        const toolName = CREATIVE_TOOLS.find(t => t.id === toolSnapshot)?.name || toolSnapshot;
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const entry = { tool: toolSnapshot, toolName, input: inputSnapshot.slice(0, 60), result: finalResult, time: timeStr };
+        setCreativeHistory(prev => [entry, ...prev].slice(0, 20));
+      }
+    }
+  };
+
   const handleSelectPlan = async (plan: (typeof PLANS)[number]) => {
     if (plan.name === 'Basic') { alert('You are already on the Basic plan.'); setIsPricingOpen(false); return; }
-      // Removed session check for demo - payment will work without login issue
-      const saved = localStorage.getItem('smartai_session');
-      const user = saved ? JSON.parse(saved) : { email: 'demo@user.com' };
+    // Removed session check for demo - payment will work without login issue
+    const saved = localStorage.getItem('smartai_session');
+    const user = saved ? JSON.parse(saved) : { email: 'demo@user.com' };
     try {
       // Fixed plan name and email values
-      const res = await fetch('/api/payment/create-order', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          plan: plan.name, 
-          email: 'demo@payment.com' 
-        }) 
+      const res = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: plan.name,
+          email: 'demo@payment.com'
+        })
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || 'Failed to create order'); return; }
@@ -826,15 +976,15 @@ if (referredBy) {
             <form onSubmit={handleLogin} className="space-y-4">
 
               <div className="flex gap-2 mb-2">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setLoginContactType('email')}
                   className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
                 >
                   Email
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setLoginContactType('mobile')}
                   className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
                 >
@@ -843,25 +993,25 @@ if (referredBy) {
               </div>
 
               {loginContactType === 'email' && (
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
+                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
               )}
 
               {loginContactType === 'mobile' && (
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number</label>
-                <input type="tel" value={loginMobile} onChange={e => setLoginMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" /></div>
+                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number</label>
+                  <input type="tel" value={loginMobile} onChange={e => setLoginMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" /></div>
               )}
               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
                 <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    required 
-                    value={password} 
-                    onChange={e => setPassword(e.target.value)} 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" 
-                    placeholder="••••••••" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
+                    placeholder="••••••••"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
@@ -880,48 +1030,48 @@ if (referredBy) {
             </form>
           )}
 
-           {authMode === 'signup' && (
-             <div className="space-y-3">
-               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Full Name *</label>
-                 <input type="text" required value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="John Doe" /></div>
-               
-               <div className="flex gap-2 mb-2">
-                 <button 
-                   type="button" 
-                   onClick={() => setSignupContactType('email')}
-                   className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                 >
-                   Email
-                 </button>
-                 <button 
-                   type="button" 
-                   onClick={() => setSignupContactType('mobile')}
-                   className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                 >
-                   Mobile
-                 </button>
-               </div>
+          {authMode === 'signup' && (
+            <div className="space-y-3">
+              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Full Name *</label>
+                <input type="text" required value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="John Doe" /></div>
 
-               {signupContactType === 'email' && (
-               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address *</label>
-                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
-               )}
+              <div className="flex gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setSignupContactType('email')}
+                  className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSignupContactType('mobile')}
+                  className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
+                >
+                  Mobile
+                </button>
+              </div>
 
-               {signupContactType === 'mobile' && (
-               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number *</label>
-                 <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" /></div>
-               )}
+              {signupContactType === 'email' && (
+                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address *</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
+              )}
+
+              {signupContactType === 'mobile' && (
+                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number *</label>
+                  <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" /></div>
+              )}
               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password *</label>
                 <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    required 
-                    value={password} 
-                    onChange={e => setPassword(e.target.value)} 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" 
-                    placeholder="••••••••" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
+                    placeholder="••••••••"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
@@ -932,15 +1082,15 @@ if (referredBy) {
               </div>
               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Confirm Password *</label>
                 <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    required 
-                    value={signupConfirmPassword} 
-                    onChange={e => setSignupConfirmPassword(e.target.value)} 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" 
-                    placeholder="••••••••" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={signupConfirmPassword}
+                    onChange={e => setSignupConfirmPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
+                    placeholder="••••••••"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
@@ -966,15 +1116,15 @@ if (referredBy) {
                 <input type="email" required value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
               <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">New Password</label>
                 <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    required 
-                    value={newPassword} 
-                    onChange={e => setNewPassword(e.target.value)} 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" 
-                    placeholder="••••••••" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
+                    placeholder="••••••••"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
@@ -1006,7 +1156,7 @@ if (referredBy) {
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 md:p-8 max-w-sm sm:max-w-2xl md:max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4 md:mb-8"><h2 className="text-xl sm:text-2xl md:text-3xl font-bold italic tracking-tight">Upgrade Your Neural Link</h2><button onClick={() => setIsPricingOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><Plus className="w-5 h-5 md:w-6 md:h-6 rotate-45" /></button></div>
               <div className="grid md:grid-cols-3 gap-3 md:gap-6">
-                {[{ name: "Basic", price: "Free", features: ["100 Credits","Standard Response","720p Energy"], color: "slate-400" },{ name: "Pro", price: "₹99", features: ["10,000 Credits","Expert Mode Enabled","2K Intelligence"], color: "indigo-500", popular: true },{ name: "Ultra", price: "₹199", features: ["Unlimited Pixels","Zero Latency","4K Imagination"], color: "emerald-500" }].map((plan) => (
+                {[{ name: "Basic", price: "Free", features: ["100 Credits", "Standard Response", "720p Energy"], color: "slate-400" }, { name: "Pro", price: "₹99", features: ["10,000 Credits", "Expert Mode Enabled", "2K Intelligence"], color: "indigo-500", popular: true }, { name: "Ultra", price: "₹199", features: ["Unlimited Pixels", "Zero Latency", "4K Imagination"], color: "emerald-500" }].map((plan) => (
                   <div key={plan.name} className={`p-3 sm:p-4 md:p-6 rounded-2xl border ${plan.popular ? "border-indigo-600 bg-indigo-600/5" : "border-slate-800 bg-slate-950/50"} relative flex flex-col`}>
                     {plan.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[8px] md:text-[9px] px-2 md:px-3 py-1 rounded-full uppercase tracking-widest font-bold">Most Popular</span>}
                     <h3 className="text-base sm:text-lg md:text-xl font-bold mb-1">{plan.name}</h3>
@@ -1017,6 +1167,22 @@ if (referredBy) {
                 ))}
               </div>
             </motion.div>
+          </motion.div>
+        )}
+
+        {previewHtml !== null && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-8">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full h-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2"><Eye className="w-5 h-5 text-indigo-400" /> Code Preview</h3>
+                <button onClick={() => setPreviewHtml(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 bg-white relative">
+                <iframe srcDoc={previewHtml} className="w-full h-full border-none" title="Code Preview" sandbox="allow-scripts allow-modals" />
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1033,23 +1199,23 @@ if (referredBy) {
               <Plus className="w-4 h-4" />
               <span className="text-sm font-medium">New Chat</span>
             </button>
-            
+
             <div className="mt-4 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input 
-                type="text" 
-                placeholder="Search chats..." 
+              <input
+                type="text"
+                placeholder="Search chats..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600"
               />
             </div>
-            
+
             <div className="mt-3 space-y-1 max-h-60 overflow-y-auto">
               {chatHistory.filter(chat => chat.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
-                <button 
-                  key={chat.id} 
-                  onClick={() => handleSelectChat(chat.id)} 
+                <button
+                  key={chat.id}
+                  onClick={() => handleSelectChat(chat.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all truncate ${currentChatId === chat.id ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                 >
                   {chat.title}
@@ -1058,7 +1224,7 @@ if (referredBy) {
             </div>
           </div>
         )}
-        
+
         <nav className="space-y-2 flex-1">{SIDEBAR_ITEMS.map(item => (<button key={item.tab} onClick={() => setActiveTab(item.tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}><item.icon className="w-5 h-5" /><span className="text-base font-medium">{item.name}</span></button>))}</nav>
         <div className="mt-auto pt-6 border-t border-slate-800">
           <button onClick={() => setIsPricingOpen(true)} className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-all text-[10px] font-bold uppercase tracking-widest">
@@ -1069,13 +1235,13 @@ if (referredBy) {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <div className="relative">
-          <motion.header 
+          <motion.header
             initial={false}
             animate={{ height: isHeaderVisible ? 80 : 0, opacity: isHeaderVisible ? 1 : 0 }}
             className="border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm relative z-40 overflow-hidden"
           >
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
               >
@@ -1086,14 +1252,23 @@ if (referredBy) {
                 <span className="font-medium tracking-tight">SmartAI Pro</span>
               </div>
             </div>
-            
-            <div className="hidden md:flex items-center gap-2 bg-slate-900 rounded-lg p-1 border border-slate-800">{(['normal','creative','expert'] as SmartMode[]).map(mode => {
+
+            <div className="hidden md:flex items-center gap-2 bg-slate-900/50 rounded-xl p-1 border border-slate-800/50 backdrop-blur-md">{(['normal', 'creative', 'expert'] as SmartMode[]).map(mode => {
               const locked = mode === 'expert' && plan === 'Basic';
-              return (<button key={mode} onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)} className={`relative px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-widest transition-all ${smartMode === mode ? 'bg-indigo-600 text-white' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white'}`}>{mode}{locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-white text-[5px] px-1 rounded-full uppercase tracking-wider">PRO</span>}</button>);
+              return (
+                <button
+                  key={mode}
+                  onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)}
+                  className={`relative px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${smartMode === mode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                >
+                  {mode}
+                  {locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-[6px] px-1.5 py-0.5 rounded-full text-white font-bold border border-slate-900 shadow-lg">PRO</span>}
+                </button>
+              );
             })}</div>
             <div className="flex items-center gap-4">
               <span className="text-xs text-slate-500 font-mono hidden sm:block">{email}</span>
-              <button 
+              <button
                 onClick={() => setActiveTab('profile')}
                 className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden hover:ring-2 hover:ring-indigo-500 transition-all active:scale-90"
               >
@@ -1102,7 +1277,7 @@ if (referredBy) {
             </div>
           </motion.header>
 
-          <button 
+          <button
             onClick={() => setIsHeaderVisible(!isHeaderVisible)}
             className="absolute left-1/2 -translate-x-1/2 -bottom-3 z-50 w-8 h-6 bg-slate-800 border border-slate-700 rounded-b-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg"
             title={isHeaderVisible ? "Hide Header" : "Show Header"}
@@ -1112,7 +1287,7 @@ if (referredBy) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 pb-72 md:pb-6">
-{activeTab === 'chat' && (
+          {activeTab === 'chat' && (
             <div className="max-w-3xl mx-auto flex flex-col">
               <div className="flex-1 space-y-6 mb-6">
                 <div className="flex justify-between items-center mb-2">
@@ -1126,7 +1301,7 @@ if (referredBy) {
                   <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`max-w-[85%] p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-900 border border-slate-800 text-slate-300'}`}>
                       <p className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                      
+
                       {msg.role === 'assistant' && (
                         <div className="absolute -bottom-6 left-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all">
                           <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-500 hover:text-white transition-colors">
@@ -1143,7 +1318,7 @@ if (referredBy) {
                   </motion.div>
                 ))}
                 {isAiThinking && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start"><div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl"><div className="flex gap-1"><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-indigo-500 rounded-full" /><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-indigo-500 rounded-full" /><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-indigo-500 rounded-full" /></div></div></motion.div>)}
-<div ref={chatEndRef} />
+                <div ref={chatEndRef} />
                 <div className="h-32 md:hidden" aria-hidden="true" />
               </div>
               {smartMode === 'expert' && plan !== 'Basic' && (
@@ -1157,7 +1332,7 @@ if (referredBy) {
                   )}
                 </div>
               )}
-              
+
               {showPrompts && messages.length <= 1 && (
                 <div className="mb-4 overflow-x-auto whitespace-nowrap pb-2 flex gap-2 no-scrollbar">
                   {SUGGESTED_PROMPTS.map((p, i) => (
@@ -1171,7 +1346,7 @@ if (referredBy) {
 
               <div className="fixed bottom-4 left-0 right-0 md:sticky md:bottom-0 bg-transparent md:bg-slate-950/80 md:backdrop-blur-sm pb-2 md:pb-4 px-4 md:px-0 z-30">
                 <div className="flex gap-1.5 items-center bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl">
-                  
+
                   {smartMode === 'expert' && plan !== 'Basic' && (
                     <>
                       <input type="file" ref={chatFileInput} accept="image/*,.pdf,.txt,.docx,.xlsx" className="hidden" onChange={(e) => {
@@ -1186,11 +1361,11 @@ if (referredBy) {
                         }
                       }} />
                       <button onClick={() => chatFileInput.current?.click()} className="bg-slate-800 hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
                       </button>
                     </>
                   )}
-                  
+
                   <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -1198,7 +1373,7 @@ if (referredBy) {
                       handleSendMessage();
                     }
                   }} placeholder="Enter your prompt..." className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-slate-600 z-[9999] pointer-events-auto cursor-text min-w-0" autoComplete="off" />
-                  
+
                   <div className="flex items-center gap-1.5 pr-0.5">
                     <button onClick={startListening} title="Voice Input" className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
                       <Mic className="w-4 h-4" />
@@ -1213,107 +1388,427 @@ if (referredBy) {
           )}
 
           {activeTab === 'image' && (
-            <div className="max-w-3xl mx-auto pb-20">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 relative">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-3xl font-bold italic tracking-tight">Image Synthesis</h2>
-                  <button 
-                    onClick={handleEnhancePrompt} 
-                    disabled={isEnhancing || !imgPrompt.trim()}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${isEnhancing ? 'bg-indigo-600 animate-pulse text-white' : 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 hover:bg-indigo-600/20'}`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> {isEnhancing ? 'Enhancing...' : 'Magic Prompt'}
-                  </button>
-                </div>
+            <div className={`mx-auto pb-4 px-4 sm:px-6 transition-all duration-500 ${smartMode === 'creative' ? 'max-w-[1400px]' : 'max-w-3xl'}`}>
+              <div className="flex flex-col lg:flex-row gap-6 xl:gap-8">
+                {/* Left Column: Creative Features List */}
+                {smartMode === 'creative' && (
+                  <div className="hidden xl:flex w-[260px] flex-col gap-4">
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-sm sticky top-4">
+                      <div className="mb-3 flex flex-col items-center xl:items-start text-center xl:text-left">
+                        <h2 className="text-base font-bold text-white mb-0.5 tracking-tight">Creative Features</h2>
+                        <h3 className="text-indigo-400 font-bold uppercase tracking-[0.2em] text-[9px]">(FREE USER)</h3>
+                      </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Prompt</label>
-                    <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-base h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600" />
-                  </div>
+                      <div className="space-y-1.5">
+                        {CREATIVE_TOOLS.map((tool, index) => (
+                          <button
+                            key={tool.id}
+                            onClick={() => {
+                              if (tool.id === 'chat') {
+                                setActiveTab('chat');
+                                setSmartMode('creative');
+                              } else if (tool.id === 'export') {
+                                if (creativeToolResult) {
+                                  copyToClipboard(creativeToolResult, 'code');
+                                  alert('Result copied to clipboard!');
+                                } else {
+                                  alert('Nothing to export yet! Generate something first.');
+                                }
+                              } else {
+                                setCreativeSubTab(tool.id);
+                                setCreativeToolResult('');
+                                setCreativeToolInput('');
+                              }
+                            }}
+                            className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all duration-300 text-left border ${creativeSubTab === tool.id ? 'bg-indigo-600/10 border-indigo-600/30' : 'bg-slate-950/40 border-transparent hover:bg-slate-800/60'}`}
+                          >
+                            <div className={`flex-shrink-0 ${creativeSubTab === tool.id ? 'text-indigo-400' : 'text-slate-500'}`}>
+                              <tool.icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[9px] font-bold truncate ${creativeSubTab === tool.id ? 'text-indigo-300' : 'text-slate-300'}`}>{index + 1}. {tool.name}</span>
+                                {tool.free && <span className="bg-indigo-600 px-1 py-0.5 rounded text-[6px] font-bold text-white uppercase tracking-wider flex-shrink-0">Free</span>}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
 
-                  <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Negative Prompt (Optional)</label>
-                    <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What to exclude? (e.g. blurry, low quality, text...)" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm h-20 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 mb-6">
-                  <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Aspect Ratio</label>
-                    <select value={imgAspect} onChange={e => setImgAspect(e.target.value as any)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
-                      {ASPECTS.map(a => (<option key={a} value={a}>{a}</option>))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Style</label>
-                    <select value={imgStyle} onChange={e => {
-                      const s = e.target.value;
-                      if (isStyleLocked(s)) { setIsPricingOpen(true); } else { setImgStyle(s); }
-                    }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
-                      {STYLES.map(s => {
-                        const locked = isStyleLocked(s);
-                        return (<option key={s} value={s} className={locked ? 'text-slate-600' : 'text-white'}>{s}{locked ? ' 🔒 PRO' : PREMIUM_STYLES.includes(s) && plan === 'Basic' ? ' ⭐' : ''}</option>);
-                      })}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Quality</label>
-<select value={imgQuality} onChange={e => {
-                      const q = e.target.value;
-                      const locked = (q === '2K' || q === '4K') && plan === 'Basic';
-                      if (locked) { setIsPricingOpen(true); } else { setImgQuality(q); }
-                    }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
-                      {['720p','1080p','2K','4K'].map((q: string) => {
-                        const locked = (q === '2K' || q === '4K') && plan === 'Basic';
-                        return (<option key={q} value={q} className={locked ? 'text-slate-600' : 'text-white'}>{q}{locked ? ' 🔒 PRO' : ''}</option>);
-                      })}
-                    </select>
-                  </div>
-                </div>
-                <button onClick={handleGenerateImage} disabled={isGenerating || !imgPrompt.trim()} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold text-base uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  {isGenerating ? (
-                    <div className="flex gap-1">
-                      <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-white rounded-full" />
-                      <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-white rounded-full" />
-                      <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-white rounded-full" />
+                      <div className="mt-3 flex items-center gap-2 p-3 bg-indigo-600/10 rounded-xl border border-indigo-600/20">
+                        <p className="text-[9px] text-indigo-200/90 font-medium leading-relaxed">All features are <strong className="text-indigo-400 font-bold">100% FREE</strong> with daily limits.</p>
+                      </div>
                     </div>
-                  ) : 'Synthesize Image (5 credits)'}
-                </button>
-              </div>
-              
-              {generatedImg && (<motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative group mb-10"><img src={generatedImg} alt="Generated" className="w-full rounded-3xl border border-slate-800 shadow-2xl" /><a href={generatedImg} download className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><Download className="w-5 h-5 text-white" /></a></motion.div>)}
-              
-              {imageHistory.length > 0 && (
-                <div className="mt-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold italic tracking-tight text-white">Art Gallery</h3>
-                    <button onClick={() => setShowHistory(!showHistory)} className="text-xs uppercase tracking-widest font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-600/10 px-4 py-2 rounded-full border border-indigo-600/20">{showHistory ? 'Collapse' : 'Expand All'}</button>
                   </div>
-                  <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${showHistory ? '' : 'max-h-[32rem] overflow-hidden relative'}`}>
-                    {!showHistory && <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent z-10" />}
-                    {imageHistory.map((item, i) => (
-                      <motion.div key={i} whileHover={{ y: -5 }} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-lg">
-                        <img src={item.url} alt={item.prompt} className="w-full aspect-square object-cover" loading="lazy" />
-                        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-end p-4">
-                          <p className="text-[10px] text-white line-clamp-3 mb-3 leading-relaxed italic">"{item.prompt}"</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">{item.style} • {item.quality}</span>
-                            <a href={item.url} download className="bg-white text-black p-2 rounded-lg hover:bg-slate-200 transition-colors"><Download className="w-3.5 h-3.5" /></a>
+                )}
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col gap-4 min-w-0">
+                  {smartMode === 'creative' ? (
+                    /* Creative Mode Main Panel */
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-indigo-600/50 to-transparent" />
+
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                          {CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.icon && <IconComponent icon={CREATIVE_TOOLS.find(t => t.id === creativeSubTab)!.icon} className="w-5 h-5 text-white" />}
+                        </div>
+                        <div>
+                          <h2 className="text-base font-bold italic tracking-tight text-white">{CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name}</h2>
+                          <p className="text-slate-500 text-[9px] uppercase font-bold tracking-[0.2em]">Creative Synthesis Engine</p>
+                        </div>
+                      </div>
+
+                      {creativeSubTab === 'image' ? (
+                        <>
+                          <div className="relative group mb-3">
+                            <textarea
+                              value={imgPrompt}
+                              onChange={e => setImgPrompt(e.target.value)}
+                              placeholder="Describe the image you want to generate..."
+                              className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl py-3 pl-5 pr-28 text-sm h-16 resize-none outline-none focus:border-indigo-600/50 transition-all shadow-inner placeholder:text-slate-700"
+                            />
+                            <button
+                              onClick={handleGenerateImage}
+                              disabled={isGenerating || !imgPrompt.trim()}
+                              className="absolute right-3 top-3 bottom-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50"
+                            >
+                              {isGenerating ? (
+                                <div className="flex gap-1.5">
+                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-white rounded-full" />
+                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-white rounded-full" />
+                                </div>
+                              ) : 'Generate'}
+                            </button>
+                          </div>
+
+                        </>
+                      ) : creativeSubTab === 'templates' ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
+                          {TEMPLATES.map((t, i) => (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                setActiveTab('chat');
+                                setSmartMode('creative');
+                                const templateAction = `I want to use the "${t.name}" template. The template is: "${t.prompt}". Please acknowledge this and ask me for the missing details (like the words in brackets) one by one so we can start. Promise me that you will provide a deeply detailed, highly advanced, and top-tier solution once I provide them! Use a friendly tone with emojis!`;
+                                handleSendMessage(templateAction);
+                              }}
+                              className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-left hover:bg-slate-800/50 hover:border-indigo-600/50 transition-all group"
+                            >
+                              <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center mb-2 group-hover:bg-indigo-600/20 group-hover:text-indigo-400 transition-colors">
+                                <IconComponent icon={t.icon} className="w-4 h-4" />
+                              </div>
+                              <h4 className="text-[11px] font-bold text-white mb-1">{t.name}</h4>
+                              <p className="text-[9px] text-slate-500 line-clamp-2">{t.prompt}</p>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-3">
+                          <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-5 min-h-[200px] max-h-[calc(100vh-400px)] overflow-y-auto flex flex-col items-center justify-center text-center">
+                            {creativeToolResult ? (
+                              renderCreativeResult(creativeToolResult)
+                            ) : (
+                              <>
+                                <div className="w-14 h-14 bg-indigo-600/10 rounded-full flex items-center justify-center mb-3">
+                                  {CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.icon && <IconComponent icon={CREATIVE_TOOLS.find(t => t.id === creativeSubTab)!.icon} className="w-7 h-7 text-indigo-500" />}
+                                </div>
+                                <h3 className="text-base font-bold text-white mb-1">{CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name} Ready</h3>
+                                <p className="text-slate-500 text-xs max-w-md">Enter your request below to start generating.</p>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="relative">
+                            <textarea
+                              value={creativeToolInput}
+                              onChange={e => setCreativeToolInput(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreativeToolSubmit(); } }}
+                              placeholder={`Describe your ${CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name.toLowerCase()} task...`}
+                              className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl py-4 pl-6 pr-36 text-sm h-20 resize-none outline-none focus:border-indigo-600/50 transition-all shadow-inner placeholder:text-slate-700"
+                            />
+                            <button
+                              onClick={handleCreativeToolSubmit}
+                              disabled={isCreativeToolThinking || !creativeToolInput.trim()}
+                              className="absolute right-3 top-3 bottom-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                            >
+                              {isCreativeToolThinking ? (
+                                <div className="flex gap-1">
+                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-white rounded-full" />
+                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-white rounded-full" />
+                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-white rounded-full" />
+                                </div>
+                              ) : 'Process'}
+                            </button>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Normal Mode Main Panel */
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 relative">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold italic tracking-tight">Image Synthesis</h2>
+                        <button
+                          onClick={handleEnhancePrompt}
+                          disabled={isEnhancing || !imgPrompt.trim()}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${isEnhancing ? 'bg-indigo-600 animate-pulse text-white' : 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 hover:bg-indigo-600/20'}`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" /> {isEnhancing ? 'Enhancing...' : 'Magic Prompt'}
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Prompt</label>
+                          <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-base h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600" />
+                        </div>
+
+                        <div>
+                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Negative Prompt (Optional)</label>
+                          <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What to exclude? (e.g. blurry, low quality, text...)" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm h-20 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 mb-6">
+                        <div>
+                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Aspect Ratio</label>
+                          <select value={imgAspect} onChange={e => setImgAspect(e.target.value as any)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
+                            {ASPECTS.map(a => (<option key={a} value={a}>{a}</option>))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Style</label>
+                          <select value={imgStyle} onChange={e => {
+                            const s = e.target.value;
+                            if (isStyleLocked(s)) { setIsPricingOpen(true); } else { setImgStyle(s); }
+                          }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
+                            {STYLES.map(s => {
+                              const locked = isStyleLocked(s);
+                              return (<option key={s} value={s} className={locked ? 'text-slate-600' : 'text-white'}>{s}{locked ? ' 🔒 PRO' : PREMIUM_STYLES.includes(s) && plan === 'Basic' ? ' ⭐' : ''}</option>);
+                            })}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Quality</label>
+                          <select value={imgQuality} onChange={e => {
+                            const q = e.target.value;
+                            const locked = (q === '2K' || q === '4K') && plan === 'Basic';
+                            if (locked) { setIsPricingOpen(true); } else { setImgQuality(q); }
+                          }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
+                            {['720p', '1080p', '2K', '4K'].map((q: string) => {
+                              const locked = (q === '2K' || q === '4K') && plan === 'Basic';
+                              return (<option key={q} value={q} className={locked ? 'text-slate-600' : 'text-white'}>{q}{locked ? ' 🔒 PRO' : ''}</option>);
+                            })}
+                          </select>
+                        </div>
+                      </div>
+                      <button onClick={handleGenerateImage} disabled={isGenerating || !imgPrompt.trim()} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold text-base uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                        {isGenerating ? (
+                          <div className="flex gap-1">
+                            <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-white rounded-full" />
+                            <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-white rounded-full" />
+                            <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-white rounded-full" />
+                          </div>
+                        ) : 'Synthesize Image (5 credits)'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Other Creative Tools Section - Only in Creative Mode */}
+                  {smartMode === 'creative' && (
+                    <div className="mt-4">
+                      <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                        <Sparkles className="w-4 h-4" /> Other Creative Tools <span className="text-slate-600">(Free)</span>
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {CREATIVE_TOOLS.map(tool => (
+                          <button
+                            key={tool.id}
+                            onClick={() => {
+                              if (tool.id === 'chat') {
+                                setActiveTab('chat');
+                                setSmartMode('creative');
+                              } else if (tool.id === 'export') {
+                                if (creativeToolResult) {
+                                  copyToClipboard(creativeToolResult, 'code');
+                                  alert('Result copied to clipboard!');
+                                } else {
+                                  alert('Nothing to export yet! Generate something first.');
+                                }
+                              } else {
+                                setCreativeSubTab(tool.id);
+                                setCreativeToolResult('');
+                                setCreativeToolInput('');
+                              }
+                            }}
+                            className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 group relative overflow-hidden ${creativeSubTab === tool.id ? 'bg-indigo-600 border-indigo-500 shadow-xl shadow-indigo-600/20 scale-[1.02]' : 'bg-slate-900/50 border-slate-800 hover:bg-slate-800/80 hover:border-slate-700'}`}
+                          >
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-500 ${creativeSubTab === tool.id ? 'bg-white/20 rotate-[360deg]' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
+                              <tool.icon className={`w-4 h-4 ${creativeSubTab === tool.id ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
+                            </div>
+                            <div className="text-center">
+                              <div className={`text-[10px] font-bold uppercase tracking-widest ${creativeSubTab === tool.id ? 'text-white' : 'text-slate-300'}`}>{tool.name}</div>
+                              <div className={`text-[8px] font-medium mt-0.5 ${creativeSubTab === tool.id ? 'text-indigo-100/70' : 'text-slate-600'}`}>{tool.desc}</div>
+                            </div>
+                            {creativeSubTab === tool.id && (
+                              <motion.div layoutId="activeTool" className="absolute inset-0 border-2 border-white/20 rounded-xl" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Contextual Input for Tools */}
+                      <div className="mt-6 bg-slate-900/80 border border-slate-800 rounded-2xl p-2 flex items-center gap-3 shadow-2xl backdrop-blur-md">
+                        <div className="w-9 h-9 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500">
+                          {CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.icon && <IconComponent icon={CREATIVE_TOOLS.find(t => t.id === creativeSubTab)!.icon} className="w-4 h-4" />}
+                        </div>
+                        <input
+                          value={creativeSubTab === 'image' ? imgPrompt : creativeToolInput}
+                          onChange={e => creativeSubTab === 'image' ? setImgPrompt(e.target.value) : setCreativeToolInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              creativeSubTab === 'image' ? handleGenerateImage() : handleCreativeToolSubmit();
+                            }
+                          }}
+                          placeholder={`Describe your ${CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name} request...`}
+                          className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-slate-700"
+                        />
+                        <div className="flex items-center gap-1.5">
+                          <button className="p-2.5 bg-slate-800 text-slate-500 rounded-xl hover:text-white transition-colors"><Mic className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => creativeSubTab === 'image' ? handleGenerateImage() : handleCreativeToolSubmit()} className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 active:scale-90 transition-all hover:bg-indigo-500"><Send className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Main Result Displays */}
+                  {generatedImg && smartMode !== 'creative' && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative group mb-10">
+                      <img src={generatedImg} alt="Generated" className="w-full rounded-3xl border border-slate-800 shadow-2xl" />
+                      <a href={generatedImg} download className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-all">
+                        <Download className="w-5 h-5 text-white" />
+                      </a>
+                    </motion.div>
+                  )}
+
+                  {/* History Grid (only in Normal/Expert or if expanded) */}
+                  {imageHistory.length > 0 && (smartMode !== 'creative' || showHistory) && (
+                    <div className="mt-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-bold italic tracking-tight text-white">Art Gallery</h3>
+                        <button onClick={() => setShowHistory(!showHistory)} className="text-xs uppercase tracking-widest font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-600/10 px-4 py-2 rounded-full border border-indigo-600/20">{showHistory ? 'Collapse' : 'Expand All'}</button>
+                      </div>
+                      <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${showHistory ? '' : 'max-h-[32rem] overflow-hidden relative'}`}>
+                        {!showHistory && <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent z-10" />}
+                        {imageHistory.map((item, i) => (
+                          <motion.div key={i} whileHover={{ y: -5 }} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-lg">
+                            <img src={item.url} alt={item.prompt} className="w-full aspect-square object-cover" loading="lazy" />
+                            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-end p-4">
+                              <p className="text-[10px] text-white line-clamp-3 mb-3 leading-relaxed italic">"{item.prompt}"</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">{item.style} • {item.quality}</span>
+                                <a href={item.url} download className="bg-white text-black p-2 rounded-lg hover:bg-slate-200 transition-colors"><Download className="w-3.5 h-3.5" /></a>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              
+
+                {/* Right Column: Recent Creative Results - Only in Creative Mode */}
+                {smartMode === 'creative' && (
+                  <div className="hidden lg:flex w-96 flex-col gap-6">
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-6 flex-1 shadow-2xl backdrop-blur-sm sticky top-6 max-h-[calc(100vh-100px)] overflow-y-auto">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h3 className="text-sm font-bold text-white tracking-tight">Recent Creations</h3>
+                          <p className="text-[9px] text-slate-500 uppercase tracking-[0.2em] mt-0.5">Your AI-generated content</p>
+                        </div>
+                        {creativeHistory.length > 0 && (
+                          <button
+                            onClick={() => { setCreativeHistory([]); }}
+                            className="text-[8px] uppercase tracking-widest font-bold text-red-500/60 hover:text-red-400 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
+                          >Clear</button>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        {creativeHistory.length === 0 ? (
+                          <div className="text-center py-16 flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center">
+                              <Sparkles className="w-8 h-8 text-slate-700" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Nothing here yet</p>
+                              <p className="text-[9px] text-slate-700 mt-1">Use a tool to start creating ✨</p>
+                            </div>
+                          </div>
+                        ) : (
+                          creativeHistory.map((item, i) => {
+                            const toolMeta = CREATIVE_TOOLS.find(t => t.id === item.tool);
+                            const Icon = toolMeta?.icon;
+                            const toolColors: Record<string, string> = {
+                              writer: 'bg-violet-600/20 text-violet-400 border-violet-600/20',
+                              code: 'bg-green-600/20 text-green-400 border-green-600/20',
+                              summarizer: 'bg-blue-600/20 text-blue-400 border-blue-600/20',
+                              idea: 'bg-amber-600/20 text-amber-400 border-amber-600/20',
+                              image: 'bg-pink-600/20 text-pink-400 border-pink-600/20',
+                            };
+                            const colorClass = toolColors[item.tool] || 'bg-indigo-600/20 text-indigo-400 border-indigo-600/20';
+                            return (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                onClick={() => {
+                                  setCreativeSubTab(item.tool);
+                                  setCreativeToolInput(item.input);
+                                  setCreativeToolResult(item.result);
+                                }}
+                                className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 hover:border-indigo-600/40 hover:bg-slate-800/60 transition-all cursor-pointer group"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`flex-shrink-0 w-8 h-8 rounded-xl border flex items-center justify-center ${colorClass}`}>
+                                    {Icon && <Icon className="w-4 h-4" />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                      <span className={`text-[9px] font-bold uppercase tracking-wider border rounded-md px-1.5 py-0.5 ${colorClass}`}>{item.toolName}</span>
+                                      <span className="text-[9px] text-slate-600 font-mono flex-shrink-0">{item.time}</span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-300 font-medium truncate group-hover:text-indigo-300 transition-colors">{item.input}</p>
+                                    <p className="text-[9px] text-slate-600 mt-1 line-clamp-2 leading-relaxed">{item.result.replace(/```[\w-]*/g, '').replace(/```/g, '').trim().slice(0, 80)}...</p>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {creativeHistory.length > 0 && (
+                        <button
+                          onClick={() => {
+                            const allText = creativeHistory.map(h => `[${h.toolName}] ${h.input}\n${h.result}`).join('\n\n---\n\n');
+                            copyToClipboard(allText, 'code');
+                          }}
+                          className="w-full mt-6 py-3 bg-slate-950 hover:bg-indigo-600/10 text-slate-500 hover:text-indigo-400 rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] border border-slate-800 hover:border-indigo-600/30 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Copy className="w-3 h-3" /> Export All Creations
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-
-
-{activeTab === 'video' && (
+          {activeTab === 'video' && (
             <div className="max-w-3xl mx-auto">
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
                 <h2 className="text-2xl font-bold mb-6 italic tracking-tight">Neural Motion</h2>
@@ -1327,7 +1822,7 @@ if (referredBy) {
           {activeTab === 'profile' && (
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
               <div className="flex items-center gap-4 mb-4">
-                <button 
+                <button
                   onClick={() => setActiveTab('chat')}
                   className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-all hover:bg-slate-800"
                 >
@@ -1343,7 +1838,7 @@ if (referredBy) {
                     <div className="w-28 h-28 bg-indigo-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl overflow-hidden border-4 border-slate-800">
                       {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
                     </div>
-                    <button 
+                    <button
                       onClick={() => {
                         setTempDisplayName(displayName);
                         setTempAvatar(avatar);
@@ -1384,18 +1879,18 @@ if (referredBy) {
                         </div>
                         <div className="flex-1 space-y-2">
                           <input type="text" value={tempAvatar} onChange={e => setTempAvatar(e.target.value)} placeholder="Image URL (optional)" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all" />
-                          <button 
+                          <button
                             onClick={() => fileInputRef.current?.click()}
                             className="w-full bg-slate-800 hover:bg-slate-700 text-white text-[10px] uppercase font-bold tracking-widest py-2 rounded-lg transition-all border border-slate-700"
                           >
                             Upload from Gallery
                           </button>
-                          <input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={handleFileUpload} 
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileUpload}
                           />
                         </div>
                       </div>
@@ -1494,17 +1989,17 @@ if (referredBy) {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] md:hidden"
             />
-            <motion.div 
-              initial={{ x: '-100%' }} 
-              animate={{ x: 0 }} 
-              exit={{ x: '-100%' }} 
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-y-0 left-0 w-72 bg-slate-950 border-r border-slate-800 z-[60] p-6 flex flex-col md:hidden shadow-2xl"
             >
@@ -1530,12 +2025,12 @@ if (referredBy) {
 
               <nav className="space-y-2 flex-1">
                 {SIDEBAR_ITEMS.map(item => (
-                  <button 
-                    key={item.tab} 
+                  <button
+                    key={item.tab}
                     onClick={() => {
                       setActiveTab(item.tab);
                       setIsMobileMenuOpen(false);
-                    }} 
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                   >
                     <item.icon className="w-5 h-5" />
@@ -1545,17 +2040,17 @@ if (referredBy) {
               </nav>
 
               <div className="mt-auto pt-6 border-t border-slate-800 space-y-4">
-                <button 
+                <button
                   onClick={() => {
                     setIsPricingOpen(true);
                     setIsMobileMenuOpen(false);
-                  }} 
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-all text-xs font-bold uppercase tracking-widest"
                 >
                   <Sparkles className="w-4 h-4" /> Upgrade Plan
                 </button>
-                <button 
-                  onClick={handleLogout} 
+                <button
+                  onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all text-xs font-bold uppercase tracking-widest"
                 >
                   <LogOut className="w-4 h-4" /> Sign Out
@@ -1565,6 +2060,7 @@ if (referredBy) {
           </>
         )}
       </AnimatePresence>
+
     </div>
   );
 }
