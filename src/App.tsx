@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 
@@ -1110,9 +1110,15 @@ if (referredBy) {
             const locked = mode === 'expert' && plan === 'Basic';
             return (<button key={mode} onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)} className={`relative px-4 py-1.5 rounded-md text-sm font-bold uppercase tracking-widest transition-all ${smartMode === mode ? 'bg-indigo-600 text-white' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white'}`}>{mode}{locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-white text-[5px] px-1 rounded-full uppercase tracking-wider">PRO</span>}</button>);
           })}</div>
-          <div className="flex items-center gap-4"><span className="text-xs text-slate-500 font-mono hidden sm:block">{email}</span><div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden">
-                    {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
-                  </div></div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-slate-500 font-mono hidden sm:block">{email}</span>
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden hover:ring-2 hover:ring-indigo-500 transition-all active:scale-90"
+            >
+              {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-6 pb-72 md:pb-6">
@@ -1333,6 +1339,15 @@ if (referredBy) {
 
           {activeTab === 'profile' && (
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
+              <div className="flex items-center gap-4 mb-4">
+                <button 
+                  onClick={() => setActiveTab('chat')}
+                  className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-all hover:bg-slate-800"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <h2 className="text-xl font-bold italic tracking-tight text-white">Back to Workspace</h2>
+              </div>
               {/* Header Card */}
               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/10 blur-3xl rounded-full -mr-16 -mt-16" />
