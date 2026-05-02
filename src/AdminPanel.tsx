@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, CreditCard, BarChart3, Lock, LogOut, Search } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Shield, Users, CreditCard, BarChart3, Lock, LogOut, Search, Download, User, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const ADMIN_PASSWORD = 'SmartAI@Admin2024';
 

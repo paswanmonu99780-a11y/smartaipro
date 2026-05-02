@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, FileText, Code, Lightbulb, PenTool } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 
@@ -11,6 +11,7 @@ const SIDEBAR_ITEMS = [
   { name: 'Conversation', icon: MessageSquare, tab: 'chat' as Tab },
   { name: 'Creation', icon: ImageIcon, tab: 'image' as Tab },
   { name: 'Neural Motion', icon: Video, tab: 'video' as Tab },
+  { name: 'Expert Tools', icon: Shield, tab: 'chat' as Tab, badge: 'PRO' },
   { name: 'Profile', icon: User, tab: 'profile' as Tab },
   { name: 'Admin', icon: Shield, tab: 'admin' as Tab },
 ];
@@ -40,6 +41,26 @@ const CREATIVE_TOOLS = [
   { id: 'idea', name: 'Idea Generator', desc: 'Generate Ideas', icon: Lightbulb, free: true },
   { id: 'image', name: 'AI Image', desc: 'Generate Images', icon: ImageIcon, free: true },
   { id: 'export', name: 'Export & Copy', desc: 'Download / Copy', icon: Download, free: true },
+];
+
+const EXPERT_TOOLS = [
+  { id: 'agent', name: 'AI Agent', icon: Zap, desc: 'Autonomous goal execution.', category: 'AI Tools', color: '#a855f7' },
+  { id: 'memory', name: 'Neural Memory', icon: Database, desc: 'Personalized AI memory.', category: 'AI Tools', color: '#3b82f6' },
+  { id: 'video', name: 'Video Gen', icon: Video, desc: 'Text-to-video rendering.', category: 'Image Tools', color: '#ec4899' },
+  { id: 'reverse', name: 'Reverse Prompt', icon: RefreshCcw, desc: 'Extract prompts from images.', category: 'Image Tools', color: '#10b981' },
+  { id: 'builder', name: 'Web Architect', icon: Layout, desc: 'Full website builder.', category: 'Business Tools', color: '#f59e0b' },
+  { id: 'business', name: 'Growth Core', icon: TrendingUp, desc: 'Marketing strategies.', category: 'Business Tools', color: '#22c55e' },
+  { id: 'voice', name: 'Voice Clone', icon: Mic2, desc: 'Neural voice cloning.', category: 'AI Tools', color: '#d946ef' },
+  { id: 'codemaster', name: 'Code Master', icon: Code, desc: 'Autonomous coding.', category: 'AI Tools', color: '#0ea5e9' },
+  { id: 'data', name: 'Live Data', icon: Globe, desc: 'Real-time intelligence.', category: 'Business Tools', color: '#3b82f6' },
+  { id: 'social', name: 'Social Pilot', icon: Instagram, desc: 'Social media growth.', category: 'Business Tools', color: '#facc15' },
+  { id: 'writing', name: 'Pro Writer', icon: PenTool, desc: 'Expert content gen.', category: 'AI Tools', color: '#f43f5e' },
+  { id: 'security', name: 'Secure Vault', icon: LockIcon, desc: 'Encrypted data storage.', category: 'Business Tools', color: '#8b5cf6' },
+  { id: 'analytics', name: 'Neural Stats', icon: TrendingUp, desc: 'Performance analytics.', category: 'Business Tools', color: '#14b8a6' },
+  { id: 'translation', name: 'Polyglot AI', icon: Globe, desc: 'Real-time translation.', category: 'AI Tools', color: '#6366f1' },
+  { id: 'meeting', name: 'Meeting Pro', icon: MessageSquare, desc: 'Meeting notes & tasks.', category: 'Business Tools', color: '#f97316' },
+  { id: 'smart_search', name: 'Smart Search', icon: Search, desc: 'Live data search.', category: 'Business Tools', color: '#8b5cf6' },
+  { id: 'api', name: 'API System', icon: Network, desc: 'API integration.', category: 'Business Tools', color: '#f59e0b' },
 ];
 
 const TEMPLATES = [
@@ -131,6 +152,13 @@ export default function App() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [creativeHistory, setCreativeHistory] = useState<Array<{ tool: string; toolName: string; input: string; result: string; time: string }>>([]);
+  const [activeExpertTool, setActiveExpertTool] = useState<string | null>(null);
+  const [expertCategory, setExpertCategory] = useState<string>('All');
+  const [expertToolInput, setExpertToolInput] = useState('');
+  const [expertToolResult, setExpertToolResult] = useState('');
+  const [isExpertToolThinking, setIsExpertToolThinking] = useState(false);
+  const isAdmin = localStorage.getItem('smartai_admin_session') === 'active';
+  const isExpertLocked = plan === 'Basic' && !isAdmin;
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -385,8 +413,8 @@ export default function App() {
   };
   const handleLogout = () => { localStorage.removeItem('smartai_session'); window.location.reload(); };
   const handleSaveProfile = () => {
-    syncUserData({ displayName: tempName, avatar: tempAvatar });
-    setDisplayName(tempName);
+    syncUserData({ displayName: tempDisplayName, avatar: tempAvatar });
+    setDisplayName(tempDisplayName);
     setAvatar(tempAvatar);
     setIsEditingProfile(false);
   };
@@ -600,6 +628,141 @@ export default function App() {
     ].join('\n');
 
     return contextualPrompt.slice(-7000);
+  };
+
+  const renderExpertPro = () => {
+    const selectedTool = EXPERT_TOOLS.find(t => t.id === activeExpertTool) || EXPERT_TOOLS[0];
+    const tool = selectedTool;
+    const categories = ['All', 'AI Tools', 'Image Tools', 'Business Tools'];
+    const filteredTools = expertCategory === 'All' ? EXPERT_TOOLS : EXPERT_TOOLS.filter(t => t.category === expertCategory);
+
+    if (isExpertLocked) {
+      return (
+        <div className="h-full flex items-center justify-center p-8 bg-[#0a0a0c] relative overflow-hidden">
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
+           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full bg-[#16161d] border border-slate-800/50 p-12 rounded-[3.5rem] text-center relative z-10 shadow-2xl">
+              <div className="w-24 h-24 bg-indigo-600/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-indigo-600/30">
+                 <Shield className="w-10 h-10 text-indigo-400" />
+              </div>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Neural Lock Active</h2>
+              <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">Expert Suite is restricted to verified Pro accounts. Admins can bypass this lock via the Neural Command Panel.</p>
+              <div className="space-y-4">
+                 <button onClick={() => setIsPricingOpen(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/30 hover:scale-105 transition-all">Upgrade to Pro</button>
+                 <button onClick={() => setActiveTab('admin')} className="w-full py-5 bg-slate-800 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:text-white transition-all">Admin Bypass</button>
+              </div>
+           </motion.div>
+        </div>
+      );
+    }
+
+    if (!activeExpertTool) {
+      return (
+        <div className="h-full flex flex-col overflow-hidden p-8 bg-[#0a0a0c] custom-scrollbar">
+           <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-6">
+                 <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Mission Control</h2>
+                 <div className="flex bg-[#16161d] p-1.5 rounded-2xl border border-slate-800/50 shadow-inner">
+                    {categories.map(cat => (
+                      <button key={cat} onClick={() => setExpertCategory(cat)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${expertCategory === cat ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-white'}`}>{cat}</button>
+                    ))}
+                 </div>
+              </div>
+              <div className="flex items-center gap-4 text-slate-500">
+                 <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600/5 border border-indigo-500/10 rounded-xl"><div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" /><span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">15 Expert Nodes Online</span></div>
+              </div>
+           </div>
+
+           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 h-full content-start">
+                 {filteredTools.map((t, idx) => (
+                   <motion.button key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} onClick={() => setActiveExpertTool(t.id)} className="group relative aspect-[1.1/1] bg-[#16161d] border border-slate-800/50 rounded-[2rem] p-6 text-left transition-all hover:scale-[1.02] hover:border-indigo-500/50 hover:shadow-[0_0_30px_rgba(79,70,229,0.1)] overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-600/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative z-10 h-full flex flex-col justify-between">
+                         <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-800/50 group-hover:border-indigo-500/30 group-hover:bg-indigo-600/10 transition-all">
+                            <t.icon className="w-6 h-6 text-slate-400 transition-colors" style={{ color: t.color }} />
+                         </div>
+                         <div>
+                            <div className="text-xs font-black text-white uppercase tracking-widest mb-1 group-hover:text-indigo-400 transition-colors">{t.name}</div>
+                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">{t.category}</div>
+                         </div>
+                      </div>
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all">
+                         <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center"><Zap className="w-3 h-3 text-white" /></div>
+                      </div>
+                   </motion.button>
+                 ))}
+              </div>
+           </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col h-full overflow-hidden bg-[#0a0a0c]">
+        <div className="flex items-center justify-between px-8 py-5 bg-[#16161d] border-b border-slate-800/50 backdrop-blur-xl sticky top-0 z-20">
+          <div className="flex items-center gap-5">
+            <button onClick={() => setActiveExpertTool(null)} className="p-2.5 text-slate-400 hover:text-white transition-all bg-slate-800/50 rounded-2xl hover:scale-110 active:scale-95">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl" style={{ backgroundColor: `${tool.color}20`, border: `1px solid ${tool.color}40` }}>
+                <tool.icon className="w-6 h-6" style={{ color: tool.color }} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-black text-white uppercase tracking-tighter">{tool.name}</h3>
+                  <span className="bg-indigo-600 text-[8px] px-2 py-0.5 rounded-full text-white font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20">Pro Engine v4.0</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]" />
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Mission</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 relative custom-scrollbar">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
+          <div className="relative z-10 h-full flex flex-col">
+            <div className="max-w-3xl mx-auto w-full flex flex-col h-full overflow-hidden">
+               <div className="flex-1 overflow-y-auto space-y-6 mb-6 custom-scrollbar pr-2">
+                 {messages.length <= 1 ? (
+                   <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
+                      <div className="w-24 h-24 bg-indigo-600/10 rounded-[2.5rem] flex items-center justify-center border border-indigo-500/20"><tool.icon className="w-10 h-10" style={{ color: tool.color }} /></div>
+                      <div>
+                         <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{tool.name} Ready</h1>
+                         <p className="text-slate-500 font-medium tracking-wide">{tool.desc}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
+                         {SUGGESTED_PROMPTS.slice(0, 4).map((p, i) => (
+                           <button key={i} onClick={() => setChatInput(p)} className="p-6 bg-[#16161d] border border-slate-800/50 rounded-[2rem] text-left text-xs font-bold text-slate-400 hover:text-white hover:border-indigo-500/30 transition-all">{p}</button>
+                         ))}
+                      </div>
+                   </div>
+                 ) : (
+                   messages.map((msg, idx) => {
+                     if (idx === 0) return null; // hide initial system message
+                     return (
+                     <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                       <div className={`max-w-[85%] p-5 rounded-[2rem] ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-[#16161d] border border-slate-800/50 text-slate-300'}`}>
+                         <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                       </div>
+                     </motion.div>
+                   )})
+                 )}
+                 {isAiThinking && <div className="w-10 h-10 bg-indigo-600/10 rounded-full flex items-center justify-center animate-pulse"><Zap className="w-5 h-5 text-indigo-500" /></div>}
+                 <div ref={chatEndRef} />
+               </div>
+               <div className="bg-[#16161d] border border-slate-800/50 rounded-[2.5rem] p-2 flex items-center gap-2 mb-4">
+                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder={`Ask ${tool.name} a question...`} className="flex-1 bg-transparent px-6 py-4 text-sm text-white outline-none" />
+                  <button onClick={handleSendMessage} className="bg-indigo-600 text-white p-4 rounded-[2rem]"><Send className="w-5 h-5" /></button>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Streaming chat response (ChatGPT-style token-by-token UI)
@@ -1286,8 +1449,9 @@ export default function App() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 pb-72 md:pb-6">
+        <div className={`flex-1 overflow-y-auto ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-6 pb-72 md:pb-6'}`}>
           {activeTab === 'chat' && (
+            smartMode === 'expert' ? renderExpertPro() : (
             <div className="max-w-3xl mx-auto flex flex-col">
               <div className="flex-1 space-y-6 mb-6">
                 <div className="flex justify-between items-center mb-2">
@@ -1321,17 +1485,6 @@ export default function App() {
                 <div ref={chatEndRef} />
                 <div className="h-32 md:hidden" aria-hidden="true" />
               </div>
-              {smartMode === 'expert' && plan !== 'Basic' && (
-
-                <div className="mb-2">
-                  {attachedImage && (
-                    <div className="relative inline-block mr-2 mb-2">
-                      <img src={attachedImage} alt="Attached" className="w-20 h-20 object-cover rounded-xl border border-slate-700" />
-                      <button onClick={() => { setAttachedImage(null); setAttachedFile(null); }} className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 rounded-full text-white text-xs flex items-center justify-center">×</button>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {showPrompts && messages.length <= 1 && (
                 <div className="mb-4 overflow-x-auto whitespace-nowrap pb-2 flex gap-2 no-scrollbar">
@@ -1347,25 +1500,6 @@ export default function App() {
               <div className="fixed bottom-4 left-0 right-0 md:sticky md:bottom-0 bg-transparent md:bg-slate-950/80 md:backdrop-blur-sm pb-2 md:pb-4 px-4 md:px-0 z-30">
                 <div className="flex gap-1.5 items-center bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl">
 
-                  {smartMode === 'expert' && plan !== 'Basic' && (
-                    <>
-                      <input type="file" ref={chatFileInput} accept="image/*,.pdf,.txt,.docx,.xlsx" className="hidden" onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setAttachedFile(file);
-                          if (file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => setAttachedImage(ev.target?.result as string);
-                            reader.readAsDataURL(file);
-                          }
-                        }
-                      }} />
-                      <button onClick={() => chatFileInput.current?.click()} className="bg-slate-800 hover:bg-slate-700 text-slate-400 p-2.5 rounded-xl transition-all flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
-                      </button>
-                    </>
-                  )}
-
                   <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -1379,12 +1513,15 @@ export default function App() {
                       <Mic className="w-4 h-4" />
                     </button>
 
-                    <button onClick={handleSendMessage} disabled={isAiThinking || !chatInput.trim()} title="Send Message" className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"><Send className="w-4 h-4" /></button>
+                    <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} title="Send Message" className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+                       {isAiThinking ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
-                {smartMode === 'expert' && plan !== 'Basic' && <div className="text-center mt-2"><span className="ml-3 text-green-500 text-[10px]">✓ File Upload Enabled (PRO)</span></div>}
+                <div className="text-center mt-2 text-[10px] text-slate-500/80 font-medium">SmartAI can make mistakes. Consider verifying important information.</div>
               </div>
             </div>
+            )
           )}
 
           {activeTab === 'image' && (
