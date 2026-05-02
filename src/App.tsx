@@ -7,31 +7,6 @@ type Tab = 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
 interface Message { id: string; role: 'user' | 'assistant'; content: string; }
 
-function AdBanner() {
-  const adRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!adRef.current) return;
-    const container = adRef.current;
-    container.innerHTML = '';
-    const configScript = document.createElement('script');
-    configScript.text = `
-      atOptions = {
-        'key' : 'cb07926d8c0a4b4aa3010551e8596427',
-        'format' : 'iframe',
-        'height' : 50,
-        'width' : 320,
-        'params' : {}
-      };
-    `;
-    container.appendChild(configScript);
-    const invokeScript = document.createElement('script');
-    invokeScript.src = 'https://www.highperformanceformat.com/cb07926d8c0a4b4aa3010551e8596427/invoke.js';
-    invokeScript.async = true;
-    container.appendChild(invokeScript);
-  }, []);
-  return <div ref={adRef} className="w-full flex justify-center py-2" style={{ minHeight: 50 }} />;
-}
-
 const SIDEBAR_ITEMS = [
   { name: 'Conversation', icon: MessageSquare, tab: 'chat' as Tab },
   { name: 'Creation', icon: ImageIcon, tab: 'image' as Tab },
