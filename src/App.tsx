@@ -551,14 +551,14 @@ export default function App() {
     console.log('Starting OTP verification for:', target);
 
     let completed = false;
-    // Safety timeout to prevent infinite hang
+    // Safety timeout to prevent infinite hang - increased to 30s for production
     const safetyTimeout = setTimeout(() => {
       if (!completed) {
         setIsAuthenticating(false);
         setAuthError('Verification is taking longer than expected. Please check your internet or try again.');
-        console.warn('OTP verification timed out after 15s');
+        console.warn('OTP verification timed out after 30s');
       }
-    }, 15000);
+    }, 30000);
     
     try {
       // Step 1: Try 'email' type (Primary for signInWithOtp flow)
@@ -569,22 +569,21 @@ export default function App() {
         type: 'email'
       });
 
-      // Step 2: Fallback to 'signup' type if 'email' fails
+      // Step 2: Fallback to 'signup' type if 'email' fails or returns error
       if (error || !data?.user) {
-        console.log('Email type failed or no user, trying signup type fallback...');
+        console.log('Email type verification failed, trying signup type fallback...');
         const secondAttempt = await supabase.auth.verifyOtp({
           email: target,
           token: enteredOtp,
           type: 'signup'
         });
         
-        // If the second attempt succeeds, use its results
         if (secondAttempt.data?.user) {
           data = secondAttempt.data;
           error = secondAttempt.error;
         } else if (error && secondAttempt.error) {
-          // If both failed, keep the first error or use the more descriptive one
-          console.error('Both verification attempts failed.');
+           // If both failed, use the error from the second attempt if first was also an error
+           error = secondAttempt.error || error;
         }
       }
 
@@ -606,38 +605,36 @@ export default function App() {
         setIsLoggedIn(true);
         setIsAuthenticating(false);
 
-        // Background: Update local storage session
-        setTimeout(() => {
-          try {
-            const users = getUsers();
-            let currentUser = users.find(u => u.email === data.user?.email);
-            
-            if (!currentUser) {
-              currentUser = {
-                email: data.user.email || '',
-                password: '',
-                credits: 100,
-                plan: 'Basic',
-                displayName: userName,
-                avatar: '',
-                name: userName,
-                referCode: '',
-                referralCode: generateReferralCode(data.user.email || userName),
-                referredBy: '',
-                referralRewarded: false,
-                deviceId: getDeviceId(),
-                referralEarnings: 0
-              };
-              users.push(currentUser);
-              localStorage.setItem('smartai_users', JSON.stringify(users));
-            }
-            localStorage.setItem('smartai_session', JSON.stringify(currentUser));
-          } catch (e) {
-            console.error('Error updating local storage:', e);
+        // Update local session
+        try {
+          const users = getUsers();
+          let currentUser = users.find(u => u.email === data.user?.email);
+          
+          if (!currentUser) {
+            currentUser = {
+              email: data.user.email || '',
+              password: '',
+              credits: 100,
+              plan: 'Basic',
+              displayName: userName,
+              avatar: '',
+              name: userName,
+              referCode: '',
+              referralCode: generateReferralCode(data.user.email || userName),
+              referredBy: '',
+              referralRewarded: false,
+              deviceId: getDeviceId(),
+              referralEarnings: 0
+            };
+            users.push(currentUser);
+            localStorage.setItem('smartai_users', JSON.stringify(users));
           }
-        }, 100);
+          localStorage.setItem('smartai_session', JSON.stringify(currentUser));
+        } catch (e) {
+          console.error('Error updating session:', e);
+        }
       } else {
-        throw new Error('No user data returned from Supabase');
+        throw new Error('No user data returned from system');
       }
     } catch (err: any) {
       completed = true;
