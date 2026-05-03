@@ -8,9 +8,11 @@ type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
 interface Message { id: string; role: 'user' | 'assistant'; content: string; }
 
+
 const SIDEBAR_ITEMS = [
   { name: 'AI Chat', icon: MessageSquare, tab: 'chat' as Tab },
   { name: 'Image Generator', icon: ImageIcon, tab: 'image' as Tab },
+  { name: 'Profile', icon: User, tab: 'profile' as Tab },
 ];
 
 const MOBILE_TABS = [
@@ -228,6 +230,15 @@ export default function App() {
       return () => clearInterval(interval);
     }
   }, [isAdmin]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref');
+    if (ref) {
+      setSignupReferCode(ref.toUpperCase());
+      setAuthMode('signup');
+    }
+  }, []);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -507,21 +518,36 @@ export default function App() {
         deviceId: getDeviceId(),
         referralEarnings: 0
       };
+      if (referredBy) {
+        const referrerIdx = users.findIndex((u: any) => u.referralCode === referredBy);
+        if (referrerIdx !== -1) {
+          users[referrerIdx].credits = (users[referrerIdx].credits || 0) + 50;
+          users[referrerIdx].referralEarnings = (users[referrerIdx].referralEarnings || 0) + 50;
+          newUser.credits += 50; // Referee also gets 50
+        }
+      }
+
       users.push(newUser);
       saveUsers(users);
       localStorage.setItem('smartai_session', JSON.stringify(newUser));
-      setCredits(100);
+      setCredits(newUser.credits);
       setPlan('Basic');
       setDisplayName(signupName);
       setAvatar('');
       setIsLoggedIn(true);
 
       if (referredBy) {
-        alert("Account created successfully! You have been referred by a friend. Send your first message to claim +50 bonus credits!");
+        alert("Account created! You received +50 referral bonus credits. Your friend also received a reward!");
       } else {
         alert('Account created successfully!');
       }
       setIsAuthenticating(false);
+  };
+
+  const handleUpdateProfile = () => {
+    if (!displayName.trim()) return alert('Name cannot be empty');
+    syncUserData({ displayName });
+    alert('Profile updated successfully!');
   };
   const handleForgotPassword = async () => {
     if (!resetEmail) return alert('Please enter your email');
@@ -1623,7 +1649,6 @@ export default function App() {
                   <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" />
                 </div>
               )}
-
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
                 <div className="relative">
@@ -1639,6 +1664,11 @@ export default function App() {
                 <div className="relative">
                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Referral Code (Optional)</label>
+                <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm uppercase" placeholder="ABC123" />
               </div>
 
               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-bold uppercase tracking-widest text-xs mt-4">
@@ -2390,14 +2420,30 @@ export default function App() {
 
           {activeTab === 'profile' && (
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
-               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+               {/* Profile Card */}
+               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
                   <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                     <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl border-4 border-slate-800">
-                        {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
+                     <div className="relative">
+                        <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform">
+                           {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover rounded-full" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
+                        </div>
+                        <button className="absolute bottom-0 right-0 p-2 bg-slate-800 border border-slate-700 rounded-full text-indigo-400 hover:text-white transition-colors">
+                           <ImageIcon className="w-4 h-4" />
+                        </button>
                      </div>
-                     <div className="flex-1 text-center md:text-left">
-                        <h2 className="text-3xl font-bold text-white mb-1">{displayName}</h2>
-                        <p className="text-slate-400 mb-3">{email}</p>
+                     <div className="flex-1 text-center md:text-left space-y-4">
+                        <div>
+                           <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Display Name</label>
+                           <div className="flex gap-2 max-w-sm mx-auto md:mx-0">
+                              <input 
+                                value={displayName} 
+                                onChange={e => setDisplayName(e.target.value)} 
+                                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white font-bold focus:outline-none focus:border-indigo-500/50" 
+                              />
+                              <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all">Save</button>
+                           </div>
+                        </div>
                         <div className="flex gap-2 justify-center md:justify-start">
                            <span className="px-3 py-1 bg-indigo-600/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-600/20">{plan} Plan</span>
                            <span className="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full">{credits.toLocaleString()} Credits</span>
@@ -2405,7 +2451,73 @@ export default function App() {
                      </div>
                   </div>
                </div>
-               <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 text-red-500 border border-red-600/20 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all shadow-lg">Sign Out</button>
+
+               {/* Referral System */}
+               <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center border border-emerald-500/30">
+                           <Sparkles className="w-5 h-5 text-emerald-400" />
+                        </div>
+                        <div>
+                           <h3 className="text-white font-bold text-sm">Refer & Earn</h3>
+                           <p className="text-slate-500 text-[10px]">Invite friends to get 50 credits each.</p>
+                        </div>
+                     </div>
+                     
+                     <div className="space-y-3 pt-2">
+                        <div>
+                           <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Your Referral Code</label>
+                           <div className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-4 py-3">
+                              <span className="text-sm font-mono font-black text-indigo-400 tracking-widest">{(localStorage.getItem('smartai_session') ? JSON.parse(localStorage.getItem('smartai_session')!).referralCode : 'SIGNUP FIRST')}</span>
+                              <button onClick={() => { 
+                                const code = JSON.parse(localStorage.getItem('smartai_session')!).referralCode;
+                                navigator.clipboard.writeText(code);
+                                alert('Code copied!');
+                              }} className="text-slate-500 hover:text-white"><Copy className="w-4 h-4" /></button>
+                           </div>
+                        </div>
+                        <div>
+                           <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Referral Link</label>
+                           <button onClick={() => {
+                             const code = JSON.parse(localStorage.getItem('smartai_session')!).referralCode;
+                             const link = `${window.location.origin}?ref=${code}`;
+                             navigator.clipboard.writeText(link);
+                             alert('Referral link copied!');
+                           }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-left text-xs text-slate-400 truncate hover:border-indigo-500/50 transition-colors">
+                             {window.location.origin}?ref={(localStorage.getItem('smartai_session') ? JSON.parse(localStorage.getItem('smartai_session')!).referralCode : '...')}
+                           </button>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                           <TrendingUp className="w-5 h-5 text-indigo-400" />
+                        </div>
+                        <div>
+                           <h3 className="text-white font-bold text-sm">Usage Stats</h3>
+                           <p className="text-slate-500 text-[10px]">Your activity across all neural modes.</p>
+                        </div>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                           <div className="text-xs font-bold text-slate-500 mb-1">Messages</div>
+                           <div className="text-2xl font-black text-white">{messages.length}</div>
+                        </div>
+                        <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                           <div className="text-xs font-bold text-slate-500 mb-1">Images</div>
+                           <div className="text-2xl font-black text-white">{imageHistory.length}</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 text-red-500 border border-red-600/20 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2">
+                  <LogOut className="w-5 h-5" /> Sign Out from System
+               </button>
             </div>
           )}
 
