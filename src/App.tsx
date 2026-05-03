@@ -32,16 +32,7 @@ const PLANS = [
 const ASPECTS = ['1:1', '16:9', '9:16', '4:3'] as const;
 const STYLES = ['realistic', 'anime', 'oil painting', 'cyberpunk', 'minimalist', '3d render', 'minecraft'];
 
-const CREATIVE_TOOLS = [
-  { id: 'chat', name: 'AI Chat', desc: 'Chat with AI', icon: MessageSquare, free: true },
-  { id: 'templates', name: 'Templates', desc: '20+ Free Templates', icon: Copy, free: true },
-  { id: 'writer', name: 'AI Writer', desc: 'Blog, Essay, Stories', icon: PenTool, free: true },
-  { id: 'code', name: 'Code Generator', desc: 'Generate Code', icon: Code, free: true },
-  { id: 'summarizer', name: 'Summarizer', desc: 'Summarize Text', icon: FileText, free: true },
-  { id: 'idea', name: 'Idea Generator', desc: 'Generate Ideas', icon: Lightbulb, free: true },
-  { id: 'image', name: 'AI Image', desc: 'Generate Images', icon: ImageIcon, free: true },
-  { id: 'export', name: 'Export & Copy', desc: 'Download / Copy', icon: Download, free: true },
-];
+const CREATIVE_TOOLS = [];
 
 const IMAGE_TOOLS = [
   { id: 'img2prompt', name: 'Image to Prompt', desc: 'Extract prompt from image', icon: ImageIcon },
@@ -2034,15 +2025,6 @@ export default function App() {
     finally { setIsAiThinking(false); }
   };
 
-  function renderCreativeDashboard() {
-    const premiumTemplates = [
-      { name: 'YouTube Script', desc: 'Scripts', icon: Video, color: 'bg-red-500' },
-      { name: 'Instagram Reels', desc: 'Viral', icon: Instagram, color: 'bg-pink-500' },
-      { name: 'Blog Post', desc: 'SEO', icon: FileText, color: 'bg-blue-500' },
-      { name: 'Resume Builder', desc: 'Pro', icon: User, color: 'bg-emerald-500' },
-      { name: 'Email Writer', desc: 'Emails', icon: MessageSquare, color: 'bg-orange-500' },
-    ];
-
     return (
       <div className="h-full md:h-[calc(100vh-100px)] flex flex-col gap-2 max-w-[1600px] mx-auto px-2 overflow-y-auto md:overflow-hidden no-scrollbar pb-6">
         {/* Compact Mode Header */}
@@ -2064,10 +2046,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* 3-Column Grid - Stack on mobile, fixed height on desktop */}
+        {/* 1-Column Layout - Only AI Chat remains */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 md:min-h-0">
-          {/* AI Chat */}
-          <div className="md:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[400px] md:min-h-0 shadow-xl overflow-hidden">
+          {/* AI Chat expanded */}
+          <div className="md:col-span-12 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[500px] md:min-h-0 shadow-xl overflow-hidden">
             <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
@@ -2075,90 +2057,33 @@ export default function App() {
               </div>
               <Settings className="w-3 h-3 text-slate-600" />
             </div>
-            <div className="flex-1 overflow-y-auto p-2.5 space-y-3 bg-slate-950/20 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/20 no-scrollbar">
               <div className="flex flex-col items-end">
-                <div className="bg-indigo-600/80 text-white p-2 rounded-xl rounded-tr-none text-[10px] max-w-[90%]">Enhance my YouTube script prompt.</div>
+                <div className="bg-indigo-600/80 text-white p-3 rounded-2xl rounded-tr-none text-xs max-w-[80%] shadow-lg">Hello! How can I help with your creative projects today?</div>
               </div>
-              <div className="flex gap-2">
-                <div className="w-5 h-5 rounded-md bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0"><Sparkles className="w-2.5 h-2.5 text-indigo-400" /></div>
-                <div className="bg-slate-800/50 text-slate-400 p-2 rounded-xl rounded-tl-none text-[10px] max-w-[90%] border border-slate-700/30">Sure! Use: "Write a high-retention script about AI future trends with a hook..."</div>
-              </div>
-            </div>
-            <div className="p-2 bg-slate-900 border-t border-slate-800">
-              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5">
-                <input placeholder="Ask anything..." className="bg-transparent text-[10px] flex-1 outline-none text-slate-400" />
-                <Send className="w-3.5 h-3.5 text-indigo-500" />
+              <div className="flex gap-3">
+                <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0 shadow-inner"><Sparkles className="w-4 h-4 text-indigo-400" /></div>
+                <div className="bg-slate-800/50 text-slate-300 p-3 rounded-2xl rounded-tl-none text-xs max-w-[80%] border border-slate-700/30 shadow-md">I am your Creative AI assistant. I can help you with writing, brainstorming, and planning.</div>
               </div>
             </div>
-          </div>
-
-          {/* Image Suite */}
-          <div className="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[350px] md:min-h-0 shadow-xl overflow-hidden">
-            <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Image Suite</span>
-              </div>
-              <button className="text-[8px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-1.5 py-0.5 rounded">View</button>
-            </div>
-            <div className="flex-1 p-2 flex flex-col gap-2 overflow-hidden">
-              <div className="flex gap-1">
-                {['Realistic', 'Anime', '3D', 'Cinematic'].map(s => (
-                  <button key={s} className="flex-1 py-1 rounded bg-slate-800/50 text-slate-500 text-[8px] font-bold uppercase hover:bg-indigo-600 hover:text-white transition-all">{s}</button>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0 overflow-hidden">
-                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-lg border border-white/5" />
-                <div className="bg-gradient-to-tr from-cyan-500/10 to-blue-500/10 rounded-lg border border-white/5" />
-                <div className="bg-slate-800/20 rounded-lg border border-white/5" />
-                <div className="bg-slate-800/20 rounded-lg border border-white/5" />
-              </div>
-              <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                <Sparkles className="w-3 h-3" /> Generate
-              </button>
-            </div>
-          </div>
-
-          {/* Templates */}
-          <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[300px] md:min-h-0 shadow-xl overflow-hidden">
-            <div className="p-2 border-b border-slate-800 bg-slate-900/50"><span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Quick Templates</span></div>
-            <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 no-scrollbar">
-              {premiumTemplates.map(tmp => (
-                <button key={tmp.name} className="w-full p-2 rounded-xl bg-slate-950/40 border border-slate-800/50 flex items-center gap-2 hover:bg-slate-800 transition-all text-left group">
-                  <div className={`w-6 h-6 rounded-lg ${tmp.color} flex items-center justify-center shrink-0 shadow-lg`}><tmp.icon className="w-3 h-3 text-white" /></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-bold text-white truncate uppercase tracking-tight">{tmp.name}</p>
-                    <p className="text-[7px] text-slate-500 truncate">{tmp.desc}</p>
-                  </div>
+            <div className="p-3 bg-slate-900 border-t border-slate-800">
+              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
+                <input placeholder="Type your creative request..." className="bg-transparent text-sm flex-1 outline-none text-slate-300 placeholder:text-slate-600" />
+                <button className="p-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all">
+                  <Send className="w-4 h-4" />
                 </button>
-              ))}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Dynamic Tools Strip */}
-        <div className="grid grid-cols-5 gap-2 shrink-0">
-          {[
-            { icon: PenTool, name: 'Enhancer', color: 'bg-indigo-500' },
-            { icon: Mic2, name: 'Pro Tone', color: 'bg-emerald-500' },
-            { icon: Download, name: 'Upload', color: 'bg-purple-500' },
-            { icon: Clock, name: 'History', color: 'bg-orange-500' },
-            { icon: User, name: 'Support', color: 'bg-cyan-500' }
-          ].map(t => (
-            <button key={t.name} className="bg-slate-900/50 border border-slate-800 p-2 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/10 transition-all">
-              <t.icon className="w-3 h-3 text-slate-400" />
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t.name}</span>
-            </button>
-          ))}
         </div>
 
         {/* Footer Active Banner */}
-        <div className="bg-indigo-600 rounded-lg p-2 flex items-center justify-between shrink-0 shadow-inner">
+        <div className="bg-indigo-600/20 border border-indigo-500/30 rounded-lg p-2 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-            <p className="text-[8px] font-bold text-white uppercase tracking-widest">Active Plan: Creative <span className="opacity-50 mx-1">|</span> No Watermarks enabled</p>
+            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
+            <p className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest">Neural link active <span className="opacity-50 mx-1">|</span> Optimized for speed</p>
           </div>
-          <button onClick={() => setIsPricingOpen(true)} className="bg-black/20 hover:bg-black/30 px-3 py-1 rounded text-[8px] font-bold text-white uppercase">Upgrade</button>
+          <button onClick={() => setIsPricingOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-[8px] font-bold text-white uppercase transition-colors">Get Expert Tools</button>
         </div>
       </div>
     );
