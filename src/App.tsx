@@ -458,8 +458,12 @@ export default function App() {
 
   const handleSignup = async () => {
     setAuthError(null);
-    if (!signupName || !email || !password) {
+    if (!signupName || !email || !password || !signupConfirmPassword) {
       setAuthError('Please fill all required fields');
+      return;
+    }
+    if (password !== signupConfirmPassword) {
+      setAuthError('Passwords do not match');
       return;
     }
 
@@ -1705,21 +1709,22 @@ export default function App() {
              <div className="space-y-2.5">
                <div>
                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Full Name</label>
-                 <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
+                 <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
                </div>
 
                <div>
                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Email Address</label>
-                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="name@example.com" />
+                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="your@email.com" />
                </div>
 
-               <div>
-                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
-                 <div className="relative">
-                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
-                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                   </button>
+               <div className="grid grid-cols-2 gap-2">
+                 <div>
+                   <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
+                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                 </div>
+                 <div>
+                   <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm</label>
+                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
                  </div>
                </div>
 
@@ -1729,10 +1734,10 @@ export default function App() {
                </div>
 
                <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-widest text-[10px] mt-2">
-                 {isAuthenticating ? 'Creating...' : 'Get Signup OTP'}
+                 {isAuthenticating ? 'Sending OTP...' : 'Get Signup OTP'}
                </button>
 
-               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Back to Login</button>
+               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Already have an account? Login</button>
              </div>
           )}
 
