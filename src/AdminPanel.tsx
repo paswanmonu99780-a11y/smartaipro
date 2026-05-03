@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Users, CreditCard, BarChart3, Lock, LogOut, Search, Download, User, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { fetchUsersFromSupabase, syncUsersToSupabase } from './lib/db';
+import { fetchUsersFromSupabase, syncUsersToSupabase, setAdminSession, checkAdminSession } from './lib/db';
 
 const ADMIN_PASSWORD = 'SmartAI@Admin2024';
 
@@ -34,6 +34,20 @@ export default function AdminPanel() {
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [newCredits, setNewCredits] = useState<number>(0);
   const [newPlan, setNewPlan] = useState<string>('');
+  const [localSessionId, setLocalSessionId] = useState(() => localStorage.getItem('smartai_admin_session_id') || '');
+
+  useEffect(() => {
+    if (isLoggedIn && localSessionId) {
+      const interval = setInterval(async () => {
+        const globalSessionId = await checkAdminSession();
+        if (globalSessionId && globalSessionId !== localSessionId) {
+          handleLogout();
+          alert('Another admin has logged in. You have been logged out.');
+        }
+      }, 5000); // Check every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, localSessionId]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -41,10 +55,14 @@ export default function AdminPanel() {
     }
   }, [isLoggedIn]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
+      const newSessionId = Math.random().toString(36).substring(2, 15);
+      await setAdminSession(newSessionId);
+      setLocalSessionId(newSessionId);
+      localStorage.setItem('smartai_admin_session_id', newSessionId);
       localStorage.setItem('smartai_admin_session', 'active');
+      setIsLoggedIn(true);
       setError('');
       refreshData();
     } else {
@@ -55,6 +73,8 @@ export default function AdminPanel() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('smartai_admin_session');
+    localStorage.removeItem('smartai_admin_session_id');
+    setLocalSessionId('');
   };
 
   const refreshData = async () => {

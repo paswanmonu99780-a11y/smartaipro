@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
-import { fetchUsersFromSupabase, syncUsersToSupabase } from './lib/db';
+import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
@@ -130,6 +130,11 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAuthError(null);
+  }, [authMode]);
   const [loginContactType, setLoginContactType] = useState<'email' | 'mobile'>('email');
   const [loginMobile, setLoginMobile] = useState('');
   const [resetEmail, setResetEmail] = useState('');
@@ -207,6 +212,22 @@ export default function App() {
       clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    const checkGlobalAdmin = async () => {
+      const globalId = await checkAdminSession();
+      const localId = localStorage.getItem('smartai_admin_session_id');
+      if (globalId && localId && globalId !== localId) {
+        localStorage.removeItem('smartai_admin_session');
+        localStorage.removeItem('smartai_admin_session_id');
+        setIsAdmin(false);
+      }
+    };
+    if (isAdmin) {
+      const interval = setInterval(checkGlobalAdmin, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin]);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -311,20 +332,35 @@ export default function App() {
     syncUsersToSupabase(users);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginContactType === 'email' && !email) return alert('Please enter email address');
-    if (loginContactType === 'mobile' && !loginMobile) return alert('Please enter mobile number');
-    if (!password) return alert('Please enter password');
+    setAuthError(null);
+    if (loginContactType === 'email' && !email) {
+      setAuthError('Please enter email address');
+      return;
+    }
+    if (loginContactType === 'mobile' && !loginMobile) {
+      setAuthError('Please enter mobile number');
+      return;
+    }
+    if (!password) {
+      setAuthError('Please enter password');
+      return;
+    }
     setIsAuthenticating(true);
     
-    // Fetch latest DB state before login
-    fetchUsersFromSupabase().then(dbUsers => {
+    try {
+      // Fetch latest DB state before login
+      const dbUsers = await fetchUsersFromSupabase();
       if (dbUsers && dbUsers.length > 0) {
         localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
       }
-      const users = getUsers();
-      const user = users.find(u => {
+    } catch (e) {
+      console.error("Login sync failed", e);
+    }
+
+    const users = getUsers();
+    const user = users.find(u => {
         const userEmail = (u.email || '').trim();
         const userMobile = (u.mobile || '').trim();
         const inputEmail = (email || '').trim();
@@ -360,10 +396,9 @@ export default function App() {
         setEmail(user.email || '');
         setIsLoggedIn(true);
       } else {
-        alert('Invalid credentials');
+        setAuthError('Invalid credentials');
       }
       setIsAuthenticating(false);
-    });
   };
   const syncUserData = (updates: Partial<{ credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number }>) => {
     const session = localStorage.getItem('smartai_session');
@@ -383,23 +418,41 @@ export default function App() {
     }
   };
 
-  const handleSignup = () => {
-    if (!signupName || !password || !signupConfirmPassword) return alert('Please fill all required fields');
-    if (signupContactType === 'email' && !email) return alert('Please enter email address');
-    if (signupContactType === 'mobile' && !signupMobile) return alert('Please enter mobile number');
-    if (password !== signupConfirmPassword) return alert('Password and confirm password do not match');
+  const handleSignup = async () => {
+    setAuthError(null);
+    if (!signupName || !password || !signupConfirmPassword) {
+      setAuthError('Please fill all required fields');
+      return;
+    }
+    if (signupContactType === 'email' && !email) {
+      setAuthError('Please enter email address');
+      return;
+    }
+    if (signupContactType === 'mobile' && !signupMobile) {
+      setAuthError('Please enter mobile number');
+      return;
+    }
+    if (password !== signupConfirmPassword) {
+      setAuthError('Password and confirm password do not match');
+      return;
+    }
     setIsAuthenticating(true);
     
-    // Fetch latest DB state before signup to avoid overwriting existing
-    fetchUsersFromSupabase().then(dbUsers => {
+    try {
+      // Fetch latest DB state before signup to avoid overwriting existing
+      const dbUsers = await fetchUsersFromSupabase();
       if (dbUsers && dbUsers.length > 0) {
         localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
       }
-      const users = getUsers();
+    } catch (e) {
+      console.error("Signup sync failed", e);
+    }
+
+    const users = getUsers();
 
       // Check for duplicate email
       if (signupContactType === 'email' && email && users.find((u: any) => u.email === email)) {
-        alert('Account already exists with this email. Please login instead.');
+        setAuthError('Account already exists with this email. Please login instead.');
         setIsAuthenticating(false);
         return;
       }
@@ -412,8 +465,8 @@ export default function App() {
       }
 
       // Check for duplicate display name
-      if (users.find((u: any) => u.displayName?.toLowerCase() === signupName.toLowerCase())) {
-        alert('This display name is already taken. Please choose a different name.');
+      if (users.find((u: any) => u.displayName && u.displayName.toLowerCase() === signupName.toLowerCase())) {
+        setAuthError('This display name is already taken. Please choose a different name.');
         setIsAuthenticating(false);
         return;
       }
@@ -469,7 +522,6 @@ export default function App() {
         alert('Account created successfully!');
       }
       setIsAuthenticating(false);
-    });
   };
   const handleForgotPassword = async () => {
     if (!resetEmail) return alert('Please enter your email');
@@ -1502,6 +1554,12 @@ export default function App() {
             <p className="text-slate-500 text-sm mt-2 font-serif italic text-center">Modern intelligence for the creative mind</p>
           </div>
 
+          {authError && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-bold text-center animate-pulse">
+              {authError}
+            </div>
+          )}
+
           {authMode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="flex gap-2 mb-2">
@@ -1568,7 +1626,19 @@ export default function App() {
 
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
-                <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Confirm Password</label>
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
+                </div>
               </div>
 
               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-bold uppercase tracking-widest text-xs mt-4">
@@ -2392,13 +2462,17 @@ export default function App() {
              <span className="text-sm font-medium">Expert Mode</span>
           </button>
           
-          <div className="my-4 px-2">
-             <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
-          </div>
-          <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-             <Shield className="w-5 h-5" />
-             <span className="text-sm font-medium">Admin Panel</span>
-          </button>
+          {isAdmin && (
+            <>
+              <div className="my-4 px-2">
+                 <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
+              </div>
+              <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-medium">Admin Panel</span>
+              </button>
+            </>
+          )}
         </nav>
 
         <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
@@ -2416,6 +2490,12 @@ export default function App() {
              </div>
              <button onClick={() => setActiveTab('profile')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
           </div>
+          
+          {!isAdmin && (
+            <button onClick={() => setActiveTab('admin')} className="w-full mt-2 flex items-center justify-center gap-1 opacity-10 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
+              <Shield className="w-2 h-2" /> Admin Access
+            </button>
+          )}
         </div>
       </aside>
 
@@ -2487,13 +2567,17 @@ export default function App() {
                    <span className="text-base font-medium">Expert Mode</span>
                 </button>
 
-                <div className="my-4 px-2">
-                  <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
-                </div>
-                <button onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                   <Shield className="w-5 h-5" />
-                   <span className="text-base font-medium">Admin Panel</span>
-                </button>
+                {isAdmin && (
+                  <>
+                    <div className="my-4 px-2">
+                      <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
+                    </div>
+                    <button onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                      <Shield className="w-5 h-5" />
+                      <span className="text-base font-medium">Admin Panel</span>
+                    </button>
+                  </>
+                )}
               </nav>
             </motion.div>
           </>
