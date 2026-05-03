@@ -2026,65 +2026,150 @@ export default function App() {
   };
 
   function renderCreativeDashboard() {
+    const categories = [
+      {
+        name: "Content Creation Tools",
+        tools: [
+          { name: "AI Story Generator", desc: "Generate engaging stories on any topic.", icon: PenTool, color: "text-purple-400", bg: "bg-purple-600/10" },
+          { name: "Script Writer", desc: "Write scripts for YouTube, Reels, Shorts & more.", icon: Video, color: "text-red-400", bg: "bg-red-600/10" },
+          { name: "Idea Generator", desc: "Get unique ideas for content, business or more.", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-600/10" },
+          { name: "Song Lyrics Generator", desc: "Create original song lyrics in any style.", icon: Radio, color: "text-pink-400", bg: "bg-pink-600/10" },
+          { name: "Joke / Meme Ideas", desc: "Generate funny jokes and meme ideas.", icon: MessageSquare, color: "text-emerald-400", bg: "bg-emerald-600/10" }
+        ]
+      },
+      {
+        name: "Character & World Building",
+        tools: [
+          { name: "AI Character Creator", desc: "Create unique characters with backstory.", icon: User, color: "text-violet-400", bg: "bg-violet-600/10" },
+          { name: "World / Universe Builder", desc: "Build your own world, settings & lore.", icon: Globe, color: "text-blue-400", bg: "bg-blue-600/10" },
+          { name: "Fantasy Story Builder", desc: "Create fantasy stories with AI magic.", icon: Book, color: "text-emerald-400", bg: "bg-emerald-600/10" },
+          { name: "Game Story Generator", desc: "Generate storylines for your game ideas.", icon: Layout, color: "text-rose-400", bg: "bg-rose-600/10" }
+        ]
+      },
+      {
+        name: "Social & Creator Tools",
+        tools: [
+          { name: "Viral Hook Generator", desc: "Create attention-grabbing hooks for your content.", icon: Zap, color: "text-orange-400", bg: "bg-orange-600/10" },
+          { name: "Caption Generator", desc: "Generate captions for Instagram, Facebook etc.", icon: MessageSquare, color: "text-indigo-400", bg: "bg-indigo-600/10" },
+          { name: "Hashtag Generator", desc: "Find trending & relevant hashtags instantly.", icon: Hash, color: "text-purple-400", bg: "bg-purple-600/10" },
+          { name: "Video Script & Planner", desc: "Plan video content with script & scene ideas.", icon: Monitor, color: "text-emerald-400", bg: "bg-emerald-600/10" }
+        ]
+      },
+      {
+        name: "Experimental AI Tools",
+        tools: [
+          { name: "AI Personality Chat", desc: "Chat with custom AI characters.", icon: MessageSquare, color: "text-cyan-400", bg: "bg-cyan-600/10" },
+          { name: "Brainstorm Mode", desc: "Deep thinking AI for creative brainstorming.", icon: Zap, color: "text-indigo-400", bg: "bg-indigo-600/10" },
+          { name: "Future Predictor", desc: "Get fun & creative predictions.", icon: Eye, color: "text-amber-400", bg: "bg-amber-600/10" },
+          { name: "Random Creative Generator", desc: "Get random creative ideas & surprises.", icon: RefreshCcw, color: "text-purple-400", bg: "bg-purple-600/10" }
+        ]
+      },
+      {
+        name: "Design Thinking Tools",
+        tools: [
+          { name: "Brand Name Generator", desc: "Generate unique & catchy brand names.", icon: Settings, color: "text-cyan-400", bg: "bg-cyan-600/10" },
+          { name: "Tagline Generator", desc: "Create memorable taglines for brands.", icon: Tag, color: "text-orange-400", bg: "bg-orange-600/10" },
+          { name: "Product Idea Generator", desc: "Discover innovative product ideas.", icon: CreditCard, color: "text-emerald-400", bg: "bg-emerald-600/10" },
+          { name: "Startup Pitch Generator", desc: "Generate pitch ideas & content for startups.", icon: Rocket, color: "text-blue-400", bg: "bg-blue-600/10" }
+        ]
+      }
+    ];
+
     return (
-      <div className="h-full md:h-[calc(100vh-100px)] flex flex-col gap-2 max-w-[1600px] mx-auto px-2 overflow-y-auto md:overflow-hidden no-scrollbar pb-6">
-        {/* Compact Mode Header */}
-        <div className="flex items-center justify-between bg-indigo-600/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-white/10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-white/20 rounded-lg">
-              <Sparkles className="w-4 h-4 text-white" />
+      <div className="min-h-full bg-slate-950 p-4 md:p-8 overflow-y-auto no-scrollbar">
+        {/* Header Section */}
+        <div className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-[0_0_40px_rgba(79,70,229,0.3)] border border-white/10 rotate-3">
+              <Sparkles className="w-9 h-9 text-white" />
             </div>
             <div>
-              <h1 className="text-xs font-black text-white uppercase tracking-wider">Creative Dashboard <span className="ml-2 px-1.5 py-0.5 bg-white text-indigo-600 rounded text-[8px]">PRO</span></h1>
+              <h1 className="text-3xl font-black text-white italic tracking-tight">Creative Mode</h1>
+              <p className="text-slate-500 text-sm mt-1 font-medium italic">Turn your imagination into amazing content, stories & ideas with AI.</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-[9px] font-bold text-indigo-100 uppercase">Usage:</span>
-              <span className="text-[10px] font-black text-white">{usage.messages}/100</span>
-            </div>
-            <button onClick={() => setIsPricingOpen(true)} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-lg text-[9px] font-black text-white uppercase transition-all">Go Expert</button>
-          </div>
-        </div>
-
-        {/* 1-Column Layout - Only AI Chat remains */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 md:min-h-0">
-          {/* AI Chat expanded */}
-          <div className="md:col-span-12 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[500px] md:min-h-0 shadow-xl overflow-hidden">
-            <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">AI Chat</span>
+          
+          <div className="flex gap-3">
+            <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-md">
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Credits Left</span>
+                <span className="text-2xl font-black text-white">{credits.toLocaleString()}</span>
               </div>
-              <Settings className="w-3 h-3 text-slate-600" />
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/20 no-scrollbar">
-              <div className="flex flex-col items-end">
-                <div className="bg-indigo-600/80 text-white p-3 rounded-2xl rounded-tr-none text-xs max-w-[80%] shadow-lg">Hello! How can I help with your creative projects today?</div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0 shadow-inner"><Sparkles className="w-4 h-4 text-indigo-400" /></div>
-                <div className="bg-slate-800/50 text-slate-300 p-3 rounded-2xl rounded-tl-none text-xs max-w-[80%] border border-slate-700/30 shadow-md">I am your Creative AI assistant. I can help you with writing, brainstorming, and planning.</div>
+              <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center border border-indigo-500/30">
+                <Sparkles className="w-5 h-5 text-indigo-400" />
               </div>
             </div>
-            <div className="p-3 bg-slate-900 border-t border-slate-800">
-              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
-                <input placeholder="Type your creative request..." className="bg-transparent text-sm flex-1 outline-none text-slate-300 placeholder:text-slate-600" />
-                <button className="p-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all">
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all shadow-xl shadow-white/5 h-full">Upgrade</button>
           </div>
         </div>
 
-        {/* Footer Active Banner */}
-        <div className="bg-indigo-600/20 border border-indigo-500/30 rounded-lg p-2 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
-            <p className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest">Neural link active <span className="opacity-50 mx-1">|</span> Optimized for speed</p>
-          </div>
-          <button onClick={() => setIsPricingOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-[8px] font-bold text-white uppercase transition-colors">Get Expert Tools</button>
+        {/* Categories and Tools Grid */}
+        <div className="max-w-7xl mx-auto space-y-12">
+          {categories.map((cat, idx) => (
+            <div key={idx} className="space-y-6">
+              <div className="flex items-center gap-4">
+                <h2 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] whitespace-nowrap">{cat.name}</h2>
+                <div className="h-[1px] w-full bg-slate-800/50" />
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {cat.tools.map((tool, tIdx) => (
+                  <motion.button
+                    key={tIdx}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    className="group bg-slate-900/40 border border-slate-800 hover:border-indigo-500/50 p-4 rounded-2xl text-left transition-all relative overflow-hidden shadow-lg hover:shadow-indigo-600/10"
+                  >
+                    <div className={`w-10 h-10 rounded-xl ${tool.bg} flex items-center justify-center mb-4 border border-white/5 shadow-inner`}>
+                      <tool.icon className={`w-5 h-5 ${tool.color}`} />
+                    </div>
+                    <h3 className="text-sm font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">{tool.name}</h3>
+                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">{tool.desc}</p>
+                    
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-4 h-4 text-indigo-500" />
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Side/Extra Feature - AI Creative Lab (Filling the space) */}
+        <div className="max-w-7xl mx-auto mt-16 pt-16 border-t border-slate-900">
+           <div className="bg-gradient-to-br from-indigo-900/20 to-slate-900/20 border border-indigo-500/20 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
+             <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
+               <div className="space-y-6">
+                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest">Experimental Lab</div>
+                 <h2 className="text-4xl font-black text-white italic">AI Creative Studio <span className="text-slate-500 not-italic">v2.0</span></h2>
+                 <p className="text-slate-400 leading-relaxed max-w-md">Access our most advanced creative models including High-Resolution Image Synthesis, Procedural Storytelling, and Multi-Modal brainstorm engines.</p>
+                 <div className="flex gap-4">
+                   <button className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">Enter Studio</button>
+                   <button className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-700 transition-all">Documentation</button>
+                 </div>
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 {[
+                   { name: "Image Studio", icon: ImageIcon, desc: "Ultra-HD Visuals" },
+                   { name: "Video Lab", icon: Video, desc: "Motion Generation" },
+                   { name: "Voice Suite", icon: Mic2, desc: "Neural Voice Clone" },
+                   { name: "Dev Engine", icon: Code, desc: "AI Application Builder" }
+                 ].map(item => (
+                   <div key={item.name} className="bg-slate-950/80 border border-slate-800 p-6 rounded-3xl hover:border-indigo-500/30 transition-all group">
+                     <item.icon className="w-6 h-6 text-indigo-500 mb-3 group-hover:scale-110 transition-transform" />
+                     <h4 className="text-sm font-bold text-white mb-1">{item.name}</h4>
+                     <p className="text-[10px] text-slate-500">{item.desc}</p>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           </div>
+        </div>
+        
+        {/* Footer info */}
+        <div className="max-w-7xl mx-auto mt-20 text-center">
+          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-[0.5em]">SmartAI Neural Engine v4.8.2 | Premium Creative Access</p>
         </div>
       </div>
     );
@@ -2424,7 +2509,7 @@ export default function App() {
   }
 
   function renderHome() {
-    // Both modes now use the same stable dashboard layout
+    if (smartMode === 'creative') return renderCreativeDashboard();
     return renderNormalDashboard();
   }
 
