@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Users, CreditCard, BarChart3, Lock, LogOut, Search, Download, User, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { fetchUsersFromSupabase, syncUsersToSupabase } from './lib/db';
 
 const ADMIN_PASSWORD = 'SmartAI@Admin2024';
 
@@ -56,14 +57,21 @@ export default function AdminPanel() {
     localStorage.removeItem('smartai_admin_session');
   };
 
-  const refreshData = () => {
-    const data = localStorage.getItem('smartai_users');
-    if (data) setUsers(JSON.parse(data));
+  const refreshData = async () => {
+    const dbUsers = await fetchUsersFromSupabase();
+    if (dbUsers && dbUsers.length > 0) {
+      localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
+      setUsers(dbUsers);
+    } else {
+      const data = localStorage.getItem('smartai_users');
+      if (data) setUsers(JSON.parse(data));
+    }
   };
 
   const saveAllUsers = (updatedUsers: UserData[]) => {
     localStorage.setItem('smartai_users', JSON.stringify(updatedUsers));
     setUsers(updatedUsers);
+    syncUsersToSupabase(updatedUsers);
     
     // Also update session if the logged in user is the admin (though admin is usually separate)
     // For this app, the current user might be in the users list

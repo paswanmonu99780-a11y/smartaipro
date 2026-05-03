@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
+import { fetchUsersFromSupabase, syncUsersToSupabase } from './lib/db';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
@@ -246,33 +247,45 @@ export default function App() {
       saveUsers(migratedUsers);
     }
 
-    const saved = localStorage.getItem('smartai_session');
-    if (!saved) {
-      const params = new URLSearchParams(window.location.search);
-      const refCode = params.get('ref');
-      if (refCode) {
-        setSignupReferCode(refCode);
-        setAuthMode('signup');
+    // Fetch latest users from Supabase on mount
+    fetchUsersFromSupabase().then(dbUsers => {
+      if (dbUsers && dbUsers.length > 0) {
+        localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
       }
-    }
-    if (saved) {
-      const d = JSON.parse(saved);
-      // Also migrate session if needed
-      if (!d.referralCode) {
-        d.referralCode = generateReferralCode(d.email || d.mobile || d.displayName || 'user');
-        d.referredBy = d.referredBy || '';
-        d.referralRewarded = d.referralRewarded || false;
-        d.deviceId = d.deviceId || getDeviceId();
-        d.referralEarnings = d.referralEarnings || 0;
-        localStorage.setItem('smartai_session', JSON.stringify(d));
+      initSession();
+    });
+
+    const initSession = () => {
+      const saved = localStorage.getItem('smartai_session');
+      if (!saved) {
+        setAuthMode('login');
+      } else {
+        const d = JSON.parse(saved);
+        // Also migrate session if needed
+        if (!d.referralCode) {
+          d.referralCode = generateReferralCode(d.email || d.mobile || d.displayName || 'user');
+          d.referredBy = d.referredBy || '';
+          d.referralRewarded = d.referralRewarded || false;
+          d.deviceId = d.deviceId || getDeviceId();
+          d.referralEarnings = d.referralEarnings || 0;
+          localStorage.setItem('smartai_session', JSON.stringify(d));
+        }
+        setCredits(typeof d.credits === 'number' ? d.credits : 100);
+        setEmail(d.email || '');
+        setPlan(d.plan || 'Basic');
+        setDisplayName(d.displayName || d.email?.split('@')[0] || 'User');
+        setAvatar(d.avatar || '');
+        setIsLoggedIn(true);
       }
-      setCredits(typeof d.credits === 'number' ? d.credits : 100);
-      setEmail(d.email || '');
-      setPlan(d.plan || 'Basic');
-      setDisplayName(d.displayName || d.email?.split('@')[0] || 'User');
-      setAvatar(d.avatar || '');
-      setIsLoggedIn(true);
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      setSignupReferCode(refCode);
+      setAuthMode('signup');
     }
+
     const hist = localStorage.getItem('smartai_image_history');
     if (hist) { setImageHistory(JSON.parse(hist)); }
 
@@ -295,6 +308,7 @@ export default function App() {
   };
   const saveUsers = (users: Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }>) => {
     localStorage.setItem('smartai_users', JSON.stringify(users));
+    syncUsersToSupabase(users);
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -303,7 +317,12 @@ export default function App() {
     if (loginContactType === 'mobile' && !loginMobile) return alert('Please enter mobile number');
     if (!password) return alert('Please enter password');
     setIsAuthenticating(true);
-    setTimeout(() => {
+    
+    // Fetch latest DB state before login
+    fetchUsersFromSupabase().then(dbUsers => {
+      if (dbUsers && dbUsers.length > 0) {
+        localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
+      }
       const users = getUsers();
       const user = users.find(u => {
         const userEmail = (u.email || '').trim();
@@ -315,14 +334,18 @@ export default function App() {
           : userMobile === inputMobile;
         return matchContact && u.password === password;
       });
+
       if (user) {
-        // Backward compatibility: ensure existing users have referral code
-        if (!user.referralCode) {
-          user.referralCode = generateReferralCode(user.email || user.mobile || user.displayName);
-          user.referredBy = user.referredBy || '';
-          user.referralRewarded = user.referralRewarded !== undefined ? user.referralRewarded : false;
-          user.deviceId = user.deviceId || getDeviceId();
-          user.referralEarnings = user.referralEarnings || 0;
+        // Daily refresh logic
+        const lastLogin = localStorage.getItem('smartai_last_login');
+        const today = new Date().toDateString();
+        
+        if (lastLogin !== today) {
+          localStorage.setItem('smartai_last_login', today);
+          const dailyCredits = user.plan === 'Basic' ? 10 : 50;
+          user.credits = (typeof user.credits === 'number' ? user.credits : 100) + dailyCredits;
+          alert(`Welcome back! You received ${dailyCredits} daily bonus credits.`);
+          
           const userIdx = users.findIndex(u => u.email === user.email || u.mobile === user.mobile);
           if (userIdx !== -1) {
             users[userIdx] = user;
@@ -337,11 +360,10 @@ export default function App() {
         setEmail(user.email || '');
         setIsLoggedIn(true);
       } else {
-        const contactLabel = loginContactType === 'email' ? 'email' : 'mobile number';
-        alert(`Invalid ${contactLabel} or password. Please try again.`);
+        alert('Invalid credentials');
       }
       setIsAuthenticating(false);
-    }, 800);
+    });
   };
   const syncUserData = (updates: Partial<{ credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number }>) => {
     const session = localStorage.getItem('smartai_session');
@@ -367,7 +389,12 @@ export default function App() {
     if (signupContactType === 'mobile' && !signupMobile) return alert('Please enter mobile number');
     if (password !== signupConfirmPassword) return alert('Password and confirm password do not match');
     setIsAuthenticating(true);
-    setTimeout(() => {
+    
+    // Fetch latest DB state before signup to avoid overwriting existing
+    fetchUsersFromSupabase().then(dbUsers => {
+      if (dbUsers && dbUsers.length > 0) {
+        localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
+      }
       const users = getUsers();
 
       // Check for duplicate email
@@ -442,12 +469,16 @@ export default function App() {
         alert('Account created successfully!');
       }
       setIsAuthenticating(false);
-    }, 800);
+    });
   };
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     if (!resetEmail) return alert('Please enter your email');
+    const dbUsers = await fetchUsersFromSupabase();
+    if (dbUsers && dbUsers.length > 0) {
+      localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
+    }
     const users = getUsers();
-    const user = users.find(u => u.email === resetEmail);
+    const user = users.find((u: any) => u.email === resetEmail);
     if (!user) return alert('No account found with this email.');
     if (!newPassword) return alert('Please enter a new password');
     user.password = newPassword;
