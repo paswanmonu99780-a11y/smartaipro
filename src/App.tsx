@@ -523,15 +523,28 @@ export default function App() {
     const target = email;
     
     setIsAuthenticating(true);
-    const verifyType = otpType === 'signup' ? 'signup' : 'email';
+    let verifyType = otpType === 'signup' ? 'signup' : 'email';
     console.log(`Verifying OTP for ${target} with type: ${verifyType}`);
     
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      let { data, error } = await supabase.auth.verifyOtp({
         email: target,
         token: enteredOtp,
-        type: verifyType
+        type: verifyType as any
       });
+
+      // Smart Fallback: If first type fails, try the other one automatically
+      if (error && (error.message.includes('expired') || error.message.includes('invalid'))) {
+        const fallbackType = verifyType === 'signup' ? 'email' : 'signup';
+        console.log(`Initial attempt failed. Trying fallback type: ${fallbackType}`);
+        const fallbackResult = await supabase.auth.verifyOtp({
+          email: target,
+          token: enteredOtp,
+          type: fallbackType as any
+        });
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+      }
 
       if (error) {
         console.error('OTP Verify Error:', error);
