@@ -1622,9 +1622,15 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-4 font-sans relative overflow-hidden">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[380px] bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-2xl relative z-10 mx-auto">
+        {/* Background Elements */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[min(380px,92vw)] bg-slate-900/80 border border-slate-800 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl backdrop-blur-2xl relative z-10 mx-auto max-h-[90vh] overflow-y-auto hide-scrollbar">
           <div className="flex flex-col items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(79,70,229,0.4)] rotate-3"><Zap className="text-white w-7 h-7 fill-white" /></div>
             <h1 className="text-2xl font-black tracking-tight text-white italic">SmartAI <span className="font-light text-slate-500 not-italic">PRO</span></h1>
+            <p className="text-slate-500 text-[9px] mt-1 font-bold uppercase tracking-[0.3em] text-center">Neural Creative Engine</p>
           </div>
 
           {authError && (
@@ -1639,7 +1645,7 @@ export default function App() {
                 <form onSubmit={handleLogin} className="space-y-4">
                  <div>
                     <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Email Address</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
                  </div>
 
                  <div>
@@ -1652,7 +1658,7 @@ export default function App() {
                    </div>
                  </div>
 
-               <button type="submit" disabled={isAuthenticating} className="w-full bg-white text-slate-900 py-4 rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
+               <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
                  {isAuthenticating ? 'Logging in...' : 'Login'}
                </button>
 
@@ -1667,18 +1673,18 @@ export default function App() {
              <div className="space-y-2.5">
                <div>
                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Full Name</label>
-                 <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
+                 <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
                </div>
 
                <div>
                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Email Address</label>
-                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs text-white" placeholder="name@example.com" />
+                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="name@example.com" />
                </div>
 
                <div>
                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
                  <div className="relative">
-                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                    </button>
@@ -1687,10 +1693,10 @@ export default function App() {
 
                <div>
                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Referral (Optional)</label>
-                 <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs uppercase text-white" placeholder="ABC123" />
+                 <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs uppercase text-white" placeholder="ABC123" />
                </div>
 
-               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-white text-slate-900 py-3.5 rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 font-black uppercase tracking-widest text-[10px] mt-2">
+               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-widest text-[10px] mt-2">
                  {isAuthenticating ? 'Creating...' : 'Get Signup OTP'}
                </button>
 
