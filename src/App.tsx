@@ -529,38 +529,50 @@ export default function App() {
     setAuthError(null);
     console.log('Starting OTP verification for:', target);
 
+    let completed = false;
     // Safety timeout to prevent infinite hang
     const safetyTimeout = setTimeout(() => {
-      setIsAuthenticating(false);
-      setAuthError('Verification timed out. Please try again.');
+      if (!completed) {
+        setIsAuthenticating(false);
+        setAuthError('Verification is taking longer than expected. Please check your internet or try again.');
+        console.warn('OTP verification timed out after 15s');
+      }
     }, 15000);
     
     try {
-      // Step 1: Try 'signup' type (required for new users in Supabase v2)
-      console.log('Trying signup type verification...');
+      // Step 1: Try 'email' type (Primary for signInWithOtp flow)
+      console.log('Trying email type verification...');
       let { data, error } = await supabase.auth.verifyOtp({
         email: target,
         token: enteredOtp,
-        type: 'signup'
+        type: 'email'
       });
 
-      // Step 2: Fallback to 'email' type if signup fails (required for existing users)
+      // Step 2: Fallback to 'signup' type if 'email' fails
       if (error || !data?.user) {
-        console.log('Signup type failed, trying email type fallback...');
+        console.log('Email type failed or no user, trying signup type fallback...');
         const secondAttempt = await supabase.auth.verifyOtp({
           email: target,
           token: enteredOtp,
-          type: 'email'
+          type: 'signup'
         });
-        data = secondAttempt.data;
-        error = secondAttempt.error;
+        
+        // If the second attempt succeeds, use its results
+        if (secondAttempt.data?.user) {
+          data = secondAttempt.data;
+          error = secondAttempt.error;
+        } else if (error && secondAttempt.error) {
+          // If both failed, keep the first error or use the more descriptive one
+          console.error('Both verification attempts failed.');
+        }
       }
 
+      completed = true;
       clearTimeout(safetyTimeout);
 
       if (error) {
         console.error('Final OTP Verify Error:', error);
-        setAuthError(error.message);
+        setAuthError(error.message || 'Invalid or expired code. Please try again.');
         setIsAuthenticating(false);
       } else if (data?.user) {
         console.log('Verification successful!');
@@ -573,38 +585,41 @@ export default function App() {
         setIsLoggedIn(true);
         setIsAuthenticating(false);
 
-        // Background: Update storage
-        const users = getUsers();
-        const userIdx = users.findIndex(u => u.email === data.user?.email);
-        if (userIdx === -1) {
-          const newUser = {
-            email: data.user.email || '',
-            password: '',
-            credits: 100,
-            plan: 'Basic',
-            displayName: userName,
-            avatar: '',
-            name: userName,
-            referCode: '',
-            referralCode: generateReferralCode(data.user.email || userName),
-            referredBy: '',
-            referralRewarded: false,
-            deviceId: getDeviceId(),
-            referralEarnings: 0
-          };
-          users.push(newUser);
-          localStorage.setItem('smartai_users', JSON.stringify(users));
-          localStorage.setItem('smartai_session', JSON.stringify(newUser));
-        } else {
-          if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
-            users[userIdx].displayName = userName;
-            users[userIdx].name = userName;
-            localStorage.setItem('smartai_users', JSON.stringify(users));
+        // Background: Update local storage session
+        setTimeout(() => {
+          try {
+            const users = getUsers();
+            let currentUser = users.find(u => u.email === data.user?.email);
+            
+            if (!currentUser) {
+              currentUser = {
+                email: data.user.email || '',
+                password: '',
+                credits: 100,
+                plan: 'Basic',
+                displayName: userName,
+                avatar: '',
+                name: userName,
+                referCode: '',
+                referralCode: generateReferralCode(data.user.email || userName),
+                referredBy: '',
+                referralRewarded: false,
+                deviceId: getDeviceId(),
+                referralEarnings: 0
+              };
+              users.push(currentUser);
+              localStorage.setItem('smartai_users', JSON.stringify(users));
+            }
+            localStorage.setItem('smartai_session', JSON.stringify(currentUser));
+          } catch (e) {
+            console.error('Error updating local storage:', e);
           }
-          localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
-        }
+        }, 100);
+      } else {
+        throw new Error('No user data returned from Supabase');
       }
     } catch (err: any) {
+      completed = true;
       clearTimeout(safetyTimeout);
       console.error('OTP Verify Catch:', err);
       setAuthError(err.message || 'Verification failed. Please try again.');
@@ -1694,11 +1709,21 @@ export default function App() {
 
   const renderOtpScreen = () => {
     const handlePaste = (e: React.ClipboardEvent) => {
-      const data = e.clipboardData.getData('text').trim();
-      if (/^\d{6}$/.test(data)) {
-        const newOtp = data.split('');
+      e.preventDefault();
+      const pastedData = e.clipboardData.getData('text');
+      // Strip everything except digits
+      const digitsOnly = pastedData.replace(/\D/g, '').slice(0, 6);
+      
+      if (digitsOnly.length > 0) {
+        const newOtp = [...otp];
+        for (let i = 0; i < digitsOnly.length; i++) {
+          newOtp[i] = digitsOnly[i];
+        }
         setOtp(newOtp);
-        document.getElementById('otp-5')?.focus();
+        
+        // Focus the appropriate input
+        const nextIndex = Math.min(digitsOnly.length, 5);
+        document.getElementById(`otp-${nextIndex}`)?.focus();
       }
     };
 
@@ -1719,16 +1744,17 @@ export default function App() {
               id={`otp-${i}`}
               type="text"
               inputMode="numeric"
+              autoComplete="one-time-code"
               maxLength={1}
               value={digit}
-              onPaste={i === 0 ? handlePaste : undefined}
+              onPaste={handlePaste}
               onChange={(e) => {
-                const val = e.target.value;
-                if (/^\d*$/.test(val)) {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val) {
                   const newOtp = [...otp];
                   newOtp[i] = val.slice(-1);
                   setOtp(newOtp);
-                  if (val && i < 5) document.getElementById(`otp-${i + 1}`)?.focus();
+                  if (i < 5) document.getElementById(`otp-${i + 1}`)?.focus();
                 }
               }}
               onKeyDown={(e) => {
