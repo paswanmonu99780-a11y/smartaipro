@@ -2424,7 +2424,7 @@ export default function App() {
   }
 
   function renderHome() {
-    if (smartMode === 'creative') return renderCreativeDashboard();
+    // Both modes now use the same stable dashboard layout
     return renderNormalDashboard();
   }
 
