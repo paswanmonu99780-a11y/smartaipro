@@ -419,7 +419,7 @@ export default function App() {
       setIsAuthenticating(true);
 
       try {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
           password: password
         });
@@ -430,6 +430,25 @@ export default function App() {
           } else {
             setAuthError(error.message);
           }
+        } else if (data.user) {
+          const meta = data.user.user_metadata;
+          const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
+
+          const users = getUsers();
+          const userIdx = users.findIndex(u => u.email === data.user?.email);
+          
+          if (userIdx !== -1) {
+            if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
+                users[userIdx].displayName = userName;
+                users[userIdx].name = userName;
+                saveUsers(users);
+            }
+            localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
+            setDisplayName(users[userIdx].displayName);
+          } else {
+             setDisplayName(userName);
+          }
+          setIsLoggedIn(true);
         }
       } catch (err: any) {
         setAuthError(err.message);
@@ -512,7 +531,7 @@ export default function App() {
     const target = email;
     
     setIsAuthenticating(true);
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       email: target,
       token: enteredOtp,
       type: 'magiclink'
@@ -521,7 +540,43 @@ export default function App() {
     if (error) {
       setAuthError(error.message);
       setIsAuthenticating(false);
-    } else {
+    } else if (data.user) {
+      const meta = data.user.user_metadata;
+      const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
+      
+      const users = getUsers();
+      let userIdx = users.findIndex(u => u.email === data.user?.email);
+      
+      if (userIdx === -1) {
+        const newUser = {
+          email: data.user.email || '',
+          password: '',
+          credits: 100,
+          plan: 'Basic',
+          displayName: userName,
+          avatar: '',
+          name: userName,
+          referCode: '',
+          referralCode: generateReferralCode(data.user.email || userName),
+          referredBy: '',
+          referralRewarded: false,
+          deviceId: getDeviceId(),
+          referralEarnings: 0
+        };
+        users.push(newUser);
+        saveUsers(users);
+        localStorage.setItem('smartai_session', JSON.stringify(newUser));
+      } else {
+        if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
+          users[userIdx].displayName = userName;
+          users[userIdx].name = userName;
+          saveUsers(users);
+        }
+        localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
+      }
+
+      setDisplayName(userName);
+      setIsLoggedIn(true);
       setIsVerifyingOtp(false);
     }
   };
