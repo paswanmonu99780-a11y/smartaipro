@@ -1,19 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 
-type Tab = 'chat' | 'image' | 'video' | 'profile' | 'admin';
+type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
 interface Message { id: string; role: 'user' | 'assistant'; content: string; }
 
 const SIDEBAR_ITEMS = [
-  { name: 'Conversation', icon: MessageSquare, tab: 'chat' as Tab },
-  { name: 'Creation', icon: ImageIcon, tab: 'image' as Tab },
-  { name: 'Neural Motion', icon: Video, tab: 'video' as Tab },
-  { name: 'Expert Tools', icon: Shield, tab: 'chat' as Tab, badge: 'PRO' },
-  { name: 'Profile', icon: User, tab: 'profile' as Tab },
-  { name: 'Admin', icon: Shield, tab: 'admin' as Tab },
+  { name: 'AI Chat', icon: MessageSquare, tab: 'chat' as Tab },
+  { name: 'Image Generator', icon: ImageIcon, tab: 'image' as Tab },
 ];
 
 const MOBILE_TABS = [
@@ -25,8 +21,8 @@ const MOBILE_TABS = [
 
 const PLANS = [
   { name: 'Basic', price: 'Free', features: ['100 Credits', 'Standard Response', '720p Energy'], color: 'slate-400' },
-  { name: 'Pro', price: '₹99', features: ['10,000 Credits', 'Expert Mode Enabled', '2K Intelligence'], color: 'indigo-500', popular: true },
-  { name: 'Ultra', price: '₹199', features: ['Unlimited Pixels', 'Zero Latency', '4K Imagination'], color: 'emerald-500' },
+  { name: 'Pro', price: 'â‚¹99', features: ['10,000 Credits', 'Expert Mode Enabled', '2K Intelligence'], color: 'indigo-500', popular: true },
+  { name: 'Ultra', price: 'â‚¹199', features: ['Unlimited Pixels', 'Zero Latency', '4K Imagination'], color: 'emerald-500' },
 ];
 
 const ASPECTS = ['1:1', '16:9', '9:16', '4:3'] as const;
@@ -43,24 +39,33 @@ const CREATIVE_TOOLS = [
   { id: 'export', name: 'Export & Copy', desc: 'Download / Copy', icon: Download, free: true },
 ];
 
+const IMAGE_TOOLS = [
+  { id: 'img2prompt', name: 'Image to Prompt', desc: 'Extract prompt from image', icon: ImageIcon },
+  { id: 'editor', name: 'Image Editor', desc: 'Edit image with AI', icon: PenTool },
+  { id: 'bgremove', name: 'Background Remover', desc: 'Remove background easily', icon: Layers },
+  { id: 'style', name: 'Style Transfer', desc: 'Apply style to your image', icon: Sparkles },
+  { id: 'face', name: 'Face Consistency', desc: 'Keep face same in all images', icon: User },
+  { id: 'upscale', name: 'Upscale Image', desc: 'Increase resolution to 4K/8K', icon: Monitor, badge: 'PRO', color: 'indigo-500' },
+  { id: 'bulk', name: 'Bulk Generation', desc: 'Generate multiple images', icon: Layout, badge: 'PRO', color: 'emerald-500' },
+  { id: 'animate', name: 'Image to Animation', desc: 'Convert image to animation', icon: Video, badge: 'PRO', color: 'purple-500' },
+];
+
 const EXPERT_TOOLS = [
-  { id: 'agent', name: 'AI Agent', icon: Zap, desc: 'Autonomous goal execution.', category: 'AI Tools', color: '#a855f7' },
-  { id: 'memory', name: 'Neural Memory', icon: Database, desc: 'Personalized AI memory.', category: 'AI Tools', color: '#3b82f6' },
-  { id: 'video', name: 'Video Gen', icon: Video, desc: 'Text-to-video rendering.', category: 'Image Tools', color: '#ec4899' },
-  { id: 'reverse', name: 'Reverse Prompt', icon: RefreshCcw, desc: 'Extract prompts from images.', category: 'Image Tools', color: '#10b981' },
-  { id: 'builder', name: 'Web Architect', icon: Layout, desc: 'Full website builder.', category: 'Business Tools', color: '#f59e0b' },
-  { id: 'business', name: 'Growth Core', icon: TrendingUp, desc: 'Marketing strategies.', category: 'Business Tools', color: '#22c55e' },
-  { id: 'voice', name: 'Voice Clone', icon: Mic2, desc: 'Neural voice cloning.', category: 'AI Tools', color: '#d946ef' },
-  { id: 'codemaster', name: 'Code Master', icon: Code, desc: 'Autonomous coding.', category: 'AI Tools', color: '#0ea5e9' },
-  { id: 'data', name: 'Live Data', icon: Globe, desc: 'Real-time intelligence.', category: 'Business Tools', color: '#3b82f6' },
-  { id: 'social', name: 'Social Pilot', icon: Instagram, desc: 'Social media growth.', category: 'Business Tools', color: '#facc15' },
-  { id: 'writing', name: 'Pro Writer', icon: PenTool, desc: 'Expert content gen.', category: 'AI Tools', color: '#f43f5e' },
-  { id: 'security', name: 'Secure Vault', icon: LockIcon, desc: 'Encrypted data storage.', category: 'Business Tools', color: '#8b5cf6' },
-  { id: 'analytics', name: 'Neural Stats', icon: TrendingUp, desc: 'Performance analytics.', category: 'Business Tools', color: '#14b8a6' },
-  { id: 'translation', name: 'Polyglot AI', icon: Globe, desc: 'Real-time translation.', category: 'AI Tools', color: '#6366f1' },
-  { id: 'meeting', name: 'Meeting Pro', icon: MessageSquare, desc: 'Meeting notes & tasks.', category: 'Business Tools', color: '#f97316' },
-  { id: 'smart_search', name: 'Smart Search', icon: Search, desc: 'Live data search.', category: 'Business Tools', color: '#8b5cf6' },
-  { id: 'api', name: 'API System', icon: Network, desc: 'API integration.', category: 'Business Tools', color: '#f59e0b' },
+  { id: 'agent', name: 'AI Agent Mode', badge: 'NEW', icon: Zap, desc: 'AI handles complete tasks automatically from planning to execution.', color: '#a855f7' },
+  { id: 'memory', name: 'Memory + Personal AI', badge: 'NEW', icon: Database, desc: 'AI remembers your chats, preferences and provides personalized results.', color: '#3b82f6' },
+  { id: 'video', name: 'AI Video Generator', badge: 'NEW', icon: Video, desc: 'Turn text into full videos with scenes, voiceovers and captions.', color: '#ec4899' },
+  { id: 'reverse', name: 'Image â†’ Prompt Reverse', badge: 'NEW', icon: ImageIcon, desc: 'Upload an image and AI will detect the exact prompt used.', color: '#10b981' },
+  { id: 'builder', name: 'Full Website Builder', badge: 'NEW', icon: Code, desc: 'Generate complete websites with design, code and one-click deploy.', color: '#f59e0b' },
+  { id: 'business', name: 'Business Growth Tools', badge: 'NEW', icon: TrendingUp, desc: 'Marketing strategy, ad copy, startup ideas, funnels and business plans.', color: '#22c55e' },
+  { id: 'voice', name: 'Voice Clone AI', badge: 'NEW', icon: Mic2, desc: 'Clone any voice and generate realistic AI voice audio.', color: '#d946ef' },
+  { id: 'file', name: 'Advanced File Intelligence', badge: 'NEW', icon: FileText, desc: 'Upload PDFs/DOCs and get deep analysis, Q&A and smart summaries.', color: '#6366f1' },
+  { id: 'bulk', name: 'Bulk Generation', badge: 'NEW', icon: Layout, desc: 'Generate 10x outputs (images, captions, ideas) in one click.', color: '#a855f7' },
+  { id: 'multi', name: 'Multi-Model Access', badge: 'NEW', icon: Network, desc: 'Access GPT-4, Claude, Gemini and other top AI models.', color: '#3b82f6' },
+  { id: 'speed', name: 'Priority Speed', badge: 'NEW', icon: Zap, desc: 'Get faster responses with priority processing (100x faster).', color: '#f59e0b' },
+  { id: 'quality', name: 'High Quality Output', badge: 'NEW', icon: Monitor, desc: 'Get 4K / 8K quality images, videos and premium results.', color: '#10b981' },
+  { id: 'data', name: 'Real-Time Internet Data', badge: 'HOT', icon: Globe, desc: 'Get live data from the web (Google-like search) with latest and accurate info.', color: '#ef4444' },
+  { id: 'search', name: 'Smart Search Mode', badge: 'HOT', icon: Search, desc: 'AI automatically decides when to use live data for best and updated answers.', color: '#a855f7' },
+  { id: 'api', name: 'API Integration System', badge: 'HOT', icon: CloudSun, desc: 'Connect external APIs (weather, stock, news, etc.) and build real-time apps.', color: '#f59e0b' },
 ];
 
 const TEMPLATES = [
@@ -92,10 +97,34 @@ const IconComponent = ({ icon: Icon, className }: { icon: any, className?: strin
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('chat');
+  const [activeTab, setActiveTab] = useState<Tab>('home');
   const [smartMode, setSmartMode] = useState<SmartMode>('normal');
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [credits, setCredits] = useState(100);
+  const [usage, setUsage] = useState({ messages: 0, images: 0, date: new Date().toLocaleDateString() });
+
+  useEffect(() => {
+    const savedUsage = localStorage.getItem('smartai_usage');
+    const today = new Date().toLocaleDateString();
+    if (savedUsage) {
+      const parsed = JSON.parse(savedUsage);
+      if (parsed.date === today) {
+        setUsage(parsed);
+      } else {
+        const reset = { messages: 0, images: 0, date: today };
+        setUsage(reset);
+        localStorage.setItem('smartai_usage', JSON.stringify(reset));
+      }
+    }
+  }, []);
+
+  const updateUsage = (type: 'messages' | 'images') => {
+    setUsage(prev => {
+      const next = { ...prev, [type]: prev[type] + 1 };
+      localStorage.setItem('smartai_usage', JSON.stringify(next));
+      return next;
+    });
+  };
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -157,8 +186,22 @@ export default function App() {
   const [expertToolInput, setExpertToolInput] = useState('');
   const [expertToolResult, setExpertToolResult] = useState('');
   const [isExpertToolThinking, setIsExpertToolThinking] = useState(false);
-  const isAdmin = localStorage.getItem('smartai_admin_session') === 'active';
+  const [tone, setTone] = useState<'Professional' | 'Funny' | 'Casual'>('Professional');
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
   const isExpertLocked = plan === 'Basic' && !isAdmin;
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsAdmin(localStorage.getItem('smartai_admin_session') === 'active');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    // Also poll occasionally in case it was changed in the same window without a storage event
+    const interval = setInterval(handleStorageChange, 1000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -634,7 +677,7 @@ export default function App() {
     const selectedTool = EXPERT_TOOLS.find(t => t.id === activeExpertTool) || EXPERT_TOOLS[0];
     const tool = selectedTool;
     const categories = ['All', 'AI Tools', 'Image Tools', 'Business Tools'];
-    const filteredTools = expertCategory === 'All' ? EXPERT_TOOLS : EXPERT_TOOLS.filter(t => t.category === expertCategory);
+    const filteredTools = EXPERT_TOOLS;
 
     if (isExpertLocked) {
       return (
@@ -657,42 +700,285 @@ export default function App() {
 
     if (!activeExpertTool) {
       return (
-        <div className="h-full flex flex-col overflow-hidden p-8 bg-[#0a0a0c] custom-scrollbar">
-           <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-6">
-                 <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Mission Control</h2>
-                 <div className="flex bg-[#16161d] p-1.5 rounded-2xl border border-slate-800/50 shadow-inner">
-                    {categories.map(cat => (
-                      <button key={cat} onClick={() => setExpertCategory(cat)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${expertCategory === cat ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-white'}`}>{cat}</button>
-                    ))}
-                 </div>
+        <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0c]">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <div className="flex flex-col xl:flex-row gap-8 max-w-[1600px] mx-auto">
+              
+              {/* Left Main Section */}
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <Crown className="w-8 h-8 text-yellow-500" />
+                    <h2 className="text-3xl font-bold text-white tracking-tight">Expert Tools</h2>
+                    <span className="bg-indigo-600/20 text-indigo-400 text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-widest border border-indigo-500/20">PRO</span>
+                  </div>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input type="text" placeholder="Search expert tools..." className="w-full bg-[#16161d] border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50" />
+                  </div>
+                </div>
+                <p className="text-slate-400 text-sm mb-8">Next-level AI features for professionals and creators.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                  {EXPERT_TOOLS.map((t, idx) => (
+                    <motion.button key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} onClick={() => setActiveExpertTool(t.id)} className="group relative bg-[#111116] border border-slate-800/50 rounded-2xl p-5 text-left transition-all hover:bg-[#16161d] hover:border-slate-700 h-full flex flex-col">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#0a0a0c] border border-slate-800/50 mb-4 group-hover:scale-110 transition-transform">
+                         <t.icon className="w-6 h-6" style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.color}40)` }} />
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">{t.name}</span>
+                        {t.badge && (
+                           <span className={`flex-shrink-0 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest ${t.badge === 'HOT' ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'}`}>{t.badge}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed flex-1">{t.desc}</p>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-4 text-slate-500">
-                 <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600/5 border border-indigo-500/10 rounded-xl"><div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" /><span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">15 Expert Nodes Online</span></div>
-              </div>
-           </div>
 
-           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 h-full content-start">
-                 {filteredTools.map((t, idx) => (
-                   <motion.button key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} onClick={() => setActiveExpertTool(t.id)} className="group relative aspect-[1.1/1] bg-[#16161d] border border-slate-800/50 rounded-[2rem] p-6 text-left transition-all hover:scale-[1.02] hover:border-indigo-500/50 hover:shadow-[0_0_30px_rgba(79,70,229,0.1)] overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-600/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative z-10 h-full flex flex-col justify-between">
-                         <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center border border-slate-800/50 group-hover:border-indigo-500/30 group-hover:bg-indigo-600/10 transition-all">
-                            <t.icon className="w-6 h-6 text-slate-400 transition-colors" style={{ color: t.color }} />
-                         </div>
-                         <div>
-                            <div className="text-xs font-black text-white uppercase tracking-widest mb-1 group-hover:text-indigo-400 transition-colors">{t.name}</div>
-                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">{t.category}</div>
-                         </div>
-                      </div>
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all">
-                         <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center"><Zap className="w-3 h-3 text-white" /></div>
-                      </div>
-                   </motion.button>
-                 ))}
+              {/* Right Sidebar Section */}
+              <div className="w-full xl:w-80 flex flex-col gap-6 flex-shrink-0">
+                {/* Recent Creations */}
+                <div className="bg-[#111116] border border-slate-800/50 rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-white">Recent Creations</h3>
+                    <button className="text-xs text-indigo-400 hover:text-indigo-300">View All</button>
+                  </div>
+                  <div className="space-y-4">
+                     {[
+                       { title: 'AI Generated Website', time: 'Just now', img: 'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&q=80&w=200' },
+                       { title: 'Motivation Video', time: '5 mins ago', img: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200', isVideo: true },
+                       { title: 'Voice Clone Audio', time: '15 mins ago', icon: Mic2, color: 'text-indigo-400', bg: 'bg-indigo-600/10' },
+                       { title: 'Business Plan PDF', time: '25 mins ago', icon: FileText, color: 'text-red-400', bg: 'bg-red-500/10', label: 'PDF' },
+                       { title: 'AI Image (4K)', time: '1 hour ago', img: 'https://images.unsplash.com/photo-1506744626753-1fa28f6f5122?auto=format&fit=crop&q=80&w=200' },
+                     ].map((item, i) => (
+                       <div key={i} className="flex items-center gap-3 cursor-pointer group">
+                          {item.img ? (
+                            <div className="relative w-12 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                               <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                               {item.isVideo && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><div className="w-4 h-4 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-sm" /></div></div>}
+                            </div>
+                          ) : (
+                            <div className={`w-12 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${item.bg}`}>
+                               {item.label ? <span className={`text-[10px] font-bold ${item.color}`}>{item.label}</span> : <item.icon className={`w-4 h-4 ${item.color}`} />}
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{item.title}</div>
+                            <div className="text-[10px] text-slate-500">{item.time}</div>
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+                </div>
+
+                {/* Live Data */}
+                <div className="bg-[#111116] border border-slate-800/50 rounded-2xl p-5 flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-white">Live Data (Real-Time)</h3>
+                    <div className="flex items-center gap-1.5">
+                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                       <span className="text-[10px] text-emerald-500 font-bold">Live</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                     {[
+                       { title: 'Gold Price (24K)', sub: 'â‚¹72,185 / 10g', icon: TrendingUp, color: 'text-yellow-500', trend: '+1.28%', trendColor: 'text-emerald-500' },
+                       { title: 'Cricket Score (Live)', sub: 'IND 256/4 (45.2)', icon: Crown, color: 'text-blue-400', badge: 'LIVE', badgeColor: 'text-yellow-500' },
+                       { title: 'Weather (Delhi)', sub: '32Â°C', icon: CloudSun, color: 'text-orange-400', subRight: 'Clear Sky' },
+                       { title: 'Top News', sub: 'AI chips demand hits record high in 2024', icon: FileText, color: 'text-yellow-500', badge: 'LIVE', badgeColor: 'text-red-500' },
+                     ].map((item, i) => (
+                       <div key={i} className="flex items-start justify-between group cursor-pointer border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
+                          <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 rounded bg-[#16161d] border border-slate-800 flex items-center justify-center mt-0.5">
+                               <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                            </div>
+                            <div>
+                               <div className="text-xs font-bold text-slate-300">{item.title}</div>
+                               <div className="text-[10px] text-slate-500 mt-0.5 w-32 truncate leading-tight">{item.sub}</div>
+                            </div>
+                          </div>
+                          <div className="text-right flex flex-col items-end">
+                             {item.trend && <span className={`text-[10px] font-bold ${item.trendColor}`}>{item.trend}</span>}
+                             {item.badge && <span className={`text-[8px] font-bold ${item.badgeColor} uppercase tracking-widest`}>{item.badge}</span>}
+                             {item.subRight && <span className="text-[10px] text-slate-400 mt-1">{item.subRight}</span>}
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+                </div>
               </div>
-           </div>
+            </div>
+          </div>
+          
+          {/* Bottom Footer Panel */}
+          <div className="border-t border-slate-800/50 bg-[#111116] p-4 flex flex-col shrink-0">
+             <div className="max-w-[1600px] w-full mx-auto flex flex-col lg:flex-row items-center justify-between mb-4 px-4 gap-4">
+                <div className="flex flex-wrap items-center justify-center gap-8 lg:gap-12">
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center"><Crown className="w-4 h-4 text-rose-500" /></div>
+                      <div>
+                         <div className="text-xs font-bold text-white">Unlimited Access</div>
+                         <div className="text-[10px] text-slate-500">No limits, all features</div>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center"><Monitor className="w-4 h-4 text-emerald-500" /></div>
+                      <div>
+                         <div className="text-xs font-bold text-white">4K / 8K Quality</div>
+                         <div className="text-[10px] text-slate-500">Ultra HD results</div>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center"><FastForward className="w-4 h-4 text-yellow-500" /></div>
+                      <div>
+                         <div className="text-xs font-bold text-white">Priority Speed</div>
+                         <div className="text-[10px] text-slate-500">100x faster</div>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center"><Shield className="w-4 h-4 text-green-500" /></div>
+                      <div>
+                         <div className="text-xs font-bold text-white">Secure & Private</div>
+                         <div className="text-[10px] text-slate-500">Your data is 100% safe</div>
+                      </div>
+                   </div>
+                </div>
+                <button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 whitespace-nowrap">
+                   <Crown className="w-5 h-5 text-yellow-400" />
+                   <div className="text-left leading-tight">
+                      <div className="text-sm">Upgrade to Expert</div>
+                      <div className="text-[9px] text-indigo-200 font-medium">Unlock All Premium Features</div>
+                   </div>
+                </button>
+             </div>
+             <div className="max-w-[1600px] w-full mx-auto relative px-4">
+                <input type="text" placeholder="Enter your prompt..." className="w-full bg-[#0a0a0c] border border-slate-800 rounded-2xl pl-6 pr-32 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50" />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                   <button className="p-2 text-slate-500 hover:text-white transition-colors"><Layers className="w-4 h-4" /></button>
+                   <button className="p-2 text-slate-500 hover:text-white transition-colors"><Mic className="w-4 h-4" /></button>
+                   <button className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"><Send className="w-4 h-4" /></button>
+                </div>
+             </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeExpertTool === 'agent') {
+      return (
+        <div className="flex flex-col h-full overflow-hidden bg-[#050507]">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 bg-[#0a0a0c] border-b border-white/5 backdrop-blur-2xl z-30">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setActiveExpertTool(null)} className="p-2 text-slate-500 hover:text-white transition-all"><ArrowLeft className="w-5 h-5" /></button>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                  <Cpu className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-tighter">Autonomous AI Agent</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em]">Neural Link Established</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">System Load</span>
+                <div className="w-32 h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-indigo-500 shadow-[0_0_10px_#6366f1]" />
+                </div>
+              </div>
+              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">Terminate Mission</button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Left Panel: Intelligence Feed */}
+            <div className="flex-1 border-r border-white/5 overflow-y-auto custom-scrollbar bg-[#050507] p-8">
+              <div className="max-w-3xl mx-auto space-y-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Intelligence Feed</h4>
+                  </div>
+                  {messages.length <= 1 ? (
+                    <div className="space-y-6">
+                      <div className="p-8 bg-[#0a0a0c] border border-white/5 rounded-3xl">
+                        <h2 className="text-2xl font-black text-white mb-4 leading-tight uppercase tracking-tighter">Awaiting Mission Parameters...</h2>
+                        <p className="text-slate-500 text-sm leading-relaxed mb-8">Deploy your autonomous agent to handle complex tasks, research markets, or automate workflows with high-level reasoning.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {['Analyze current tech market trends', 'Research sustainable energy startups', 'Write a technical whitepaper on AI', 'Build a business growth strategy'].map((p, i) => (
+                            <button key={i} onClick={() => setChatInput(p)} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left text-[10px] font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all uppercase tracking-widest">{p}</button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {messages.map((msg, i) => i > 0 && (
+                        <motion.div key={msg.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className={`p-6 rounded-3xl ${msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20' : 'bg-[#0a0a0c] border border-white/5'}`}>
+                           <div className="flex items-center gap-3 mb-3">
+                             <div className={`w-6 h-6 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+                               {msg.role === 'user' ? <User className="w-3 h-3 text-white" /> : <Cpu className="w-3 h-3 text-indigo-400" />}
+                             </div>
+                             <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{msg.role === 'user' ? 'Mission Commander' : 'Neural Core'}</span>
+                           </div>
+                           <p className="text-sm text-slate-300 leading-relaxed">{msg.content}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel: Terminal / Browser */}
+            <div className="w-[450px] bg-[#08080a] flex flex-col overflow-hidden">
+               <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500/50" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
+                     </div>
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Agent Terminal</span>
+                  </div>
+                  <Terminal className="w-4 h-4 text-slate-600" />
+               </div>
+               <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto custom-scrollbar">
+                  <div className="space-y-3">
+                     <div className="text-emerald-500 flex gap-2"><span>[SYSTEM]</span> <span>Initializing autonomous environment...</span></div>
+                     <div className="text-slate-500 flex gap-2"><span>[LINK]</span> <span>Connected to global neural grid</span></div>
+                     <div className="text-slate-500 flex gap-2"><span>[AUTH]</span> <span>Verified session: smartai_pro_admin</span></div>
+                     <div className="text-indigo-400 mt-6 flex gap-2"><span>$</span> <span className="animate-pulse">_</span></div>
+                  </div>
+                  {isAiThinking && (
+                    <div className="mt-8 space-y-4">
+                       <div className="flex items-center gap-3 text-indigo-400">
+                          <Zap className="w-3 h-3 animate-bounce" />
+                          <span className="font-bold uppercase tracking-widest text-[9px]">Analyzing Mission Data...</span>
+                       </div>
+                       <div className="space-y-2 opacity-50">
+                          <div className="h-2 bg-slate-800 rounded-full w-full" />
+                          <div className="h-2 bg-slate-800 rounded-full w-[80%]" />
+                          <div className="h-2 bg-slate-800 rounded-full w-[90%]" />
+                       </div>
+                    </div>
+                  )}
+               </div>
+               <div className="p-6 bg-[#0a0a0c] border-t border-white/5">
+                  <div className="relative">
+                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Command the agent..." className="w-full bg-[#050507] border border-white/10 rounded-2xl px-5 py-4 text-xs text-white focus:border-indigo-500/50 outline-none transition-all" />
+                    <button onClick={handleSendMessage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all"><Send className="w-4 h-4" /></button>
+                  </div>
+               </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -771,6 +1057,15 @@ export default function App() {
     const prompt = normalizePrompt(promptText);
     if (!prompt || isAiThinking) return;
 
+    if (smartMode === 'normal' && usage.messages >= 10) {
+      alert('Daily message limit reached (10/day). Upgrade to Creative or Expert mode for unlimited access!');
+      return;
+    }
+    if (smartMode === 'creative' && usage.messages >= 100) {
+      alert('Daily message limit reached (100/day). Upgrade to Expert mode for unlimited access!');
+      return;
+    }
+
     // Check and process referral reward on first message
     processReferralReward();
 
@@ -784,8 +1079,9 @@ export default function App() {
     setChatInput('');
     setIsAiThinking(true);
     updateCurrentChatHistory(currentChatId, title, optimisticMessages);
+    if (smartMode === 'normal' || smartMode === 'creative') updateUsage('messages');
 
-    const systemPrompt = 'You are a helpful AI assistant. Provide accurate and useful answers. If you are unsure, say clearly that you are unsure.';
+    const systemPrompt = `You are a helpful AI assistant. Provide accurate and useful answers. Maintain a ${tone} tone in your responses. If you are unsure, say clearly that you are unsure.`;
     const contextualPrompt = buildContextualPrompt(messages, prompt);
 
     let renderedText = '';
@@ -881,7 +1177,7 @@ export default function App() {
   };
 
   const getDimensions = (quality: string, aspect: string): [number, number] => {
-    const longEdge = { '720p': 512, '1080p': 768, '2K': 1024, '4K': 1024 }[quality] || 512;
+    const longEdge = { 'Standard': 512, 'HD': 1024, '4K': 1280, '8K': 2048 }[quality] || 1024;
     if (aspect === '1:1') return [longEdge, longEdge];
     if (aspect === '16:9') return [longEdge, Math.round(longEdge * 9 / 16)];
     if (aspect === '9:16') return [Math.round(longEdge * 9 / 16), longEdge];
@@ -891,25 +1187,75 @@ export default function App() {
 
   const generateImageProxyUrl = (promptText: string, seedOverride?: number) => {
     const [w, h] = getDimensions(imgQuality, imgAspect);
-    const fullPrompt = `${promptText}${imgStyle === 'realistic' ? '' : `, ${imgStyle} style`}${negativePrompt.trim() ? ` ### Negative: ${negativePrompt.trim()}` : ''}`;
+    
+    let stylePrefix = '';
+    if (imgStyle === 'realistic') stylePrefix = 'Photorealistic, DSLR photography, hyperrealistic: ';
+    else if (imgStyle === 'anime') stylePrefix = 'Anime style, studio ghibli, makoto shinkai, masterpiece anime art: ';
+    else if (imgStyle === '3d render') stylePrefix = '3D render, unreal engine 5, octane render, global illumination: ';
+    else if (imgStyle === 'cinematic') stylePrefix = 'Cinematic shot, dramatic lighting, movie still, IMAX: ';
+    else stylePrefix = `${imgStyle.charAt(0).toUpperCase() + imgStyle.slice(1)} style: `;
+
+    const enhanceStr = imgQuality === 'Standard' ? '' : ', Masterpiece, highest visual quality, hyper detailed, intricate details, trending on artstation, 8k resolution, sharp, clear';
+    const negPrompt = negativePrompt.trim() ? `lowres, blurry, pixelated, distorted, bad anatomy, ${negativePrompt.trim()}` : 'lowres, blurry, pixelated, distorted, low quality, artifact, jpeg artifacts, watermarks';
+    
+    const fullPrompt = `${stylePrefix}${promptText}${enhanceStr}`;
     const seed = seedOverride ?? Math.floor(Math.random() * 999999);
+    
     const params = new URLSearchParams({
       width: String(w),
       height: String(h),
       seed: String(seed),
-      model: 'flux',
-      nologo: 'true'
+      model: 'flux', // Flux gives DALL-E/Midjourney level quality
+      nologo: 'true',
+      negative_prompt: negPrompt
     });
     return `/api/image?prompt=${encodeURIComponent(fullPrompt)}&${params.toString()}`;
   };
 
-  const handleGenerateImage = async () => {
+  const handleDownloadImageAsPng = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      const objectUrl = URL.createObjectURL(blob);
+      img.src = objectUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if(ctx) {
+           ctx.drawImage(img, 0, 0);
+           const pngData = canvas.toDataURL('image/png');
+           const a = document.createElement('a');
+           a.href = pngData;
+           a.download = `SmartAI-Image-${Date.now()}.png`;
+           document.body.appendChild(a);
+           a.click();
+           document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(objectUrl);
+      };
+    } catch (e) {
+      // Fallback
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `SmartAI-Image-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
+  const handleGenerateImage = async (isRegenerate = false) => {
     const cleanedPrompt = normalizePrompt(imgPrompt);
     if (!cleanedPrompt || isGenerating) return;
-    if (isStyleLocked(imgStyle)) { alert('This style requires Pro plan. Please upgrade to use it.'); setIsPricingOpen(true); return; }
-    if (credits < 5) { alert('Insufficient credits (5 required).'); setIsPricingOpen(true); return; }
+    
+    const tokenCost = isRegenerate ? 2 : 5;
+    if (credits < tokenCost) { alert(`Insufficient credits (${tokenCost} tokens required).`); setIsPricingOpen(true); return; }
 
-    // Capture current credits value synchronously to avoid stale closure bugs
+    // Capture current credits value synchronously
     const startingCredits = credits;
 
     setIsGenerating(true);
@@ -925,37 +1271,30 @@ export default function App() {
     });
 
     const baseSeed = Math.floor(Math.random() * 999999);
-    const urls = [baseSeed, baseSeed + 1, baseSeed + 2].map(seed => {
-      const proxyUrl = generateImageProxyUrl(cleanedPrompt, seed);
-      return `${proxyUrl}&t=${Date.now()}-${seed}&nocache=1`;
-    });
+    const proxyUrl = generateImageProxyUrl(cleanedPrompt, baseSeed);
+    const candidate = `${proxyUrl}&t=${Date.now()}-${baseSeed}&nocache=1`;
 
     let finalUrl: string | null = null;
-    for (const candidate of urls) {
-      const ok = await tryLoadImage(candidate);
-      if (ok) {
-        finalUrl = candidate;
-        break;
-      }
+    const ok = await tryLoadImage(candidate);
+    if (ok) {
+      finalUrl = candidate;
     }
 
     if (!finalUrl) {
       setIsGenerating(false);
-      alert('Image generation failed. Kripya prompt thoda detail me likhein aur dubara try karein.');
+      alert('Image generation failed (Server busy). Kripya thodi der baad dubara try karein.');
       return;
     }
 
-    // Deduct credits ONLY after successful generation to avoid stale-closure bugs
-    const newCredits = startingCredits - 5;
-    setCredits(newCredits);
-    syncUserData({ credits: newCredits });
-
+    const newCredits = startingCredits - tokenCost;
     setGeneratedImg(finalUrl);
     setIsGenerating(false);
-    const newItem = { url: finalUrl, prompt: cleanedPrompt, style: imgStyle, quality: imgQuality, aspect: imgAspect, date: new Date().toLocaleString() };
-    const newHistory = [newItem, ...imageHistory].slice(0, 50);
-    setImageHistory(newHistory);
-    localStorage.setItem('smartai_image_history', JSON.stringify(newHistory));
+    const historyItem = { url: proxyUrl, prompt: cleanedPrompt, style: imgStyle, quality: imgQuality, aspect: imgAspect, date: new Date().toLocaleString() };
+    setImageHistory(prev => [historyItem, ...prev]);
+    localStorage.setItem('smartai_image_history', JSON.stringify([historyItem, ...imageHistory.slice(0, 99)]));
+    
+    setCredits(newCredits);
+    syncUserData({ credits: newCredits });
   };
 
   const handleEnhancePrompt = async () => {
@@ -1032,11 +1371,11 @@ export default function App() {
     const toolSnapshot = creativeSubTab;
     let finalResult = '';
 
-    let systemPrompt = 'You are a highly advanced, empathetic, and intelligent AI assistant. Always provide a high-level, extremely helpful response. Understand the deep intent of the user, offer valuable extra suggestions, and express emotion using appropriate emojis! 🌟 Make the user feel heard and supported! 💖';
-    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! ✍️✨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! 🌺';
-    else if (creativeSubTab === 'code') systemPrompt = 'You are a Master Game Developer and Elite Senior Software Engineer! 🎮💻 Your mission is to generate high-end, visually stunning, and fully functional code. When generating games or interactive UI: 1. Use advanced logic (physics, state machines, proper game loops). 2. Create "Good Looking" visuals with modern CSS (glassmorphism, neon glows, smooth 60fps animations, professional typography). 3. ALWAYS include intuitive controls (Keyboard ARROW keys/WASD, Mouse, or Mobile Touch). 4. Prefer self-contained, high-performance HTML/CSS/JS that can be previewed. For other code, be professional, optimized, and follow best practices. Always wrap code in ``` blocks. Be encouraging and use emojis! 🚀✨';
-    else if (creativeSubTab === 'summarizer') systemPrompt = 'You are an expert Speed-Reader and Analyst! 📚⚡ Summarize the provided text beautifully and concisely. Retain the absolute core information, provide a "Key Takeaways" section, and suggest why this information matters! Use engaging emojis and an empathetic tone! 🧠💡';
-    else if (creativeSubTab === 'idea') systemPrompt = 'You are a brilliant Idea Generator and Brainstorming Partner! 🤯🎯 Provide innovative, out-of-the-box, and highly practical ideas. Structure your response perfectly, give actionable next steps, and motivate the user with a highly emotional, enthusiastic tone and lots of inspiring emojis! 🚀🌟';
+    let systemPrompt = 'You are a highly advanced, empathetic, and intelligent AI assistant. Always provide a high-level, extremely helpful response. Understand the deep intent of the user, offer valuable extra suggestions, and express emotion using appropriate emojis! ðŸŒŸ Make the user feel heard and supported! ðŸ’–';
+    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! âœï¸âœ¨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! ðŸŒº';
+    else if (creativeSubTab === 'code') systemPrompt = 'You are a Master Game Developer and Elite Senior Software Engineer! ðŸŽ®ðŸ’» Your mission is to generate high-end, visually stunning, and fully functional code. When generating games or interactive UI: 1. Use advanced logic (physics, state machines, proper game loops). 2. Create "Good Looking" visuals with modern CSS (glassmorphism, neon glows, smooth 60fps animations, professional typography). 3. ALWAYS include intuitive controls (Keyboard ARROW keys/WASD, Mouse, or Mobile Touch). 4. Prefer self-contained, high-performance HTML/CSS/JS that can be previewed. For other code, be professional, optimized, and follow best practices. Always wrap code in ``` blocks. Be encouraging and use emojis! ðŸš€âœ¨';
+    else if (creativeSubTab === 'summarizer') systemPrompt = 'You are an expert Speed-Reader and Analyst! ðŸ“šâš¡ Summarize the provided text beautifully and concisely. Retain the absolute core information, provide a "Key Takeaways" section, and suggest why this information matters! Use engaging emojis and an empathetic tone! ðŸ§ ðŸ’¡';
+    else if (creativeSubTab === 'idea') systemPrompt = 'You are a brilliant Idea Generator and Brainstorming Partner! ðŸ¤¯ðŸŽ¯ Provide innovative, out-of-the-box, and highly practical ideas. Structure your response perfectly, give actionable next steps, and motivate the user with a highly emotional, enthusiastic tone and lots of inspiring emojis! ðŸš€ðŸŒŸ';
 
     const seed = Math.floor(Math.random() * 0xFFFFFFFF);
     try {
@@ -1137,57 +1476,39 @@ export default function App() {
 
           {authMode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
-
               <div className="flex gap-2 mb-2">
-                <button
-                  type="button"
-                  onClick={() => setLoginContactType('email')}
-                  className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  Email
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginContactType('mobile')}
-                  className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  Mobile
-                </button>
+                <button type="button" onClick={() => setLoginContactType('email')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Email</button>
+                <button type="button" onClick={() => setLoginContactType('mobile')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Mobile</button>
               </div>
 
-              {loginContactType === 'email' && (
-                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
+              {loginContactType === 'email' ? (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number</label>
+                  <input type="tel" value={loginMobile} onChange={e => setLoginMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" />
+                </div>
               )}
 
-              {loginContactType === 'mobile' && (
-                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number</label>
-                  <input type="tel" value={loginMobile} onChange={e => setLoginMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" /></div>
-              )}
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
                 <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
+                  <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
-              <div className="pt-2 flex flex-col gap-3 text-sm uppercase tracking-widest font-bold">
-                <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center justify-center gap-2">{isAuthenticating ? 'Logging in...' : 'Login'}</button>
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-500 mt-2">
-                <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-indigo-400 transition-colors">Don't have an account? Sign Up</button>
+
+              <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-bold uppercase tracking-widest text-xs mt-4">
+                {isAuthenticating ? 'Logging in...' : 'Login'}
+              </button>
+
+              <div className="flex justify-between text-[10px] text-slate-500 mt-4">
+                <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-indigo-400 transition-colors">Sign Up</button>
                 <button type="button" onClick={() => setAuthMode('forgot')} className="hover:text-indigo-400 transition-colors">Forgot Password?</button>
               </div>
             </form>
@@ -1195,284 +1516,266 @@ export default function App() {
 
           {authMode === 'signup' && (
             <div className="space-y-3">
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Full Name *</label>
-                <input type="text" required value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="John Doe" /></div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Full Name</label>
+                <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="John Doe" />
+              </div>
 
               <div className="flex gap-2 mb-2">
-                <button
-                  type="button"
-                  onClick={() => setSignupContactType('email')}
-                  className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  Email
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSignupContactType('mobile')}
-                  className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  Mobile
-                </button>
+                <button type="button" onClick={() => setSignupContactType('email')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Email</button>
+                <button type="button" onClick={() => setSignupContactType('mobile')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Mobile</button>
               </div>
 
-              {signupContactType === 'email' && (
-                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address *</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
+              {signupContactType === 'email' ? (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile</label>
+                  <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" />
+                </div>
               )}
 
-              {signupContactType === 'mobile' && (
-                <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number *</label>
-                  <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" /></div>
-              )}
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password *</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
+                <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
               </div>
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Confirm Password *</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={signupConfirmPassword}
-                    onChange={e => setSignupConfirmPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Refer Code (Optional)</label>
-                <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="Enter refer code" /></div>
-              <div className="pt-2 flex flex-col gap-3 text-sm uppercase tracking-widest font-bold">
-                <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center justify-center gap-2">{isAuthenticating ? 'Creating account...' : 'Sign Up'}</button>
-              </div>
-              <div className="text-center text-[10px] text-slate-500 mt-2">
-                <button onClick={() => setAuthMode('login')} className="hover:text-indigo-400 transition-colors">Already have an account? Login</button>
-              </div>
+
+              <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-bold uppercase tracking-widest text-xs mt-4">
+                {isAuthenticating ? 'Creating account...' : 'Create Account'}
+              </button>
+
+              <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-bold transition-colors">Already have an account? Login</button>
             </div>
           )}
 
           {authMode === 'forgot' && (
             <div className="space-y-4">
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email</label>
-                <input type="email" required value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" /></div>
-              <div><label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">New Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email</label>
+                <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" />
               </div>
-              <div className="pt-2 flex flex-col gap-3 text-sm uppercase tracking-widest font-bold">
-                <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center justify-center gap-2">Reset Password</button>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">New Password</label>
+                <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
               </div>
-              <div className="text-center text-[10px] text-slate-500 mt-2">
-                <button onClick={() => setAuthMode('login')} className="hover:text-indigo-400 transition-colors">Back to Login</button>
-              </div>
+              <button onClick={handleForgotPassword} className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-xs">Reset Password</button>
+              <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-bold">Back to Login</button>
             </div>
           )}
-
-          <div className="mt-8 pt-6 border-t border-slate-800 flex justify-between items-center text-slate-600"><Github className="w-4 h-4 cursor-pointer hover:text-white transition-colors" /><span className="text-[9px] uppercase tracking-[0.3em] font-mono">Kernel v2.4.0_Stable</span></div>
         </motion.div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 flex font-sans overflow-hidden">
-      <AnimatePresence>
-        {isPricingOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 sm:p-4">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 md:p-8 max-w-sm sm:max-w-2xl md:max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4 md:mb-8"><h2 className="text-xl sm:text-2xl md:text-3xl font-bold italic tracking-tight">Upgrade Your Neural Link</h2><button onClick={() => setIsPricingOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><Plus className="w-5 h-5 md:w-6 md:h-6 rotate-45" /></button></div>
-              <div className="grid md:grid-cols-3 gap-3 md:gap-6">
-                {[{ name: "Basic", price: "Free", features: ["100 Credits", "Standard Response", "720p Energy"], color: "slate-400" }, { name: "Pro", price: "₹99", features: ["10,000 Credits", "Expert Mode Enabled", "2K Intelligence"], color: "indigo-500", popular: true }, { name: "Ultra", price: "₹199", features: ["Unlimited Pixels", "Zero Latency", "4K Imagination"], color: "emerald-500" }].map((plan) => (
-                  <div key={plan.name} className={`p-3 sm:p-4 md:p-6 rounded-2xl border ${plan.popular ? "border-indigo-600 bg-indigo-600/5" : "border-slate-800 bg-slate-950/50"} relative flex flex-col`}>
-                    {plan.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[8px] md:text-[9px] px-2 md:px-3 py-1 rounded-full uppercase tracking-widest font-bold">Most Popular</span>}
-                    <h3 className="text-base sm:text-lg md:text-xl font-bold mb-1">{plan.name}</h3>
-                    <div className="mb-2 md:mb-4"><span className="text-lg sm:text-xl md:text-2xl font-bold">{plan.price}</span><span className="text-slate-500 text-xs"> /month</span></div>
-                    <ul className="space-y-1 md:space-y-3 mb-4 md:mb-8 flex-1">{plan.features.map(f => <li key={f} className="text-[10px] md:text-xs text-slate-400 flex items-center gap-2"><div className={`w-1 h-1 rounded-full bg-${plan.color}`}></div> {f}</li>)}</ul>
-                    <button onClick={() => handleSelectPlan(plan)} className={`w-full py-2 md:py-3 rounded-xl font-bold text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${plan.popular ? "bg-indigo-600 text-white" : "bg-white text-black hover:bg-slate-200"}`}>Select {plan.name}</button>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+  const handleEnhanceCreativePrompt = async () => {
+    if (!chatInput.trim() || isAiThinking) return;
+    setIsAiThinking(true);
+    try {
+      const systemPrompt = "You are a prompt engineering expert. Improve the user's prompt to be more descriptive, professional, and effective for AI. Return ONLY the improved prompt.";
+      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(`Enhance this: ${chatInput}`)}&system=${encodeURIComponent(systemPrompt)}&json=false`);
+      if (res.ok) {
+        const text = await res.text();
+        setChatInput(text.trim());
+      }
+    } catch (e) { console.error(e); }
+    finally { setIsAiThinking(false); }
+  };
 
-        {previewHtml !== null && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-8">
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full h-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2"><Eye className="w-5 h-5 text-indigo-400" /> Code Preview</h3>
-                <button onClick={() => setPreviewHtml(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex-1 bg-white relative">
-                <iframe srcDoc={previewHtml} className="w-full h-full border-none" title="Code Preview" sandbox="allow-scripts allow-modals" />
-              </div>
+  function renderCreativeDashboard() {
+    const premiumTemplates = [
+      { name: 'YouTube Script', desc: 'Scripts', icon: Video, color: 'bg-red-500' },
+      { name: 'Instagram Reels', desc: 'Viral', icon: Instagram, color: 'bg-pink-500' },
+      { name: 'Blog Post', desc: 'SEO', icon: FileText, color: 'bg-blue-500' },
+      { name: 'Resume Builder', desc: 'Pro', icon: User, color: 'bg-emerald-500' },
+      { name: 'Email Writer', desc: 'Emails', icon: MessageSquare, color: 'bg-orange-500' },
+    ];
+
+    return (
+      <div className="h-[calc(100vh-100px)] flex flex-col gap-2 max-w-[1600px] mx-auto px-2 overflow-hidden">
+        {/* Compact Mode Header */}
+        <div className="flex items-center justify-between bg-indigo-600/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-white/10 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 bg-white/20 rounded-lg">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <aside className="hidden md:flex w-72 bg-slate-950 border-r border-slate-800 flex-col p-6 overflow-y-auto">
-        <div className="flex items-center gap-3 mb-10"><div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div><span className="text-xl font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span></div>
-        <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between">
-          <div><span className="text-xs uppercase font-bold text-slate-500 tracking-widest">Credits</span><div className="text-2xl font-bold text-white mt-1">{credits.toLocaleString()}</div></div>
-          <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center"><Sparkles className="w-5 h-5 text-indigo-400" /></div>
-        </div>
-        {activeTab === 'chat' && (
-          <div className="mb-4">
-            <button onClick={handleNewChat} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-all">
-              <Plus className="w-4 h-4" />
-              <span className="text-sm font-medium">New Chat</span>
-            </button>
-
-            <div className="mt-4 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search chats..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600"
-              />
-            </div>
-
-            <div className="mt-3 space-y-1 max-h-60 overflow-y-auto">
-              {chatHistory.filter(chat => chat.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
-                <button
-                  key={chat.id}
-                  onClick={() => handleSelectChat(chat.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all truncate ${currentChatId === chat.id ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                >
-                  {chat.title}
-                </button>
-              ))}
+            <div>
+              <h1 className="text-xs font-black text-white uppercase tracking-wider">Creative Dashboard <span className="ml-2 px-1.5 py-0.5 bg-white text-indigo-600 rounded text-[8px]">PRO</span></h1>
             </div>
           </div>
-        )}
-
-        <nav className="space-y-2 flex-1">{SIDEBAR_ITEMS.map(item => (<button key={item.tab} onClick={() => setActiveTab(item.tab)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}><item.icon className="w-5 h-5" /><span className="text-base font-medium">{item.name}</span></button>))}</nav>
-        <div className="mt-auto pt-6 border-t border-slate-800">
-          <button onClick={() => setIsPricingOpen(true)} className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-all text-[10px] font-bold uppercase tracking-widest">
-            <Sparkles className="w-3.5 h-3.5" /> Upgrade Plan
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <div className="relative">
-          <motion.header
-            initial={false}
-            animate={{ height: isHeaderVisible ? 80 : 0, opacity: isHeaderVisible ? 1 : 0 }}
-            className="border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm relative z-40 overflow-hidden"
-          >
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div className="flex items-center gap-4 md:hidden">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
-                <span className="font-medium tracking-tight">SmartAI Pro</span>
-              </div>
-            </div>
-
-            <div className="hidden md:flex items-center gap-2 bg-slate-900/50 rounded-xl p-1 border border-slate-800/50 backdrop-blur-md">{(['normal', 'creative', 'expert'] as SmartMode[]).map(mode => {
-              const locked = mode === 'expert' && plan === 'Basic';
-              return (
-                <button
-                  key={mode}
-                  onClick={() => locked ? setIsPricingOpen(true) : setSmartMode(mode)}
-                  className={`relative px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${smartMode === mode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : locked ? 'text-slate-600 cursor-pointer opacity-60' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
-                >
-                  {mode}
-                  {locked && <span className="absolute -top-1.5 -right-1 bg-indigo-600 text-[6px] px-1.5 py-0.5 rounded-full text-white font-bold border border-slate-900 shadow-lg">PRO</span>}
-                </button>
-              );
-            })}</div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500 font-mono hidden sm:block">{email}</span>
-              <button
-                onClick={() => setActiveTab('profile')}
-                className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden hover:ring-2 hover:ring-indigo-500 transition-all active:scale-90"
-              >
-                {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
-              </button>
-            </div>
-          </motion.header>
-
-          <button
-            onClick={() => setIsHeaderVisible(!isHeaderVisible)}
-            className="absolute left-1/2 -translate-x-1/2 -bottom-3 z-50 w-8 h-6 bg-slate-800 border border-slate-700 rounded-b-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all shadow-lg"
-            title={isHeaderVisible ? "Hide Header" : "Show Header"}
-          >
-            {isHeaderVisible ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-4">
+             <div className="hidden sm:flex items-center gap-2">
+                <span className="text-[9px] font-bold text-indigo-100 uppercase">Usage:</span>
+                <span className="text-[10px] font-black text-white">{usage.messages}/100</span>
+             </div>
+             <button onClick={() => setIsPricingOpen(true)} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-lg text-[9px] font-black text-white uppercase transition-all">Go Expert</button>
+          </div>
         </div>
 
-        <div className={`flex-1 overflow-y-auto ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-6 pb-72 md:pb-6'}`}>
-          {activeTab === 'chat' && (
-            smartMode === 'expert' ? renderExpertPro() : (
-            <div className="max-w-3xl mx-auto flex flex-col">
-              <div className="flex-1 space-y-6 mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Link</h2>
-                  <button onClick={handleDownloadChat} className="flex items-center gap-2 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-600/5 px-3 py-1.5 rounded-lg border border-indigo-600/10">
-                    <Download className="w-3 h-3" /> Export Chat
-                  </button>
+        {/* 3-Column Grid - Fixed Height */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 min-h-0">
+          {/* AI Chat */}
+          <div className="md:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-0 shadow-xl overflow-hidden">
+             <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">AI Chat</span>
                 </div>
+                <Settings className="w-3 h-3 text-slate-600" />
+             </div>
+             <div className="flex-1 overflow-y-auto p-2.5 space-y-3 bg-slate-950/20 no-scrollbar">
+                <div className="flex flex-col items-end">
+                   <div className="bg-indigo-600/80 text-white p-2 rounded-xl rounded-tr-none text-[10px] max-w-[90%]">Enhance my YouTube script prompt.</div>
+                </div>
+                <div className="flex gap-2">
+                   <div className="w-5 h-5 rounded-md bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0"><Sparkles className="w-2.5 h-2.5 text-indigo-400" /></div>
+                   <div className="bg-slate-800/50 text-slate-400 p-2 rounded-xl rounded-tl-none text-[10px] max-w-[90%] border border-slate-700/30">Sure! Use: "Write a high-retention script about AI future trends with a hook..."</div>
+                </div>
+             </div>
+             <div className="p-2 bg-slate-900 border-t border-slate-800">
+                <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5">
+                   <input placeholder="Ask anything..." className="bg-transparent text-[10px] flex-1 outline-none text-slate-400" />
+                   <Send className="w-3.5 h-3.5 text-indigo-500" />
+                </div>
+             </div>
+          </div>
+
+          {/* Image Suite */}
+          <div className="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-0 shadow-xl overflow-hidden">
+             <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Image Suite</span>
+                </div>
+                <button className="text-[8px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-1.5 py-0.5 rounded">View</button>
+             </div>
+             <div className="flex-1 p-2 flex flex-col gap-2 overflow-hidden">
+                <div className="flex gap-1">
+                   {['Realistic', 'Anime', '3D', 'Cinematic'].map(s => (
+                     <button key={s} className="flex-1 py-1 rounded bg-slate-800/50 text-slate-500 text-[8px] font-bold uppercase hover:bg-indigo-600 hover:text-white transition-all">{s}</button>
+                   ))}
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0 overflow-hidden">
+                   <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-lg border border-white/5" />
+                   <div className="bg-gradient-to-tr from-cyan-500/10 to-blue-500/10 rounded-lg border border-white/5" />
+                   <div className="bg-slate-800/20 rounded-lg border border-white/5" />
+                   <div className="bg-slate-800/20 rounded-lg border border-white/5" />
+                </div>
+                <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                   <Sparkles className="w-3 h-3" /> Generate
+                </button>
+             </div>
+          </div>
+
+          {/* Templates */}
+          <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-0 shadow-xl overflow-hidden">
+             <div className="p-2 border-b border-slate-800 bg-slate-900/50"><span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Quick Templates</span></div>
+             <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 no-scrollbar">
+                {premiumTemplates.map(tmp => (
+                  <button key={tmp.name} className="w-full p-2 rounded-xl bg-slate-950/40 border border-slate-800/50 flex items-center gap-2 hover:bg-slate-800 transition-all text-left group">
+                    <div className={`w-6 h-6 rounded-lg ${tmp.color} flex items-center justify-center shrink-0 shadow-lg`}><tmp.icon className="w-3 h-3 text-white" /></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-bold text-white truncate uppercase tracking-tight">{tmp.name}</p>
+                      <p className="text-[7px] text-slate-500 truncate">{tmp.desc}</p>
+                    </div>
+                  </button>
+                ))}
+             </div>
+          </div>
+        </div>
+
+        {/* Dynamic Tools Strip */}
+        <div className="grid grid-cols-5 gap-2 shrink-0">
+           {[
+             { icon: PenTool, name: 'Enhancer', color: 'bg-indigo-500' },
+             { icon: Mic2, name: 'Pro Tone', color: 'bg-emerald-500' },
+             { icon: Download, name: 'Upload', color: 'bg-purple-500' },
+             { icon: Clock, name: 'History', color: 'bg-orange-500' },
+             { icon: User, name: 'Support', color: 'bg-cyan-500' }
+           ].map(t => (
+             <button key={t.name} className="bg-slate-900/50 border border-slate-800 p-2 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/10 transition-all">
+                <t.icon className="w-3 h-3 text-slate-400" />
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t.name}</span>
+             </button>
+           ))}
+        </div>
+
+        {/* Footer Active Banner */}
+        <div className="bg-indigo-600 rounded-lg p-2 flex items-center justify-between shrink-0 shadow-inner">
+           <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+              <p className="text-[8px] font-bold text-white uppercase tracking-widest">Active Plan: Creative <span className="opacity-50 mx-1">|</span> No Watermarks enabled</p>
+           </div>
+           <button onClick={() => setIsPricingOpen(true)} className="bg-black/20 hover:bg-black/30 px-3 py-1 rounded text-[8px] font-bold text-white uppercase">Upgrade</button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderHome() {
+    if (smartMode === 'creative') return renderCreativeDashboard();
+    
+    return (
+      <div className="h-[calc(100vh-100px)] flex flex-col items-center justify-center max-w-[1400px] mx-auto p-4 text-center">
+         <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 mb-6 shadow-lg shadow-indigo-600/5">
+            <Sparkles className="w-8 h-8 text-indigo-400" />
+         </div>
+         <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-widest mb-2">SmartAI <span className="text-indigo-400">Normal Mode</span></h1>
+         <p className="text-slate-500 text-sm md:text-base max-w-md uppercase tracking-wider font-bold">Your basic neural interface is active. Select a tool from the sidebar to begin.</p>
+      </div>
+    );
+  }
+
+  const renderContent = () => {
+    if (activeTab === 'home') return renderHome();
+    return (
+      <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-4 md:p-6'}`}>
+        {activeTab === 'chat' && (
+            smartMode === 'expert' ? renderExpertPro() : (
+            <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+              {/* Chat Header */}
+              <div className="flex justify-between items-center p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                    <MessageSquare className="w-4 h-4 text-indigo-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-black text-white uppercase tracking-[0.1em]">AI Neural Chat</h2>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{smartMode} mode active</p>
+                  </div>
+                </div>
+                <button onClick={handleDownloadChat} className="flex items-center gap-2 text-[9px] font-bold text-indigo-400 hover:text-white transition-colors bg-indigo-600/10 px-3 py-1.5 rounded-lg border border-indigo-600/20 hover:bg-indigo-600/30">
+                  <Download className="w-3 h-3" /> Export
+                </button>
+              </div>
+
+              {/* Chat Messages Area (Scrollable) */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar scroll-smooth">
+                {smartMode === 'normal' && (
+                  <div className="mb-4 p-3 bg-indigo-600/5 border border-indigo-600/10 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Daily Message Limit</span>
+                      <span className="text-[9px] font-bold text-slate-400">{usage.messages} / 10</span>
+                    </div>
+                    <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(usage.messages / 10, 1) * 100}%` }} className="h-full bg-indigo-500" />
+                    </div>
+                  </div>
+                )}
 
                 {messages.map((msg, idx) => (
                   <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[85%] p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-900 border border-slate-800 text-slate-300'}`}>
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-
+                    <div className={`max-w-[85%] p-3 md:p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'}`}>
+                      <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
                       {msg.role === 'assistant' && (
-                        <div className="absolute -bottom-6 left-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-500 hover:text-white transition-colors">
+                        <div className="absolute -bottom-7 left-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 border border-slate-700 px-2 py-1 rounded-md shadow-lg">
+                          <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                           {idx === messages.length - 1 && (
-                            <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-500 hover:text-white transition-colors">
+                            <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-400 hover:text-white transition-colors">
                               <RefreshCcw className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -1481,723 +1784,377 @@ export default function App() {
                     </div>
                   </motion.div>
                 ))}
-                {isAiThinking && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start"><div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl"><div className="flex gap-1"><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-indigo-500 rounded-full" /><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-indigo-500 rounded-full" /><motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-indigo-500 rounded-full" /></div></div></motion.div>)}
+                {isAiThinking && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                    <div className="bg-slate-800/80 border border-slate-700/50 p-4 rounded-2xl rounded-tl-sm flex gap-1.5 shadow-lg">
+                      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }} className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.6 }} className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                    </div>
+                  </motion.div>
+                )}
                 <div ref={chatEndRef} />
-                <div className="h-32 md:hidden" aria-hidden="true" />
               </div>
 
-              {showPrompts && messages.length <= 1 && (
-                <div className="mb-4 overflow-x-auto whitespace-nowrap pb-2 flex gap-2 no-scrollbar">
-                  {SUGGESTED_PROMPTS.map((p, i) => (
-                    <button key={i} onClick={() => setChatInput(p)} className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-full text-[10px] font-medium text-slate-400 hover:text-white hover:border-indigo-600/50 transition-all">
-                      {p}
-                    </button>
-                  ))}
-                  <button onClick={() => setShowPrompts(false)} className="text-slate-600 hover:text-white px-2">×</button>
-                </div>
-              )}
-
-              <div className="fixed bottom-4 left-0 right-0 md:sticky md:bottom-0 bg-transparent md:bg-slate-950/80 md:backdrop-blur-sm pb-2 md:pb-4 px-4 md:px-0 z-30">
-                <div className="flex gap-1.5 items-center bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl">
-
-                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSendMessage();
-                    }
-                  }} placeholder="Enter your prompt..." className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-slate-600 z-[9999] pointer-events-auto cursor-text min-w-0" autoComplete="off" />
-
-                  <div className="flex items-center gap-1.5 pr-0.5">
-                    <button onClick={startListening} title="Voice Input" className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+              {/* Chat Input Area (Fixed at bottom of container) */}
+              <div className="p-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
+                <div className="flex gap-2 items-center bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
+                  <input 
+                    value={chatInput} 
+                    onChange={e => setChatInput(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }} 
+                    placeholder="Enter your prompt here..." 
+                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium" 
+                  />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={startListening} className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
                       <Mic className="w-4 h-4" />
                     </button>
-
-                    <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} title="Send Message" className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                       {isAiThinking ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+                    <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20 active:scale-95">
+                      <Send className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <div className="text-center mt-2 text-[10px] text-slate-500/80 font-medium">SmartAI can make mistakes. Consider verifying important information.</div>
               </div>
             </div>
             )
           )}
 
           {activeTab === 'image' && (
-            <div className={`mx-auto pb-4 px-4 sm:px-6 transition-all duration-500 ${smartMode === 'creative' ? 'max-w-[1400px]' : 'max-w-3xl'}`}>
-              <div className="flex flex-col lg:flex-row gap-6 xl:gap-8">
-                {/* Left Column: Creative Features List */}
-                {smartMode === 'creative' && (
-                  <div className="hidden xl:flex w-[320px] flex-col gap-4">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-sm sticky top-4">
-                      <div className="mb-4 flex flex-col items-center xl:items-start text-center xl:text-left">
-                        <h2 className="text-base font-bold text-white mb-0.5 tracking-tight">Creative Features</h2>
-                        <h3 className="text-indigo-400 font-bold uppercase tracking-[0.2em] text-[9px]">(FREE USER)</h3>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        {CREATIVE_TOOLS.map((tool, index) => (
-                          <button
-                            key={tool.id}
-                            onClick={() => {
-                              if (tool.id === 'chat') {
-                                setActiveTab('chat');
-                                setSmartMode('creative');
-                              } else if (tool.id === 'export') {
-                                if (creativeToolResult) {
-                                  copyToClipboard(creativeToolResult, 'code');
-                                  alert('Result copied to clipboard!');
-                                } else {
-                                  alert('Nothing to export yet! Generate something first.');
-                                }
-                              } else {
-                                setCreativeSubTab(tool.id);
-                                setCreativeToolResult('');
-                                setCreativeToolInput('');
-                              }
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all duration-300 text-left border ${creativeSubTab === tool.id ? 'bg-indigo-600/10 border-indigo-600/30' : 'bg-slate-950/40 border-transparent hover:bg-slate-800/60'}`}
-                          >
-                            <div className={`flex-shrink-0 ${creativeSubTab === tool.id ? 'text-indigo-400' : 'text-slate-500'}`}>
-                              <tool.icon className="w-3.5 h-3.5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className={`text-[9px] font-bold truncate ${creativeSubTab === tool.id ? 'text-indigo-300' : 'text-slate-300'}`}>{index + 1}. {tool.name}</span>
-                                {tool.free && <span className="bg-indigo-600 px-1 py-0.5 rounded text-[6px] font-bold text-white uppercase tracking-wider flex-shrink-0">Free</span>}
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-2 p-3 bg-indigo-600/10 rounded-xl border border-indigo-600/20">
-                        <p className="text-[9px] text-indigo-200/90 font-medium leading-relaxed">All features are <strong className="text-indigo-400 font-bold">100% FREE</strong> with daily limits.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {/* Main Content Area */}
-                <div className="flex-1 flex flex-col gap-4 min-w-0">
-                  {smartMode === 'creative' ? (
-                    /* Creative Mode Main Panel */
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-sm relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-indigo-600/50 to-transparent" />
-
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                          {CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.icon && <IconComponent icon={CREATIVE_TOOLS.find(t => t.id === creativeSubTab)!.icon} className="w-5 h-5 text-white" />}
+             <div className="max-w-5xl mx-auto pb-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 relative shadow-2xl overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
+                   
+                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 relative z-10">
+                     <div>
+                       <h2 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                         <ImageIcon className="w-8 h-8 text-indigo-400" />
+                         Image Synthesis
+                       </h2>
+                       <p className="text-slate-400 text-sm mt-1">Generate high-quality visuals instantly.</p>
+                     </div>
+                     <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl shadow-inner">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cost Per Image</span>
+                        <div className="flex items-center gap-1.5 text-indigo-400 font-black">
+                          <Zap className="w-4 h-4" /> 5 Tokens
                         </div>
-                        <div>
-                          <h2 className="text-base font-bold italic tracking-tight text-white">{CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name}</h2>
-                          <p className="text-slate-500 text-[9px] uppercase font-bold tracking-[0.2em]">Creative Synthesis Engine</p>
-                        </div>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10 mb-6">
+                      <div className="md:col-span-8 space-y-4">
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex justify-between">
+                             <span>Prompt</span>
+                             <button onClick={handleEnhancePrompt} disabled={isEnhancing} className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
+                                <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Enhance Prompt'}
+                             </button>
+                           </label>
+                           <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate in detail..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Negative Prompt (Optional)</label>
+                           <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What should NOT be in the image (e.g. blurry, bad anatomy, text)..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm h-16 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                         </div>
                       </div>
 
-                      {creativeSubTab === 'image' ? (
-                        <>
-                          <div className="relative group mb-3">
-                            <textarea
-                              value={imgPrompt}
-                              onChange={e => setImgPrompt(e.target.value)}
-                              placeholder="Describe the image you want to generate..."
-                              className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl py-3 pl-5 pr-28 text-sm h-16 resize-none outline-none focus:border-indigo-600/50 transition-all shadow-inner placeholder:text-slate-700"
-                            />
-                            <button
-                              onClick={handleGenerateImage}
-                              disabled={isGenerating || !imgPrompt.trim()}
-                              className="absolute right-3 top-3 bottom-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50"
-                            >
-                              {isGenerating ? (
-                                <div className="flex gap-1.5">
-                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-white rounded-full" />
-                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-white rounded-full" />
-                                </div>
-                              ) : 'Generate'}
-                            </button>
-                          </div>
+                      <div className="md:col-span-4 space-y-4 bg-slate-950/50 border border-slate-800/50 rounded-2xl p-4">
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Style</label>
+                           <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                             {STYLES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                           </select>
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Quality</label>
+                           <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                             <option value="Standard">Standard (Fast)</option>
+                             <option value="HD">HD Quality</option>
+                             <option value="4K">4K Ultra</option>
+                             <option value="8K">8K Masterpiece</option>
+                           </select>
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Aspect Ratio</label>
+                           <div className="grid grid-cols-4 gap-2">
+                              {ASPECTS.map(a => (
+                                <button key={a} onClick={() => setImgAspect(a as any)} className={`py-2 rounded-lg text-[10px] font-bold transition-all border ${imgAspect === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}>{a}</button>
+                              ))}
+                           </div>
+                         </div>
+                      </div>
+                   </div>
 
-                        </>
-                      ) : creativeSubTab === 'templates' ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
-                          {TEMPLATES.map((t, i) => (
-                            <button
-                              key={i}
-                              onClick={() => {
-                                setActiveTab('chat');
-                                setSmartMode('creative');
-                                const templateAction = `I want to use the "${t.name}" template. The template is: "${t.prompt}". Please acknowledge this and ask me for the missing details (like the words in brackets) one by one so we can start. Promise me that you will provide a deeply detailed, highly advanced, and top-tier solution once I provide them! Use a friendly tone with emojis!`;
-                                handleSendMessage(templateAction);
-                              }}
-                              className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-left hover:bg-slate-800/50 hover:border-indigo-600/50 transition-all group"
-                            >
-                              <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center mb-2 group-hover:bg-indigo-600/20 group-hover:text-indigo-400 transition-colors">
-                                <IconComponent icon={t.icon} className="w-4 h-4" />
-                              </div>
-                              <h4 className="text-[11px] font-bold text-white mb-1">{t.name}</h4>
-                              <p className="text-[9px] text-slate-500 line-clamp-2">{t.prompt}</p>
-                            </button>
-                          ))}
-                        </div>
+                   <button onClick={() => handleGenerateImage(false)} disabled={isGenerating || !imgPrompt.trim()} className="w-full relative group overflow-hidden bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-sm transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50">
+                      <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                      {isGenerating ? (
+                         <span className="flex items-center justify-center gap-3">
+                           <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
+                           Synthesizing...
+                         </span>
                       ) : (
-                        <div className="flex flex-col gap-3">
-                          <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-5 min-h-[200px] max-h-[calc(100vh-400px)] overflow-y-auto flex flex-col items-center justify-center text-center">
-                            {creativeToolResult ? (
-                              renderCreativeResult(creativeToolResult)
-                            ) : (
-                              <>
-                                <div className="w-14 h-14 bg-indigo-600/10 rounded-full flex items-center justify-center mb-3">
-                                  {CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.icon && <IconComponent icon={CREATIVE_TOOLS.find(t => t.id === creativeSubTab)!.icon} className="w-7 h-7 text-indigo-500" />}
-                                </div>
-                                <h3 className="text-base font-bold text-white mb-1">{CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name} Ready</h3>
-                                <p className="text-slate-500 text-xs max-w-md">Enter your request below to start generating.</p>
-                              </>
-                            )}
-                          </div>
-
-                          <div className="relative">
-                            <textarea
-                              value={creativeToolInput}
-                              onChange={e => setCreativeToolInput(e.target.value)}
-                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreativeToolSubmit(); } }}
-                              placeholder={`Describe your ${CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name.toLowerCase()} task...`}
-                              className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl py-4 pl-6 pr-36 text-sm h-20 resize-none outline-none focus:border-indigo-600/50 transition-all shadow-inner placeholder:text-slate-700"
-                            />
-                            <button
-                              onClick={handleCreativeToolSubmit}
-                              disabled={isCreativeToolThinking || !creativeToolInput.trim()}
-                              className="absolute right-3 top-3 bottom-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50 flex items-center justify-center"
-                            >
-                              {isCreativeToolThinking ? (
-                                <div className="flex gap-1">
-                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-white rounded-full" />
-                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-white rounded-full" />
-                                  <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-white rounded-full" />
-                                </div>
-                              ) : 'Process'}
-                            </button>
-                          </div>
-                        </div>
+                         <span className="flex items-center justify-center gap-2">
+                           <Sparkles className="w-5 h-5" /> Generate Image <span className="opacity-70 font-medium ml-2">-5 Tokens</span>
+                         </span>
                       )}
-                    </div>
-                  ) : (
-                    /* Normal Mode Main Panel */
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 relative">
-                      <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-3xl font-bold italic tracking-tight">Image Synthesis</h2>
-                        <button
-                          onClick={handleEnhancePrompt}
-                          disabled={isEnhancing || !imgPrompt.trim()}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${isEnhancing ? 'bg-indigo-600 animate-pulse text-white' : 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 hover:bg-indigo-600/20'}`}
-                        >
-                          <Sparkles className="w-3.5 h-3.5" /> {isEnhancing ? 'Enhancing...' : 'Magic Prompt'}
-                        </button>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Prompt</label>
-                          <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-base h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600" />
-                        </div>
-
-                        <div>
-                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Negative Prompt (Optional)</label>
-                          <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What to exclude? (e.g. blurry, low quality, text...)" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm h-20 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600" />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 mb-6">
-                        <div>
-                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Aspect Ratio</label>
-                          <select value={imgAspect} onChange={e => setImgAspect(e.target.value as any)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
-                            {ASPECTS.map(a => (<option key={a} value={a}>{a}</option>))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Style</label>
-                          <select value={imgStyle} onChange={e => {
-                            const s = e.target.value;
-                            if (isStyleLocked(s)) { setIsPricingOpen(true); } else { setImgStyle(s); }
-                          }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
-                            {STYLES.map(s => {
-                              const locked = isStyleLocked(s);
-                              return (<option key={s} value={s} className={locked ? 'text-slate-600' : 'text-white'}>{s}{locked ? ' 🔒 PRO' : PREMIUM_STYLES.includes(s) && plan === 'Basic' ? ' ⭐' : ''}</option>);
-                            })}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Quality</label>
-                          <select value={imgQuality} onChange={e => {
-                            const q = e.target.value;
-                            const locked = (q === '2K' || q === '4K') && plan === 'Basic';
-                            if (locked) { setIsPricingOpen(true); } else { setImgQuality(q); }
-                          }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
-                            {['720p', '1080p', '2K', '4K'].map((q: string) => {
-                              const locked = (q === '2K' || q === '4K') && plan === 'Basic';
-                              return (<option key={q} value={q} className={locked ? 'text-slate-600' : 'text-white'}>{q}{locked ? ' 🔒 PRO' : ''}</option>);
-                            })}
-                          </select>
-                        </div>
-                      </div>
-                      <button onClick={handleGenerateImage} disabled={isGenerating || !imgPrompt.trim()} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold text-base uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                        {isGenerating ? (
-                          <div className="flex gap-1">
-                            <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-white rounded-full" />
-                            <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-white rounded-full" />
-                            <motion.div animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-white rounded-full" />
-                          </div>
-                        ) : 'Synthesize Image (5 credits)'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Other Creative Tools Section - Only in Creative Mode */}
-                  {smartMode === 'creative' && (
-                    <div className="mt-4">
-                      <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                        <Sparkles className="w-4 h-4" /> Other Creative Tools <span className="text-slate-600">(Free)</span>
-                      </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {CREATIVE_TOOLS.map(tool => (
-                          <button
-                            key={tool.id}
-                            onClick={() => {
-                              if (tool.id === 'chat') {
-                                setActiveTab('chat');
-                                setSmartMode('creative');
-                              } else if (tool.id === 'export') {
-                                if (creativeToolResult) {
-                                  copyToClipboard(creativeToolResult, 'code');
-                                  alert('Result copied to clipboard!');
-                                } else {
-                                  alert('Nothing to export yet! Generate something first.');
-                                }
-                              } else {
-                                setCreativeSubTab(tool.id);
-                                setCreativeToolResult('');
-                                setCreativeToolInput('');
-                              }
-                            }}
-                            className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 group relative overflow-hidden ${creativeSubTab === tool.id ? 'bg-indigo-600 border-indigo-500 shadow-xl shadow-indigo-600/20 scale-[1.02]' : 'bg-slate-900/50 border-slate-800 hover:bg-slate-800/80 hover:border-slate-700'}`}
-                          >
-                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-500 ${creativeSubTab === tool.id ? 'bg-white/20 rotate-[360deg]' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-                              <tool.icon className={`w-4 h-4 ${creativeSubTab === tool.id ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
-                            </div>
-                            <div className="text-center">
-                              <div className={`text-[10px] font-bold uppercase tracking-widest ${creativeSubTab === tool.id ? 'text-white' : 'text-slate-300'}`}>{tool.name}</div>
-                              <div className={`text-[8px] font-medium mt-0.5 ${creativeSubTab === tool.id ? 'text-indigo-100/70' : 'text-slate-600'}`}>{tool.desc}</div>
-                            </div>
-                            {creativeSubTab === tool.id && (
-                              <motion.div layoutId="activeTool" className="absolute inset-0 border-2 border-white/20 rounded-xl" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Contextual Input for Tools */}
-                      <div className="mt-6 bg-slate-900/80 border border-slate-800 rounded-2xl p-2 flex items-center gap-3 shadow-2xl backdrop-blur-md">
-                        <div className="w-9 h-9 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500">
-                          {CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.icon && <IconComponent icon={CREATIVE_TOOLS.find(t => t.id === creativeSubTab)!.icon} className="w-4 h-4" />}
-                        </div>
-                        <input
-                          value={creativeSubTab === 'image' ? imgPrompt : creativeToolInput}
-                          onChange={e => creativeSubTab === 'image' ? setImgPrompt(e.target.value) : setCreativeToolInput(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              creativeSubTab === 'image' ? handleGenerateImage() : handleCreativeToolSubmit();
-                            }
-                          }}
-                          placeholder={`Describe your ${CREATIVE_TOOLS.find(t => t.id === creativeSubTab)?.name} request...`}
-                          className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-slate-700"
-                        />
-                        <div className="flex items-center gap-1.5">
-                          <button className="p-2.5 bg-slate-800 text-slate-500 rounded-xl hover:text-white transition-colors"><Mic className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => creativeSubTab === 'image' ? handleGenerateImage() : handleCreativeToolSubmit()} className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 active:scale-90 transition-all hover:bg-indigo-500"><Send className="w-3.5 h-3.5" /></button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Main Result Displays */}
-                  {generatedImg && smartMode !== 'creative' && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative group mb-10">
-                      <img src={generatedImg} alt="Generated" className="w-full rounded-3xl border border-slate-800 shadow-2xl" />
-                      <a href={generatedImg} download className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-all">
-                        <Download className="w-5 h-5 text-white" />
-                      </a>
-                    </motion.div>
-                  )}
-
-                  {/* History Grid (only in Normal/Expert or if expanded) */}
-                  {imageHistory.length > 0 && (smartMode !== 'creative' || showHistory) && (
-                    <div className="mt-8">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold italic tracking-tight text-white">Art Gallery</h3>
-                        <button onClick={() => setShowHistory(!showHistory)} className="text-xs uppercase tracking-widest font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-600/10 px-4 py-2 rounded-full border border-indigo-600/20">{showHistory ? 'Collapse' : 'Expand All'}</button>
-                      </div>
-                      <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${showHistory ? '' : 'max-h-[32rem] overflow-hidden relative'}`}>
-                        {!showHistory && <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent z-10" />}
-                        {imageHistory.map((item, i) => (
-                          <motion.div key={i} whileHover={{ y: -5 }} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-lg">
-                            <img src={item.url} alt={item.prompt} className="w-full aspect-square object-cover" loading="lazy" />
-                            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-end p-4">
-                              <p className="text-[10px] text-white line-clamp-3 mb-3 leading-relaxed italic">"{item.prompt}"</p>
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">{item.style} • {item.quality}</span>
-                                <a href={item.url} download className="bg-white text-black p-2 rounded-lg hover:bg-slate-200 transition-colors"><Download className="w-3.5 h-3.5" /></a>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                   </button>
                 </div>
 
-                {/* Right Column: Recent Creative Results - Only in Creative Mode */}
-                {smartMode === 'creative' && (
-                  <div className="hidden lg:flex w-[320px] flex-col gap-6">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-6 flex-1 shadow-2xl backdrop-blur-sm sticky top-6 max-h-[calc(100vh-100px)] overflow-y-auto">
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <h3 className="text-sm font-bold text-white tracking-tight">Recent Creations</h3>
-                          <p className="text-[9px] text-slate-500 uppercase tracking-[0.2em] mt-0.5">Your AI-generated content</p>
-                        </div>
-                        {creativeHistory.length > 0 && (
-                          <button
-                            onClick={() => { setCreativeHistory([]); }}
-                            className="text-[8px] uppercase tracking-widest font-bold text-red-500/60 hover:text-red-400 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
-                          >Clear</button>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        {creativeHistory.length === 0 ? (
-                          <div className="text-center py-16 flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center">
-                              <Sparkles className="w-8 h-8 text-slate-700" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Nothing here yet</p>
-                              <p className="text-[9px] text-slate-700 mt-1">Use a tool to start creating ✨</p>
-                            </div>
-                          </div>
-                        ) : (
-                          creativeHistory.map((item, i) => {
-                            const toolMeta = CREATIVE_TOOLS.find(t => t.id === item.tool);
-                            const Icon = toolMeta?.icon;
-                            const toolColors: Record<string, string> = {
-                              writer: 'bg-violet-600/20 text-violet-400 border-violet-600/20',
-                              code: 'bg-green-600/20 text-green-400 border-green-600/20',
-                              summarizer: 'bg-blue-600/20 text-blue-400 border-blue-600/20',
-                              idea: 'bg-amber-600/20 text-amber-400 border-amber-600/20',
-                              image: 'bg-pink-600/20 text-pink-400 border-pink-600/20',
-                            };
-                            const colorClass = toolColors[item.tool] || 'bg-indigo-600/20 text-indigo-400 border-indigo-600/20';
-                            return (
-                              <motion.div
-                                key={i}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                onClick={() => {
-                                  setCreativeSubTab(item.tool);
-                                  setCreativeToolInput(item.input);
-                                  setCreativeToolResult(item.result);
-                                }}
-                                className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 hover:border-indigo-600/40 hover:bg-slate-800/60 transition-all cursor-pointer group"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className={`flex-shrink-0 w-8 h-8 rounded-xl border flex items-center justify-center ${colorClass}`}>
-                                    {Icon && <Icon className="w-4 h-4" />}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2 mb-1">
-                                      <span className={`text-[9px] font-bold uppercase tracking-wider border rounded-md px-1.5 py-0.5 ${colorClass}`}>{item.toolName}</span>
-                                      <span className="text-[9px] text-slate-600 font-mono flex-shrink-0">{item.time}</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-300 font-medium truncate group-hover:text-indigo-300 transition-colors">{item.input}</p>
-                                    <p className="text-[9px] text-slate-600 mt-1 line-clamp-2 leading-relaxed">{item.result.replace(/```[\w-]*/g, '').replace(/```/g, '').trim().slice(0, 80)}...</p>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            );
-                          })
-                        )}
-                      </div>
-
-                      {creativeHistory.length > 0 && (
-                        <button
-                          onClick={() => {
-                            const allText = creativeHistory.map(h => `[${h.toolName}] ${h.input}\n${h.result}`).join('\n\n---\n\n');
-                            copyToClipboard(allText, 'code');
-                          }}
-                          className="w-full mt-6 py-3 bg-slate-950 hover:bg-indigo-600/10 text-slate-500 hover:text-indigo-400 rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] border border-slate-800 hover:border-indigo-600/30 transition-all flex items-center justify-center gap-2"
-                        >
-                          <Copy className="w-3 h-3" /> Export All Creations
-                        </button>
-                      )}
+                {generatedImg && (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative group mb-10 mx-auto max-w-2xl overflow-hidden rounded-[2rem] border border-slate-800 shadow-2xl bg-slate-900 p-2">
+                    <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-3xl" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm rounded-[2rem] flex flex-col md:flex-row items-center justify-center gap-4 p-4">
+                       <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl hover:scale-105">
+                         <Download className="w-4 h-4" /> Download PNG
+                       </button>
+                       <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500 transition-colors shadow-xl hover:scale-105 disabled:opacity-50">
+                         <RefreshCcw className="w-4 h-4" /> Regenerate (-2 Tokens)
+                       </button>
+                       <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="bg-slate-700 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-600 transition-colors shadow-xl hover:scale-105">
+                         <Copy className="w-4 h-4" /> Share
+                       </button>
                     </div>
+                  </motion.div>
+                )}
+
+                {imageHistory.length > 0 && (
+                  <div className="mt-16">
+                     <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 tracking-tight">
+                       <Clock className="w-6 h-6 text-indigo-400" />
+                       Recent Generations
+                     </h3>
+                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                       {imageHistory.map((item, i) => (
+                          <div key={i} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-lg">
+                             <img src={item.url} alt={item.prompt} className="w-full h-full object-cover" />
+                             <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
+                               <p className="text-[10px] text-white line-clamp-4 text-center font-medium leading-relaxed">{item.prompt}</p>
+                               <div className="flex gap-2">
+                                 <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-indigo-600 text-white p-2.5 rounded-lg hover:bg-indigo-500 transition-colors">
+                                    <Download className="w-4 h-4" />
+                                 </button>
+                                 <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-slate-700 text-white p-2.5 rounded-lg hover:bg-slate-600 transition-colors">
+                                    <Copy className="w-4 h-4" />
+                                 </button>
+                               </div>
+                             </div>
+                          </div>
+                       ))}
+                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'video' && (
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
-                <h2 className="text-2xl font-bold mb-6 italic tracking-tight">Neural Motion</h2>
-                <textarea value={videoPrompt} onChange={e => setVideoPrompt(e.target.value)} placeholder="Describe the video you want to generate..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-32 resize-none outline-none focus:border-indigo-500/50 transition-all mb-4 placeholder:text-slate-600" />
-                <button onClick={handleGenerateVideo} disabled={isGeneratingVideo || !videoPrompt.trim()} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2">{isGeneratingVideo ? 'Rendering...' : 'Generate Video (10 credits)'}</button>
-                <p className="text-center mt-3 text-xs text-indigo-400 font-bold uppercase tracking-widest">Coming Soon</p>
-              </div>
-            </div>
+             </div>
           )}
 
           {activeTab === 'profile' && (
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
-              <div className="flex items-center gap-4 mb-4">
-                <button
-                  onClick={() => setActiveTab('chat')}
-                  className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-all hover:bg-slate-800"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-bold italic tracking-tight text-white">Back to Workspace</h2>
-              </div>
-              {/* Header Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/10 blur-3xl rounded-full -mr-16 -mt-16" />
-                <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                  <div className="relative group">
-                    <div className="w-28 h-28 bg-indigo-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl overflow-hidden border-4 border-slate-800">
-                      {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setTempDisplayName(displayName);
-                        setTempAvatar(avatar);
-                        setIsEditingProfile(true);
-                      }}
-                      className="absolute bottom-0 right-0 bg-indigo-500 hover:bg-indigo-400 text-white p-2 rounded-lg shadow-lg transition-all"
-                    >
-                      <User className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 text-center md:text-left">
-                    <h2 className="text-3xl font-bold text-white mb-1 flex items-center justify-center md:justify-start gap-3">
-                      {displayName}
-                      <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full ${plan === 'Basic' ? 'bg-slate-800 text-slate-500' : 'bg-indigo-600 text-white animate-pulse'}`}>{plan}</span>
-                    </h2>
-                    <p className="text-slate-400 text-lg mb-3">{email}</p>
-                    <div className="flex items-center justify-center md:justify-start gap-4">
-                      <span className="bg-indigo-600/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-indigo-600/20">Member Since May 2024</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Editing Modal Logic */}
-              {isEditingProfile && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900 border border-indigo-600/30 rounded-3xl p-8 shadow-2xl">
-                  <h3 className="text-xl font-bold mb-6 italic tracking-tight text-white">Edit Profile</h3>
-                  <div className="space-y-4 mb-6">
-                    <div>
-                      <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Display Name</label>
-                      <input type="text" value={tempDisplayName} onChange={e => setTempDisplayName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500/50 transition-all" />
-                    </div>
-                    <div>
-                      <label className="text-xs uppercase font-bold text-slate-500 tracking-widest block mb-2">Avatar</label>
-                      <div className="flex gap-4 items-center">
-                        <div className="w-16 h-16 bg-slate-800 rounded-full overflow-hidden flex-shrink-0">
-                          {tempAvatar ? <img src={tempAvatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-500"><User /></div>}
+               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                  <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                     <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl border-4 border-slate-800">
+                        {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
+                     </div>
+                     <div className="flex-1 text-center md:text-left">
+                        <h2 className="text-3xl font-bold text-white mb-1">{displayName}</h2>
+                        <p className="text-slate-400 mb-3">{email}</p>
+                        <div className="flex gap-2 justify-center md:justify-start">
+                           <span className="px-3 py-1 bg-indigo-600/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-600/20">{plan} Plan</span>
+                           <span className="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full">{credits.toLocaleString()} Credits</span>
                         </div>
-                        <div className="flex-1 space-y-2">
-                          <input type="text" value={tempAvatar} onChange={e => setTempAvatar(e.target.value)} placeholder="Image URL (optional)" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-indigo-500/50 transition-all" />
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full bg-slate-800 hover:bg-slate-700 text-white text-[10px] uppercase font-bold tracking-widest py-2 rounded-lg transition-all border border-slate-700"
-                          >
-                            Upload from Gallery
-                          </button>
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileUpload}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <button onClick={handleUpdateProfile} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold transition-all">Save Changes</button>
-                    <button onClick={() => setIsEditingProfile(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold transition-all">Cancel</button>
-                  </div>
-                </motion.div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Subscription Card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center"><CreditCard className="w-5 h-5 text-indigo-400" /></div>
-                    <h3 className="text-lg font-bold text-white">Subscription</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800/50">
-                      <span className="text-slate-500 text-sm">Available Credits</span>
-                      <span className="text-2xl font-bold text-white">{credits.toLocaleString()}</span>
-                    </div>
-                    <button onClick={() => setIsPricingOpen(true)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
-                      <Sparkles className="w-4 h-4" /> {plan === 'Basic' ? 'Upgrade to Pro' : 'Manage Subscription'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Referral Card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-green-600/20 rounded-xl flex items-center justify-center"><Zap className="w-5 h-5 text-green-400" /></div>
-                    <h3 className="text-lg font-bold text-white">Refer & Earn</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/50">
-                      <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mb-2">Your Referral Code</p>
-                      <div className="flex items-center justify-between">
-                        <code className="text-lg font-bold text-indigo-400">{getCurrentUserReferralData()?.referralCode || 'N/A'}</code>
-                        <button onClick={copyReferralCode} className="text-slate-400 hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-slate-500 text-center">Share this code to earn 100 bonus credits for every successful signup!</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Usage Stats Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-amber-600/20 rounded-xl flex items-center justify-center"><Sparkles className="w-5 h-5 text-amber-400" /></div>
-                  <h3 className="text-lg font-bold text-white">Usage Analytics</h3>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/50 text-center">
-                    <p className="text-2xl font-bold text-white mb-1">{messages.filter(m => m.role === 'user').length}</p>
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Prompts Sent</p>
-                  </div>
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/50 text-center">
-                    <p className="text-2xl font-bold text-white mb-1">{imageHistory.length}</p>
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Images Created</p>
-                  </div>
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/50 text-center">
-                    <p className="text-2xl font-bold text-white mb-1">0</p>
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Videos Rendered</p>
-                  </div>
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/50 text-center">
-                    <p className="text-2xl font-bold text-white mb-1">{credits < 500 ? 'Level 1' : 'Level 2'}</p>
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">User Rank</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button onClick={() => setActiveTab('chat')} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
-                  <MessageSquare className="w-4 h-4" /> Go to Workspace
-                </button>
-                <button onClick={handleLogout} className="flex-1 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/20 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2">
-                  <LogOut className="w-4 h-4" /> Sign Out
-                </button>
-              </div>
+               </div>
+               <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 text-red-500 border border-red-600/20 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all shadow-lg">Sign Out</button>
             </div>
           )}
-          {activeTab === 'admin' && (
-            <div className="max-w-3xl mx-auto">
-              <AdminPanel />
-            </div>
-          )}
+
+          {activeTab === 'admin' && <AdminPanel />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen w-full bg-slate-950 text-slate-200 flex font-sans overflow-hidden">
+      {/* Sidebar for Desktop */}
+      <aside className="hidden md:flex w-72 bg-slate-950 border-r border-slate-800 flex-col p-6 overflow-hidden">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">S</div>
+          <span className="text-xl font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span>
+        </div>
+        
+        <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between shadow-inner">
+          <div>
+            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-[0.2em]">Credits</span>
+            <div className="text-2xl font-bold text-white mt-0.5">{credits.toLocaleString()}</div>
+          </div>
+          <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-indigo-400" />
+          </div>
+        </div>
+
+        <nav className="space-y-1.5 flex-1 overflow-y-auto no-scrollbar pr-2">
+          {SIDEBAR_ITEMS.map(item => (
+            <button
+              key={item.tab}
+              onClick={() => setActiveTab(item.tab)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-sm font-medium">{item.name}</span>
+            </button>
+          ))}
+
+          <div className="my-4 px-2">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dashboards</span>
+          </div>
+
+          <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+             <Send className="w-5 h-5" />
+             <span className="text-sm font-medium">Normal Mode</span>
+          </button>
+          <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+             <Lightbulb className="w-5 h-5" />
+             <span className="text-sm font-medium">Creative Mode</span>
+          </button>
+          <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+             <Zap className="w-5 h-5" />
+             <span className="text-sm font-medium">Expert Mode</span>
+          </button>
+        </nav>
+
+        <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
+          <button 
+            onClick={() => setIsPricingOpen(true)} 
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+          >
+            <Sparkles className="w-4 h-4" /> Upgrade Plan
+          </button>
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{displayName.charAt(0)}</div>
+             <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-bold text-white truncate">{displayName}</div>
+                <div className="text-[9px] text-slate-500 truncate">{email}</div>
+             </div>
+             <button onClick={() => setActiveTab('profile')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Container */}
+      <main className="flex-1 flex flex-col min-w-0 bg-slate-950">
+        {/* Header */}
+        <header className="h-16 border-b border-slate-800 flex items-center justify-between px-4 sm:px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-40">
+           <div className="flex items-center gap-4">
+              <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white md:hidden"><Menu className="w-6 h-6" /></button>
+              <div className="md:hidden flex items-center gap-2">
+                <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-[10px] font-bold">S</div>
+                <span className="text-sm font-bold">SmartAI</span>
+              </div>
+              <div className="hidden md:flex items-center gap-2 text-slate-500 text-[9px] font-black uppercase tracking-[0.3em]">
+                 <span>System</span>
+                 <ChevronRight className="w-3 h-3 opacity-30" />
+                 <span className="text-white">{activeTab}</span>
+              </div>
+           </div>
+           <div className="flex items-center gap-3">
+              <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20' : 'bg-orange-600/10 text-orange-400 border-orange-600/20'}`}>
+                {smartMode} mode
+              </div>
+              <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-lg shadow-white/5">Upgrade</button>
+           </div>
+        </header>
+
+        {/* Dynamic Content */}
+        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0">
+           {renderContent()}
         </div>
       </main>
 
-      {/* Mobile Sidebar Drawer */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] md:hidden"
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-72 bg-slate-950 border-r border-slate-800 z-[60] p-6 flex flex-col md:hidden shadow-2xl"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] md:hidden" />
+            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed inset-y-0 left-0 w-72 bg-slate-950 border-r border-slate-800 z-[60] p-6 flex flex-col md:hidden shadow-2xl">
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">S</div>
                   <span className="text-xl font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span>
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:text-white">
-                  <X className="w-6 h-6" />
-                </button>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:text-white"><X className="w-6 h-6" /></button>
               </div>
-
-              <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-xs uppercase font-bold text-slate-500 tracking-widest">Credits</span>
-                  <div className="text-2xl font-bold text-white mt-1">{credits.toLocaleString()}</div>
-                </div>
-                <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-indigo-400" />
-                </div>
-              </div>
-
-              <nav className="space-y-2 flex-1">
+              <nav className="space-y-1.5 flex-1">
                 {SIDEBAR_ITEMS.map(item => (
-                  <button
-                    key={item.tab}
-                    onClick={() => {
-                      setActiveTab(item.tab);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
-                  >
+                  <button key={item.tab} onClick={() => { setActiveTab(item.tab); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                     <item.icon className="w-5 h-5" />
                     <span className="text-base font-medium">{item.name}</span>
                   </button>
                 ))}
-              </nav>
 
-              <div className="mt-auto pt-6 border-t border-slate-800 space-y-4">
-                <button
-                  onClick={() => {
-                    setIsPricingOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-all text-xs font-bold uppercase tracking-widest"
-                >
-                  <Sparkles className="w-4 h-4" /> Upgrade Plan
+                <div className="my-4 px-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dashboards</span>
+                </div>
+
+                <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                   <Send className="w-5 h-5" />
+                   <span className="text-base font-medium">Normal Mode</span>
                 </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all text-xs font-bold uppercase tracking-widest"
-                >
-                  <LogOut className="w-4 h-4" /> Sign Out
+                <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                   <Lightbulb className="w-5 h-5" />
+                   <span className="text-base font-medium">Creative Mode</span>
                 </button>
-              </div>
+                <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                   <Zap className="w-5 h-5" />
+                   <span className="text-base font-medium">Expert Mode</span>
+                </button>
+              </nav>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
+      {/* Overlays */}
+      <AnimatePresence>
+        {isPricingOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+             <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-10 max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+                <div className="flex justify-between items-center mb-10">
+                   <div>
+                      <h2 className="text-3xl font-bold italic tracking-tight text-white">Neural Network Plans</h2>
+                      <p className="text-slate-500 text-sm mt-1">Select the processing power that matches your ambition.</p>
+                   </div>
+                   <button onClick={() => setIsPricingOpen(false)} className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+                  {PLANS.map(p => (
+                    <div key={p.name} className={`p-8 rounded-3xl border transition-all duration-500 flex flex-col relative group ${p.popular ? 'border-indigo-600 bg-indigo-600/5 shadow-2xl shadow-indigo-600/10' : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'}`}>
+                      {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-lg">Recommended</span>}
+                      <h3 className="text-xl font-bold text-white mb-2">{p.name}</h3>
+                      <div className="flex items-baseline gap-1 mb-6">
+                        <span className="text-3xl font-bold text-white">{p.price.split(' ')[0]}</span>
+                        <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{p.price.split(' ').slice(1).join(' ')}</span>
+                      </div>
+                      <ul className="space-y-4 mb-10 flex-1">
+                        {p.features.map(f => (
+                          <li key={f} className="text-xs text-slate-400 flex items-start gap-3 leading-relaxed">
+                            <Check className="w-3.5 h-3.5 text-indigo-400 mt-0.5 flex-shrink-0" /> {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <button onClick={() => handleSelectPlan(p)} className={`w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg ${p.popular ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-600/20' : 'bg-white text-black hover:bg-slate-200 shadow-white/5'}`}>
+                        Initialize {p.name}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
