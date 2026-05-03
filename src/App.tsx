@@ -2360,6 +2360,14 @@ export default function App() {
              <Zap className="w-5 h-5" />
              <span className="text-sm font-medium">Expert Mode</span>
           </button>
+          
+          <div className="my-4 px-2">
+             <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
+          </div>
+          <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+             <Shield className="w-5 h-5" />
+             <span className="text-sm font-medium">Admin Panel</span>
+          </button>
         </nav>
 
         <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
