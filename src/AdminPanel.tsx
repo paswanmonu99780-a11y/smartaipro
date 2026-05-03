@@ -358,52 +358,51 @@ export default function AdminPanel() {
                 <div className="text-center py-8 text-slate-500 text-sm">No users found</div>
              ) : (
                 filteredUsers.map((user, index) => (
-                  <div key={index} className="p-4 flex flex-col gap-4">
+                  <div key={index} className="p-3 flex flex-col gap-2.5">
                      <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                       <div className="flex items-center gap-2">
+                         <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
                            {user.avatar ? <img src={user.avatar} className="w-full h-full rounded-full object-cover" /> : user.displayName?.charAt(0).toUpperCase() || 'U'}
                          </div>
                          <div className="flex flex-col">
-                            <span className="text-sm font-bold text-white">{user.displayName || 'N/A'}</span>
-                            <span className="text-[10px] text-slate-400">{user.email || user.mobile || 'No Contact'}</span>
+                            <span className="text-xs font-bold text-white line-clamp-1">{user.displayName || 'N/A'}</span>
+                            <span className="text-[9px] text-slate-400 line-clamp-1">{user.email || user.mobile || 'No Contact'}</span>
                          </div>
                        </div>
-                       <span className={`text-[9px] px-2.5 py-1 rounded-full uppercase tracking-widest font-black border ${
+                       <div className="flex flex-col items-end gap-1 shrink-0">
+                         <span className={`text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black border ${
                           user.plan === 'Pro' ? 'bg-indigo-600/20 text-indigo-400 border-indigo-600/30' :
                           user.plan === 'Ultra' ? 'bg-emerald-600/20 text-emerald-400 border-emerald-600/30' :
                           'bg-slate-800/80 text-slate-400 border-slate-700'
                         }`}>
                           {user.plan || 'Basic'}
-                        </span>
+                         </span>
+                         <span className="text-[11px] font-black text-indigo-300">{(user.credits || 0).toLocaleString()} <span className="text-[7px] text-slate-500 uppercase">CR</span></span>
+                       </div>
                      </div>
 
-                     <div className="flex items-center justify-between bg-slate-950/50 rounded-xl p-3 border border-slate-800/50">
-                       <div className="flex items-center gap-4">
-                         <div>
-                           <div className="text-[8px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Credits</div>
-                           <div className="text-sm font-black text-white">{(user.credits || 0).toLocaleString()}</div>
-                         </div>
+                     <div className="flex items-center justify-between bg-slate-950/50 rounded-lg p-2 border border-slate-800/50">
+                       <div className="flex items-center gap-3">
                          {user.referralCode && (
-                           <div>
-                             <div className="text-[8px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Ref Code</div>
-                             <div className="text-[10px] font-bold text-indigo-400 tracking-widest">{user.referralCode}</div>
+                           <div className="flex items-center gap-1">
+                             <span className="text-[8px] uppercase tracking-widest text-slate-500 font-bold">Ref:</span>
+                             <span className="text-[9px] font-bold text-indigo-400 tracking-widest">{user.referralCode}</span>
                            </div>
                          )}
                        </div>
-                       <div className="flex items-center gap-2">
+                       <div className="flex items-center gap-1.5 shrink-0">
                           <button 
                             onClick={() => {
                               setEditingUser(user);
                               setNewCredits(user.credits || 0);
                               setNewPlan(user.plan || 'Basic');
                             }}
-                            className="p-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors"
+                            className="p-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-md transition-colors"
                           >
-                            <User className="w-4 h-4" />
+                            <User className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => deleteUser(user)} className="p-2 bg-rose-600/10 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-colors">
-                            <Plus className="w-4 h-4 rotate-45" />
+                          <button onClick={() => deleteUser(user)} className="p-1.5 bg-rose-600/10 text-rose-400 hover:bg-rose-600 hover:text-white rounded-md transition-colors">
+                            <Plus className="w-3.5 h-3.5 rotate-45" />
                           </button>
                        </div>
                      </div>
