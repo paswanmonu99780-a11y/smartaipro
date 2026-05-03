@@ -531,10 +531,12 @@ export default function App() {
     const target = email;
     
     setIsAuthenticating(true);
+    const verifyType = otpType === 'signup' ? 'signup' : 'email';
+    
     const { data, error } = await supabase.auth.verifyOtp({
       email: target,
       token: enteredOtp,
-      type: 'magiclink'
+      type: verifyType
     });
 
     if (error) {
@@ -601,15 +603,23 @@ export default function App() {
     setAuthError(null);
     setIsAuthenticating(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email: resetEmail,
         token: resetOtp.join(''),
-        type: 'magiclink'
+        type: 'recovery'
       });
-      if (error) setAuthError(error.message);
-      else setForgotPasswordStep('reset');
-    } catch (err: any) { setAuthError(err.message); }
-    finally { setIsAuthenticating(false); }
+
+      if (error) {
+        setAuthError(error.message);
+        setIsAuthenticating(false);
+      } else {
+        setForgotPasswordStep('reset');
+        setIsAuthenticating(false);
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+      setIsAuthenticating(false);
+    }
   };
 
   const handleFinalPasswordReset = async () => {
