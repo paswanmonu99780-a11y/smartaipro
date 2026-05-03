@@ -488,14 +488,16 @@ export default function App() {
 
     setIsAuthenticating(true);
     try {
-      // Check if displayName is unique
-      const { data: existingUser } = await supabase
+      // Check if displayName is unique - optimized
+      const { data: existingUsers, error: checkError } = await supabase
         .from('users')
         .select('displayName')
         .eq('displayName', signupName)
-        .single();
+        .limit(1);
 
-      if (existingUser) {
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.warn('Name check error:', checkError);
+      } else if (existingUsers && existingUsers.length > 0) {
         setAuthError('This name is already taken. Choose another.');
         setIsAuthenticating(false);
         return;
@@ -520,7 +522,7 @@ export default function App() {
         setOtpType('signup');
       }
     } catch (err: any) {
-      setAuthError(err.message);
+      setAuthError(err.message || 'Signup failed. Please try again.');
     } finally {
       setIsAuthenticating(false);
     }
