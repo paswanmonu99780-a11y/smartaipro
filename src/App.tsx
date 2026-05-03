@@ -1773,13 +1773,19 @@ export default function App() {
                </div>
 
                <div className="grid grid-cols-2 gap-2">
-                 <div>
+                 <div className="relative">
                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
-                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
+                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                   </button>
                  </div>
-                 <div>
+                 <div className="relative">
                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm</label>
-                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
+                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                   </button>
                  </div>
                </div>
 
@@ -1840,15 +1846,21 @@ export default function App() {
                  </div>
                )}
 
-               {forgotPasswordStep === 'reset' && (
-                 <div className="space-y-4">
-                    <div>
+                {forgotPasswordStep === 'reset' && (
+                 <div className="space-y-4 text-left">
+                    <div className="relative">
                       <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">New Password</label>
-                      <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[30px] text-slate-500 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
-                    <div>
+                    <div className="relative">
                       <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm Password</label>
-                      <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[30px] text-slate-500 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                     <button onClick={handleFinalPasswordReset} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
                       {isAuthenticating ? 'Saving...' : 'Reset Password'}
