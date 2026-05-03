@@ -553,6 +553,38 @@ export default function App() {
     finally { setIsAuthenticating(false); }
   };
 
+  const handleFinalPasswordReset = async () => {
+    if (!newPassword || newPassword !== confirmNewPassword) {
+      setAuthError('Passwords do not match or are empty');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setAuthError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        alert('Password reset successful! You can now login.');
+        setAuthMode('login');
+        setForgotPasswordStep('email');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   const handleUpdatePassword = async () => {
     if (newPassword !== confirmNewPassword) return setAuthError('Passwords do not match');
     if (newPassword.length < 6) return setAuthError('Password must be at least 6 characters');
@@ -1705,20 +1737,20 @@ export default function App() {
           )}
 
           {authMode === 'forgot' && (
-             <div className="space-y-6">
+             <div className="space-y-4">
                <div className="text-center">
                  <h2 className="text-xl font-bold text-white mb-2">Reset Password</h2>
-                 <p className="text-slate-500 text-[10px] uppercase tracking-widest">
-                   {forgotPasswordStep === 'email' && 'Enter your email to get OTP'}
-                   {forgotPasswordStep === 'otp' && 'Enter the 6-digit code we sent you'}
+                 <p className="text-slate-500 text-[10px] uppercase tracking-widest leading-relaxed">
+                   {forgotPasswordStep === 'email' && 'Enter your email to receive a code'}
+                   {forgotPasswordStep === 'otp' && 'Verify your identity with the 6-digit code'}
                    {forgotPasswordStep === 'reset' && 'Create a new secure password'}
                  </p>
                </div>
 
                {forgotPasswordStep === 'email' && (
                  <div className="space-y-4">
-                   <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 font-mono text-sm text-white" placeholder="Enter your email address" />
-                   <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
+                   <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="your@email.com" />
+                   <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
                      {isAuthenticating ? 'Sending...' : 'Send OTP'}
                    </button>
                  </div>
@@ -1738,11 +1770,11 @@ export default function App() {
                              }
                            }}
                            onKeyDown={(e) => { if (e.key === 'Backspace' && !resetOtp[i] && i > 0) document.getElementById(`reset-otp-${i-1}`)?.focus(); }}
-                           className="w-10 sm:w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500 outline-none transition-all"
+                           className="w-10 sm:w-12 h-12 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
                          />
                        ))}
                     </div>
-                    <button onClick={handleVerifyResetOtp} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95">
+                    <button onClick={handleVerifyResetOtp} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
                       {isAuthenticating ? 'Verifying...' : 'Verify OTP'}
                     </button>
                  </div>
@@ -1750,21 +1782,21 @@ export default function App() {
 
                {forgotPasswordStep === 'reset' && (
                  <div className="space-y-4">
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">New Password</label>
-                     <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 font-mono text-sm text-white" placeholder="••••••••" />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confirm New Password</label>
-                     <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 font-mono text-sm text-white" placeholder="••••••••" />
-                   </div>
-                   <button onClick={handleUpdatePassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95">
-                     {isAuthenticating ? 'Updating...' : 'Update Password'}
-                   </button>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">New Password</label>
+                      <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm Password</label>
+                      <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                    </div>
+                    <button onClick={handleFinalPasswordReset} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
+                      {isAuthenticating ? 'Saving...' : 'Reset Password'}
+                    </button>
                  </div>
                )}
 
-               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-black transition-colors">Back to Login</button>
+               <button onClick={() => {setAuthMode('login'); setForgotPasswordStep('email');}} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Back to Login</button>
              </div>
           )}
           </>
