@@ -216,32 +216,43 @@ export default function App() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event);
       if (event === 'SIGNED_IN' && session?.user) {
-        // Fetch user metadata from public.users
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
+        // SET LOGGED IN IMMEDIATELY TO STOP LOADING SPINNER
+        setIsLoggedIn(true);
+        setIsAuthenticating(false);
+        setIsVerifyingOtp(false);
 
-        if (userData) {
-          localStorage.setItem('smartai_session', JSON.stringify(userData));
-          setDisplayName(userData.displayName);
-          setCredits(userData.credits);
-          setPlan(userData.plan);
-          setIsLoggedIn(true);
-        } else {
-          // If public profile doesn't exist (e.g. direct signup via magic link), create it
-          const newUser = {
-            email: session.user.email,
-            displayName: session.user.user_metadata?.displayName || session.user.email?.split('@')[0],
-            credits: 100,
-            plan: 'Basic',
-            referralCode: generateReferralCode(session.user.email || 'user')
-          };
-          await supabase.from('users').insert([newUser]);
-          localStorage.setItem('smartai_session', JSON.stringify(newUser));
-          setIsLoggedIn(true);
+        try {
+          // Fetch user metadata from public.users in background
+          const { data: userData, error: fetchError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', session.user.email)
+            .single();
+
+          if (userData) {
+            localStorage.setItem('smartai_session', JSON.stringify(userData));
+            setDisplayName(userData.displayName);
+            setCredits(userData.credits);
+            setPlan(userData.plan);
+          } else {
+            console.log('User profile not found, creating one...');
+            // If public profile doesn't exist, create it
+            const newUser = {
+              email: session.user.email,
+              displayName: session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User',
+              credits: 100,
+              plan: 'Basic',
+              referralCode: generateReferralCode(session.user.email || 'user')
+            };
+            await supabase.from('users').insert([newUser]);
+            localStorage.setItem('smartai_session', JSON.stringify(newUser));
+            setDisplayName(newUser.displayName);
+          }
+        } catch (dbErr) {
+          console.error('Database sync error (non-blocking):', dbErr);
+          // Still logged in even if DB sync fails
         }
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
