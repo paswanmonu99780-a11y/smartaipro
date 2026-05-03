@@ -544,11 +544,6 @@ export default function App() {
       setIsAuthenticating(false);
   };
 
-  const handleUpdateProfile = () => {
-    if (!displayName.trim()) return alert('Name cannot be empty');
-    syncUserData({ displayName });
-    alert('Profile updated successfully!');
-  };
   const handleForgotPassword = async () => {
     if (!resetEmail) return alert('Please enter your email');
     const dbUsers = await fetchUsersFromSupabase();
@@ -568,12 +563,6 @@ export default function App() {
     setNewPassword('');
   };
   const handleLogout = () => { localStorage.removeItem('smartai_session'); window.location.reload(); };
-  const handleSaveProfile = () => {
-    syncUserData({ displayName: tempDisplayName, avatar: tempAvatar });
-    setDisplayName(tempDisplayName);
-    setAvatar(tempAvatar);
-    setIsEditingProfile(false);
-  };
 
   const getDeviceId = () => {
     let deviceId = localStorage.getItem('smartai_device_id');
@@ -724,18 +713,12 @@ export default function App() {
   };
 
   const handleUpdateProfile = () => {
-    if (!tempDisplayName.trim()) return;
+    if (!tempDisplayName.trim()) return alert('Name cannot be empty');
     setDisplayName(tempDisplayName);
     setAvatar(tempAvatar);
     setIsEditingProfile(false);
-
-    // Persist to session
-    const session = JSON.parse(localStorage.getItem('smartai_session') || '{}');
-    if (session.user) {
-      session.user.displayName = tempDisplayName;
-      session.user.avatar = tempAvatar;
-      localStorage.setItem('smartai_session', JSON.stringify(session));
-    }
+    syncUserData({ displayName: tempDisplayName, avatar: tempAvatar });
+    alert('Profile updated successfully!');
   };
 
   const copyReferralCode = () => {
