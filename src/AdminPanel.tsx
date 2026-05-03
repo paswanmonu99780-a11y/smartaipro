@@ -170,25 +170,25 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-slate-950 text-slate-200 p-6 font-sans">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-rose-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-rose-600 rounded-lg flex items-center justify-center shrink-0">
               <Shield className="text-white w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-              <p className="text-xs text-slate-500 uppercase tracking-widest">SmartAI Pro Analytics</p>
+              <h1 className="text-xl md:text-2xl font-bold text-white">Admin Dashboard</h1>
+              <p className="text-[10px] md:text-xs text-slate-500 uppercase tracking-widest">SmartAI Pro Analytics</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={exportData} className="px-4 py-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 border border-indigo-600/30 rounded-lg text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2">
-              <Download className="w-4 h-4" /> Export Data
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <button onClick={exportData} className="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 border border-indigo-600/30 rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-2">
+              <Download className="w-4 h-4" /> Export
             </button>
-            <button onClick={refreshData} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs uppercase tracking-widest font-bold transition-all">
-              Refresh Data
+            <button onClick={refreshData} className="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all flex items-center justify-center">
+              Refresh
             </button>
-            <button onClick={handleLogout} className="px-4 py-2 bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-600/30 rounded-lg text-xs uppercase tracking-widest font-bold transition-all flex items-center gap-2">
-              <LogOut className="w-4 h-4" /> Logout
+            <button onClick={handleLogout} className="flex-1 md:flex-none px-3 md:px-4 py-2.5 bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-600/30 rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all flex items-center justify-center gap-2">
+              <LogOut className="w-4 h-4" /> Exit
             </button>
           </div>
         </div>

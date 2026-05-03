@@ -2217,18 +2217,35 @@ export default function App() {
                 </div>
 
                 {generatedImg && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative group mb-10 mx-auto max-w-2xl overflow-hidden rounded-[2rem] border border-slate-800 shadow-2xl bg-slate-900 p-2">
-                    <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-3xl" />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm rounded-[2rem] flex flex-col md:flex-row items-center justify-center gap-4 p-4">
-                       <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl hover:scale-105">
-                         <Download className="w-4 h-4" /> Download PNG
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 mx-auto max-w-2xl">
+                    <div className="relative group overflow-hidden rounded-[2rem] border border-slate-800 shadow-2xl bg-slate-900 p-2">
+                      <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-3xl" />
+                      {/* Desktop Hover Overlay */}
+                      <div className="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm rounded-[2rem] flex-row items-center justify-center gap-4 p-4 z-10">
+                         <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl hover:scale-105">
+                           <Download className="w-4 h-4" /> Download PNG
+                         </button>
+                         <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500 transition-colors shadow-xl hover:scale-105 disabled:opacity-50">
+                           <RefreshCcw className="w-4 h-4" /> Regenerate (-2 Tokens)
+                         </button>
+                         <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="bg-slate-700 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-600 transition-colors shadow-xl hover:scale-105">
+                           <Copy className="w-4 h-4" /> Share
+                         </button>
+                      </div>
+                    </div>
+                    {/* Mobile Action Buttons */}
+                    <div className="flex md:hidden flex-col gap-3 mt-4 w-full">
+                       <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="w-full bg-indigo-600 text-white px-5 py-4 rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-indigo-500 transition-colors shadow-xl">
+                         <Download className="w-5 h-5" /> Download Image
                        </button>
-                       <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500 transition-colors shadow-xl hover:scale-105 disabled:opacity-50">
-                         <RefreshCcw className="w-4 h-4" /> Regenerate (-2 Tokens)
-                       </button>
-                       <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="bg-slate-700 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-600 transition-colors shadow-xl hover:scale-105">
-                         <Copy className="w-4 h-4" /> Share
-                       </button>
+                       <div className="flex gap-3">
+                         <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="flex-1 bg-emerald-600 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-emerald-500 transition-colors shadow-xl disabled:opacity-50">
+                           <RefreshCcw className="w-4 h-4" /> Regenerate
+                         </button>
+                         <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-slate-700 transition-colors shadow-xl">
+                           <Copy className="w-4 h-4" /> Share Link
+                         </button>
+                       </div>
                     </div>
                   </motion.div>
                 )}
@@ -2429,6 +2446,14 @@ export default function App() {
                 <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                    <Zap className="w-5 h-5" />
                    <span className="text-base font-medium">Expert Mode</span>
+                </button>
+
+                <div className="my-4 px-2">
+                  <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
+                </div>
+                <button onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+                   <Shield className="w-5 h-5" />
+                   <span className="text-base font-medium">Admin Panel</span>
                 </button>
               </nav>
             </motion.div>
