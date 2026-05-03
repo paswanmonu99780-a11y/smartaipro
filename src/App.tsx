@@ -1678,6 +1678,15 @@ export default function App() {
   };
 
    const renderOtpScreen = () => {
+     const handlePaste = (e: React.ClipboardEvent) => {
+       const data = e.clipboardData.getData('text').trim();
+       if (/^\d{6}$/.test(data)) {
+         const newOtp = data.split('');
+         setOtp(newOtp);
+         document.getElementById('otp-5')?.focus();
+       }
+     };
+
      return (
        <div className="space-y-6">
          <div className="text-center">
@@ -1694,27 +1703,34 @@ export default function App() {
                 key={i} 
                 id={`otp-${i}`}
                 type="text" 
+                inputMode="numeric"
                 maxLength={1} 
                 value={digit} 
+                onPaste={i === 0 ? handlePaste : undefined}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (/^\d*$/.test(val)) {
                     const newOtp = [...otp];
-                    newOtp[i] = val;
+                    newOtp[i] = val.slice(-1);
                     setOtp(newOtp);
                     if (val && i < 5) document.getElementById(`otp-${i+1}`)?.focus();
                   }
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Backspace' && !otp[i] && i > 0) document.getElementById(`otp-${i-1}`)?.focus();
+                  if (e.key === 'Backspace' && !otp[i] && i > 0) {
+                    const newOtp = [...otp];
+                    newOtp[i-1] = '';
+                    setOtp(newOtp);
+                    document.getElementById(`otp-${i-1}`)?.focus();
+                  }
                 }}
                 className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
               />
             ))}
          </div>
 
-         <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95">
-           {isAuthenticating ? 'Verifying...' : 'Verify Code'}
+         <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50">
+           {isAuthenticating ? 'Verifying Code...' : 'Verify Code'}
          </button>
 
          <div className="text-center space-y-3">
