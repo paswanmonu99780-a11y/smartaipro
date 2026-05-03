@@ -240,6 +240,13 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'profile') {
+      setTempDisplayName(displayName);
+      setTempAvatar(avatar);
+    }
+  }, [activeTab, displayName, avatar]);
+
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
     "Explain quantum physics like I'm five",
@@ -2408,10 +2415,20 @@ export default function App() {
                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
                   <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
                      <div className="relative">
-                        <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform">
-                           {avatar ? <img src={avatar} alt="avatar" className="w-full h-full object-cover rounded-full" /> : <span>{displayName.charAt(0).toUpperCase()}</span>}
+                        <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform overflow-hidden">
+                           {tempAvatar ? <img src={tempAvatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{tempDisplayName.charAt(0).toUpperCase()}</span>}
                         </div>
-                        <button className="absolute bottom-0 right-0 p-2 bg-slate-800 border border-slate-700 rounded-full text-indigo-400 hover:text-white transition-colors">
+                        <input 
+                           type="file" 
+                           id="profile-upload" 
+                           className="hidden" 
+                           accept="image/*" 
+                           onChange={handleFileUpload}
+                        />
+                        <button 
+                           onClick={() => document.getElementById('profile-upload')?.click()} 
+                           className="absolute bottom-0 right-0 p-2 bg-slate-800 border border-slate-700 rounded-full text-indigo-400 hover:text-white transition-colors shadow-lg"
+                        >
                            <ImageIcon className="w-4 h-4" />
                         </button>
                      </div>
@@ -2420,11 +2437,11 @@ export default function App() {
                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Display Name</label>
                            <div className="flex gap-2 max-w-sm mx-auto md:mx-0">
                               <input 
-                                value={displayName} 
-                                onChange={e => setDisplayName(e.target.value)} 
+                                value={tempDisplayName} 
+                                onChange={e => setTempDisplayName(e.target.value)} 
                                 className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white font-bold focus:outline-none focus:border-indigo-500/50" 
                               />
-                              <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all">Save</button>
+                              <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all">Save Changes</button>
                            </div>
                         </div>
                         <div className="flex gap-2 justify-center md:justify-start">
