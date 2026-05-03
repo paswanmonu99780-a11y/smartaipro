@@ -2025,6 +2025,7 @@ export default function App() {
     finally { setIsAiThinking(false); }
   };
 
+  function renderCreativeDashboard() {
     return (
       <div className="h-full md:h-[calc(100vh-100px)] flex flex-col gap-2 max-w-[1600px] mx-auto px-2 overflow-y-auto md:overflow-hidden no-scrollbar pb-6">
         {/* Compact Mode Header */}
