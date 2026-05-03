@@ -1754,24 +1754,24 @@ export default function App() {
                 { name: 'Image Enhance', desc: 'Improve image quality and resolution.', icon: Sparkles, color: 'text-purple-400' },
                 { name: 'Compress Image', desc: 'Reduce image size without losing quality.', icon: Download, color: 'text-emerald-400' }
               ].map((tool, i) => (
-                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-2xl p-4 text-left group">
-                   <div className="flex items-start justify-between mb-3">
-                      <div className={`w-9 h-9 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-slate-700 transition-colors`}>
-                         <tool.icon className={`w-4 h-4 ${tool.color}`} />
+                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl md:rounded-2xl p-3 md:p-4 text-left group">
+                   <div className="flex items-start justify-between mb-2 md:mb-3">
+                      <div className={`w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-slate-700 transition-colors`}>
+                         <tool.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${tool.color}`} />
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors" />
                    </div>
-                   <h3 className="text-[13px] font-bold text-white mb-1.5">{tool.name}</h3>
-                   <p className="text-[10px] text-slate-500 leading-snug">{tool.desc}</p>
+                   <h3 className="text-[11px] md:text-[13px] font-bold text-white mb-1 md:mb-1.5 leading-tight truncate">{tool.name}</h3>
+                   <p className="text-[9px] md:text-[10px] text-slate-500 leading-snug line-clamp-2">{tool.desc}</p>
                 </button>
               ))}
            </div>
         </div>
 
         {/* More Tools */}
-        <div className="flex-1 min-h-0 flex flex-col pb-6">
+        <div className="pb-6 flex flex-col">
            <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">More Tools</h2>
-           <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-3 gap-3 flex-1 min-h-0 pb-20 md:pb-0">
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pb-20 md:pb-0">
               {[
                 { name: 'Resize Image', desc: 'Change dimensions of your image.', icon: Monitor },
                 { name: 'Crop Image', desc: 'Crop your image to any size.', icon: Layout },
@@ -1786,13 +1786,13 @@ export default function App() {
                 { name: 'Watermark Add', desc: 'Add custom watermark to image.', icon: CloudSun },
                 { name: 'QR Code Generator', desc: 'Generate QR code images.', icon: Code }
               ].map((tool, i) => (
-                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl p-3.5 flex items-center gap-4 text-left group h-full">
-                   <div className="w-9 h-9 shrink-0 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
-                      <tool.icon className="w-4 h-4 text-indigo-400" />
+                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl p-2.5 md:p-3.5 flex items-center gap-3 md:gap-4 text-left group h-full">
+                   <div className="w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
+                      <tool.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
                    </div>
                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-bold text-white mb-0.5 truncate">{tool.name}</h3>
-                      <p className="text-[10px] text-slate-500 truncate">{tool.desc}</p>
+                      <h3 className="text-[11px] md:text-xs font-bold text-white mb-0.5 truncate">{tool.name}</h3>
+                      <p className="text-[9px] md:text-[10px] text-slate-500 truncate">{tool.desc}</p>
                    </div>
                    <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 group-hover:text-white transition-colors" />
                 </button>
