@@ -138,18 +138,13 @@ export default function App() {
   useEffect(() => {
     setAuthError(null);
   }, [authMode]);
-  const [loginContactType, setLoginContactType] = useState<'email' | 'mobile'>('email');
-  const [loginMobile, setLoginMobile] = useState('');
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetOtp, setResetOtp] = useState(['', '', '', '', '', '']);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [forgotPasswordStep, setForgotPasswordStep] = useState<'email' | 'otp' | 'reset'>('email');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otpType, setOtpType] = useState<'login' | 'signup'>('login');
+  const [resendSuccess, setResendSuccess] = useState(false);
   const [signupName, setSignupName] = useState('');
-  const [signupMobile, setSignupMobile] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [signupReferCode, setSignupReferCode] = useState('');
-  const [signupContactType, setSignupContactType] = useState<'email' | 'mobile'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -205,7 +200,7 @@ export default function App() {
   const [tone, setTone] = useState<'Professional' | 'Funny' | 'Casual'>('Professional');
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [sentOtp, setSentOtp] = useState('');
+  const [resendSuccess, setResendSuccess] = useState(false);
   const [otpType, setOtpType] = useState<'login' | 'signup'>('login');
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
   const isExpertLocked = plan === 'Basic' && !isAdmin;
@@ -311,7 +306,6 @@ export default function App() {
         return {
           ...u,
           email: u.email || '',
-          mobile: u.mobile || '',
           password: u.password || '',
           credits: typeof u.credits === 'number' ? u.credits : 100,
           plan: u.plan || 'Basic',
@@ -319,7 +313,7 @@ export default function App() {
           avatar: u.avatar || '',
           name: u.name || u.displayName || 'User',
           referCode: u.referCode || '',
-          referralCode: generateReferralCode(u.email || u.mobile || u.displayName || u.name || 'user'),
+          referralCode: generateReferralCode(u.email || u.displayName || u.name || 'user'),
           referredBy: '',
           referralRewarded: false,
           deviceId: getDeviceId(),
@@ -348,7 +342,7 @@ export default function App() {
         const d = JSON.parse(saved);
         // Also migrate session if needed
         if (!d.referralCode) {
-          d.referralCode = generateReferralCode(d.email || d.mobile || d.displayName || 'user');
+          d.referralCode = generateReferralCode(d.email || d.displayName || 'user');
           d.referredBy = d.referredBy || '';
           d.referralRewarded = d.referralRewarded || false;
           d.deviceId = d.deviceId || getDeviceId();
@@ -387,22 +381,22 @@ export default function App() {
   }, []);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isAiThinking]);
 
-  const getUsers = (): Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }> => {
+  const getUsers = (): Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }> => {
     const data = localStorage.getItem('smartai_users');
     return data ? JSON.parse(data) : [];
   };
-  const saveUsers = (users: Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; mobile: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }>) => {
+  const saveUsers = (users: Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }>) => {
     localStorage.setItem('smartai_users', JSON.stringify(users));
     syncUsersToSupabase(users);
   };
 
   const sendOtp = async (type: 'login' | 'signup') => {
     setIsAuthenticating(true);
-    const target = type === 'login' ? (loginContactType === 'email' ? email : loginMobile) : (signupContactType === 'email' ? email : signupMobile);
+    const target = email;
     
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        [loginContactType === 'email' ? 'email' : 'phone']: target,
+        email: target,
         options: {
           shouldCreateUser: type === 'signup',
           data: type === 'signup' ? { displayName: signupName } : undefined
@@ -413,7 +407,7 @@ export default function App() {
         setAuthError(error.message);
       } else {
         setIsVerifyingOtp(true);
-        alert(`Verification code sent to ${target}!`);
+        setOtpType(type);
       }
     } catch (err: any) {
       setAuthError(err.message);
@@ -448,45 +442,6 @@ export default function App() {
       }
   };
 
-  const completeLogin = () => {
-      const users = getUsers();
-      const user = users.find(u => {
-        const userEmail = (u.email || '').trim();
-        const userMobile = (u.mobile || '').trim();
-        const inputEmail = (email || '').trim();
-        const inputMobile = (loginMobile || '').trim();
-        const matchContact = loginContactType === 'email'
-          ? userEmail === inputEmail
-          : userMobile === inputMobile;
-        return matchContact && u.password === password;
-      });
-
-      if (user) {
-        const lastLogin = localStorage.getItem('smartai_last_login');
-        const today = new Date().toDateString();
-        
-        if (lastLogin !== today) {
-          localStorage.setItem('smartai_last_login', today);
-          const dailyCredits = user.plan === 'Basic' ? 10 : 50;
-          user.credits = (typeof user.credits === 'number' ? user.credits : 100) + dailyCredits;
-          alert(`Welcome back! You received ${dailyCredits} daily bonus credits.`);
-          
-          const userIdx = users.findIndex(u => u.email === user.email || u.mobile === user.mobile);
-          if (userIdx !== -1) {
-            users[userIdx] = user;
-            saveUsers(users);
-          }
-        }
-        localStorage.setItem('smartai_session', JSON.stringify(user));
-        setCredits(typeof user.credits === 'number' ? user.credits : 100);
-        setPlan((user.plan as 'Basic' | 'Pro' | 'Ultra') || 'Basic');
-        setDisplayName(user.displayName || user.email?.split('@')[0] || 'User');
-        setAvatar(user.avatar || '');
-        setEmail(user.email || '');
-        setIsLoggedIn(true);
-        setIsVerifyingOtp(false);
-      }
-  };
   const syncUserData = (updates: Partial<{ credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number }>) => {
     const session = localStorage.getItem('smartai_session');
     if (session) {
@@ -496,7 +451,7 @@ export default function App() {
 
       const users = getUsers();
       const idx = users.findIndex((u: any) =>
-        (d.email && u.email === d.email) || (d.mobile && u.mobile === d.mobile)
+        (d.email && u.email === d.email)
       );
       if (idx !== -1) {
         Object.assign(users[idx], updates);
@@ -511,9 +466,22 @@ export default function App() {
       setAuthError('Please fill all required fields');
       return;
     }
-    
+
     setIsAuthenticating(true);
     try {
+      // Check if displayName is unique
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('displayName')
+        .eq('displayName', signupName)
+        .single();
+
+      if (existingUser) {
+        setAuthError('This name is already taken. Choose another.');
+        setIsAuthenticating(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
@@ -531,7 +499,6 @@ export default function App() {
       } else {
         setIsVerifyingOtp(true);
         setOtpType('signup');
-        alert(`Verification code sent to ${email}!`);
       }
     } catch (err: any) {
       setAuthError(err.message);
@@ -540,25 +507,15 @@ export default function App() {
     }
   };
 
-  const completeSignup = () => {
-    const users = getUsers();
-    const newUser = JSON.parse(localStorage.getItem('smartai_session') || '{}');
-    
-    // Final save if needed, but session is already set in handleSignup for flow
-    setIsLoggedIn(true);
-    setIsVerifyingOtp(false);
-  };
-
   const handleOtpVerify = async () => {
     const enteredOtp = otp.join('');
-    const currentContactType = otpType === 'login' ? loginContactType : signupContactType;
-    const target = otpType === 'login' ? (loginContactType === 'email' ? email : loginMobile) : (signupContactType === 'email' ? email : signupMobile);
+    const target = email;
     
     setIsAuthenticating(true);
     const { error } = await supabase.auth.verifyOtp({
-      [currentContactType === 'email' ? 'email' : 'phone']: target,
+      email: target,
       token: enteredOtp,
-      type: currentContactType === 'email' ? 'magiclink' : 'sms'
+      type: 'magiclink'
     });
 
     if (error) {
@@ -580,7 +537,6 @@ export default function App() {
       if (error) setAuthError(error.message);
       else {
         setForgotPasswordStep('otp');
-        alert(`OTP sent to ${resetEmail}`);
       }
     } catch (err: any) { setAuthError(err.message); }
     finally { setIsAuthenticating(false); }
@@ -1517,7 +1473,7 @@ export default function App() {
     let finalResult = '';
 
     let systemPrompt = 'You are a highly advanced, empathetic, and intelligent AI assistant. Always provide a high-level, extremely helpful response. Understand the deep intent of the user, offer valuable extra suggestions, and express emotion using appropriate emojis! ðŸŒŸ Make the user feel heard and supported! ðŸ’–';
-    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! âœï¸âœ¨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! ðŸŒº';
+    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! âœ ï¸ âœ¨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! ðŸŒº';
     else if (creativeSubTab === 'code') systemPrompt = 'You are a Master Game Developer and Elite Senior Software Engineer! ðŸŽ®ðŸ’» Your mission is to generate high-end, visually stunning, and fully functional code. When generating games or interactive UI: 1. Use advanced logic (physics, state machines, proper game loops). 2. Create "Good Looking" visuals with modern CSS (glassmorphism, neon glows, smooth 60fps animations, professional typography). 3. ALWAYS include intuitive controls (Keyboard ARROW keys/WASD, Mouse, or Mobile Touch). 4. Prefer self-contained, high-performance HTML/CSS/JS that can be previewed. For other code, be professional, optimized, and follow best practices. Always wrap code in ``` blocks. Be encouraging and use emojis! ðŸš€âœ¨';
     else if (creativeSubTab === 'summarizer') systemPrompt = 'You are an expert Speed-Reader and Analyst! ðŸ“šâš¡ Summarize the provided text beautifully and concisely. Retain the absolute core information, provide a "Key Takeaways" section, and suggest why this information matters! Use engaging emojis and an empathetic tone! ðŸ§ ðŸ’¡';
     else if (creativeSubTab === 'idea') systemPrompt = 'You are a brilliant Idea Generator and Brainstorming Partner! ðŸ¤¯ðŸŽ¯ Provide innovative, out-of-the-box, and highly practical ideas. Structure your response perfectly, give actionable next steps, and motivate the user with a highly emotional, enthusiastic tone and lots of inspiring emojis! ðŸš€ðŸŒŸ';
@@ -1610,15 +1566,14 @@ export default function App() {
   };
 
    const renderOtpScreen = () => {
-     const target = otpType === 'login' ? (loginContactType === 'email' ? email : loginMobile) : (signupContactType === 'email' ? email : signupMobile);
      return (
        <div className="space-y-6">
          <div className="text-center">
-            <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
-               <LockIcon className="w-8 h-8 text-indigo-400" />
+            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
+               <LockIcon className="w-8 h-8 text-slate-400" />
             </div>
             <h2 className="text-xl font-bold text-white">Verify Identity</h2>
-            <p className="text-slate-500 text-xs mt-2 leading-relaxed">We've sent a 6-digit verification code to <br/><span className="text-indigo-400 font-mono">{target}</span></p>
+            <p className="text-slate-500 text-xs mt-2 leading-relaxed">We've sent a 6-digit verification code to <br/><span className="text-slate-300 font-mono">{email}</span></p>
          </div>
 
          <div className="flex justify-between gap-2">
@@ -1641,20 +1596,29 @@ export default function App() {
                 onKeyDown={(e) => {
                   if (e.key === 'Backspace' && !otp[i] && i > 0) document.getElementById(`otp-${i-1}`)?.focus();
                 }}
-                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500 outline-none transition-all shadow-inner"
+                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-slate-500 outline-none transition-all shadow-inner"
               />
             ))}
          </div>
 
-         <button onClick={handleOtpVerify} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 active:scale-95">
+         <button onClick={handleOtpVerify} className="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-700 transition-all active:scale-95">
            Verify Code
          </button>
 
          <div className="text-center space-y-3">
-            <button onClick={() => sendOtp(otpType)} className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Resend Code</button>
-            <br/>
-            <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
-         </div>
+             <button 
+               onClick={async () => {
+                 await handleForgotPassword();
+                 setResendSuccess(true);
+                 setTimeout(() => setResendSuccess(false), 3000);
+               }} 
+               className={`text-[10px] font-black uppercase tracking-widest transition-all ${resendSuccess ? 'text-emerald-400 scale-110' : 'text-slate-500 hover:text-white'}`}
+             >
+               {resendSuccess ? 'Code Sent Successfully!' : 'Resend Code'}
+             </button>
+             <br/>
+             <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
+          </div>
        </div>
      );
    };
@@ -1662,105 +1626,80 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-4 font-sans relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
-
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[min(400px,95vw)] bg-slate-900/80 border border-slate-800 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl backdrop-blur-2xl relative z-10 mx-auto">
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(79,70,229,0.4)] rotate-3"><Zap className="text-white w-8 h-8 fill-white" /></div>
-            <h1 className="text-3xl font-black tracking-tight text-white italic">SmartAI <span className="font-light text-slate-500 not-italic">PRO</span></h1>
-            <p className="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-[0.3em] text-center">Neural Creative Engine</p>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[380px] bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-2xl relative z-10 mx-auto">
+          <div className="flex flex-col items-center mb-6">
+            <h1 className="text-2xl font-black tracking-tight text-white italic">SmartAI <span className="font-light text-slate-500 not-italic">PRO</span></h1>
           </div>
 
           {authError && (
-            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[10px] font-black uppercase tracking-widest text-center shadow-lg shadow-red-500/5">
+            <div className="mb-6 p-4 bg-red-950 border border-red-900 rounded-xl text-red-400 text-[10px] font-black uppercase tracking-widest text-center">
               {authError}
-            </motion.div>
+            </div>
           )}
 
           {isVerifyingOtp ? renderOtpScreen() : (
             <>
               {authMode === 'login' && (
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
-                  </div>
-
-               <div>
-                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
-                 <div className="relative">
-                   <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
-                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                   </button>
+                 <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Email Address</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
                  </div>
-               </div>
 
-               <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
+                 <div>
+                   <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Password</label>
+                   <div className="relative">
+                     <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                     </button>
+                   </div>
+                 </div>
+
+               <button type="submit" disabled={isAuthenticating} className="w-full bg-white text-slate-900 py-4 rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
                  {isAuthenticating ? 'Logging in...' : 'Login'}
                </button>
 
-               <div className="flex justify-between text-[10px] text-slate-500 mt-4">
-                 <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest">Sign Up</button>
-                 <button type="button" onClick={() => { setAuthMode('forgot'); setForgotPasswordStep('email'); }} className="hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest">Forgot Password?</button>
+               <div className="flex justify-between text-[9px] text-slate-500 mt-3">
+                 <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-white transition-colors font-bold uppercase tracking-widest">Sign Up</button>
+                 <button type="button" onClick={() => { setAuthMode('forgot'); setForgotPasswordStep('email'); }} className="hover:text-white transition-colors font-bold uppercase tracking-widest">Forgot Password?</button>
                </div>
             </form>
           )}
 
           {authMode === 'signup' && (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Full Name</label>
-                <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="John Doe" />
-              </div>
-
-              <div className="flex gap-2 mb-2">
-                <button type="button" onClick={() => setSignupContactType('email')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Email</button>
-                <button type="button" onClick={() => setSignupContactType('mobile')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${signupContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Mobile</button>
-              </div>
-
-              {signupContactType === 'email' ? (
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile</label>
-                  <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" />
-                </div>
-              )}
+             <div className="space-y-2.5">
+               <div>
+                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Full Name</label>
+                 <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
+               </div>
 
                <div>
-                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Create Password</label>
+                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Email Address</label>
+                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs text-white" placeholder="name@example.com" />
+               </div>
+
+               <div>
+                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
                  <div className="relative">
-                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
-                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                    </button>
                  </div>
                </div>
 
                <div>
-                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Confirm Password</label>
-                 <div className="relative">
-                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
-                 </div>
+                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Referral (Optional)</label>
+                 <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-slate-500 transition-all font-mono text-xs uppercase text-white" placeholder="ABC123" />
                </div>
 
-               <div className="pt-2">
-                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Referral Code (Optional)</label>
-                 <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm uppercase" placeholder="ABC123" />
-               </div>
-
-               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-6">
-                 {isAuthenticating ? 'Creating Account...' : 'Get Signup OTP'}
+               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-white text-slate-900 py-3.5 rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 font-black uppercase tracking-widest text-[10px] mt-2">
+                 {isAuthenticating ? 'Creating...' : 'Get Signup OTP'}
                </button>
 
-              <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-bold transition-colors">Already have an account? Login</button>
-            </div>
+               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Back to Login</button>
+             </div>
           )}
 
           {authMode === 'forgot' && (
@@ -1768,7 +1707,7 @@ export default function App() {
                <div className="text-center">
                  <h2 className="text-xl font-bold text-white mb-2">Reset Password</h2>
                  <p className="text-slate-500 text-[10px] uppercase tracking-widest">
-                   {forgotPasswordStep === 'email' && 'Enter your email or mobile to get OTP'}
+                   {forgotPasswordStep === 'email' && 'Enter your email to get OTP'}
                    {forgotPasswordStep === 'otp' && 'Enter the 6-digit code we sent you'}
                    {forgotPasswordStep === 'reset' && 'Create a new secure password'}
                  </p>
