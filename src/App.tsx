@@ -555,40 +555,45 @@ export default function App() {
         const meta = data.user.user_metadata;
         const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
         
-        const users = getUsers();
-        let userIdx = users.findIndex(u => u.email === data.user?.email);
-        
-        if (userIdx === -1) {
-          const newUser = {
-            email: data.user.email || '',
-            password: '',
-            credits: 100,
-            plan: 'Basic',
-            displayName: userName,
-            avatar: '',
-            name: userName,
-            referCode: '',
-            referralCode: generateReferralCode(data.user.email || userName),
-            referredBy: '',
-            referralRewarded: false,
-            deviceId: getDeviceId(),
-            referralEarnings: 0
-          };
-          users.push(newUser);
-          saveUsers(users);
-          localStorage.setItem('smartai_session', JSON.stringify(newUser));
-        } else {
-          if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
-            users[userIdx].displayName = userName;
-            users[userIdx].name = userName;
-            saveUsers(users);
-          }
-          localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
-        }
-
+        // Immediate UI update to prevent hanging
         setDisplayName(userName);
         setIsLoggedIn(true);
         setIsVerifyingOtp(false);
+        setIsAuthenticating(false);
+
+        // Perform storage and sync in background
+        setTimeout(() => {
+          const users = getUsers();
+          let userIdx = users.findIndex(u => u.email === data.user?.email);
+          
+          if (userIdx === -1) {
+            const newUser = {
+              email: data.user.email || '',
+              password: '',
+              credits: 100,
+              plan: 'Basic',
+              displayName: userName,
+              avatar: '',
+              name: userName,
+              referCode: '',
+              referralCode: generateReferralCode(data.user.email || userName),
+              referredBy: '',
+              referralRewarded: false,
+              deviceId: getDeviceId(),
+              referralEarnings: 0
+            };
+            users.push(newUser);
+            saveUsers(users);
+            localStorage.setItem('smartai_session', JSON.stringify(newUser));
+          } else {
+            if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
+              users[userIdx].displayName = userName;
+              users[userIdx].name = userName;
+              saveUsers(users);
+            }
+            localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
+          }
+        }, 10);
       }
     } catch (err: any) {
       console.error('OTP Verify Catch:', err);
