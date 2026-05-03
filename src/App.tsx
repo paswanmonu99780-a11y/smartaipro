@@ -3,6 +3,7 @@ import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, G
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
+import { supabase } from './lib/supabase';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
@@ -140,7 +141,10 @@ export default function App() {
   const [loginContactType, setLoginContactType] = useState<'email' | 'mobile'>('email');
   const [loginMobile, setLoginMobile] = useState('');
   const [resetEmail, setResetEmail] = useState('');
+  const [resetOtp, setResetOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<'email' | 'otp' | 'reset'>('email');
   const [signupName, setSignupName] = useState('');
   const [signupMobile, setSignupMobile] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
@@ -199,6 +203,10 @@ export default function App() {
   const [expertToolResult, setExpertToolResult] = useState('');
   const [isExpertToolThinking, setIsExpertToolThinking] = useState(false);
   const [tone, setTone] = useState<'Professional' | 'Funny' | 'Casual'>('Professional');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [sentOtp, setSentOtp] = useState('');
+  const [otpType, setOtpType] = useState<'login' | 'signup'>('login');
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
   const isExpertLocked = plan === 'Basic' && !isAdmin;
 
@@ -213,6 +221,44 @@ export default function App() {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Fetch user metadata from public.users
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userData) {
+          localStorage.setItem('smartai_session', JSON.stringify(userData));
+          setDisplayName(userData.displayName);
+          setCredits(userData.credits);
+          setPlan(userData.plan);
+          setIsLoggedIn(true);
+        } else {
+          // If public profile doesn't exist (e.g. direct signup via magic link), create it
+          const newUser = {
+            email: session.user.email,
+            displayName: session.user.user_metadata?.displayName || session.user.email?.split('@')[0],
+            credits: 100,
+            plan: 'Basic',
+            referralCode: generateReferralCode(session.user.email || 'user')
+          };
+          await supabase.from('users').insert([newUser]);
+          localStorage.setItem('smartai_session', JSON.stringify(newUser));
+          setIsLoggedIn(true);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false);
+        localStorage.removeItem('smartai_session');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -350,35 +396,61 @@ export default function App() {
     syncUsersToSupabase(users);
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-    if (loginContactType === 'email' && !email) {
-      setAuthError('Please enter email address');
-      return;
-    }
-    if (loginContactType === 'mobile' && !loginMobile) {
-      setAuthError('Please enter mobile number');
-      return;
-    }
-    if (!password) {
-      setAuthError('Please enter password');
-      return;
-    }
+  const sendOtp = async (type: 'login' | 'signup') => {
     setIsAuthenticating(true);
+    const target = type === 'login' ? (loginContactType === 'email' ? email : loginMobile) : (signupContactType === 'email' ? email : signupMobile);
     
     try {
-      // Fetch latest DB state before login
-      const dbUsers = await fetchUsersFromSupabase();
-      if (dbUsers && dbUsers.length > 0) {
-        localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
-      }
-    } catch (e) {
-      console.error("Login sync failed", e);
-    }
+      const { error } = await supabase.auth.signInWithOtp({
+        [loginContactType === 'email' ? 'email' : 'phone']: target,
+        options: {
+          shouldCreateUser: type === 'signup',
+          data: type === 'signup' ? { displayName: signupName } : undefined
+        }
+      });
 
-    const users = getUsers();
-    const user = users.find(u => {
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setIsVerifyingOtp(true);
+        alert(`Verification code sent to ${target}!`);
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setAuthError(null);
+      if (!email || !password) return setAuthError('Please fill all fields');
+      setIsAuthenticating(true);
+
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            setAuthError('Incorrect password or user not found');
+          } else {
+            setAuthError(error.message);
+          }
+        }
+      } catch (err: any) {
+        setAuthError(err.message);
+      } finally {
+        setIsAuthenticating(false);
+      }
+  };
+
+  const completeLogin = () => {
+      const users = getUsers();
+      const user = users.find(u => {
         const userEmail = (u.email || '').trim();
         const userMobile = (u.mobile || '').trim();
         const inputEmail = (email || '').trim();
@@ -390,7 +462,6 @@ export default function App() {
       });
 
       if (user) {
-        // Daily refresh logic
         const lastLogin = localStorage.getItem('smartai_last_login');
         const today = new Date().toDateString();
         
@@ -413,10 +484,8 @@ export default function App() {
         setAvatar(user.avatar || '');
         setEmail(user.email || '');
         setIsLoggedIn(true);
-      } else {
-        setAuthError('Invalid credentials');
+        setIsVerifyingOtp(false);
       }
-      setIsAuthenticating(false);
   };
   const syncUserData = (updates: Partial<{ credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number }>) => {
     const session = localStorage.getItem('smartai_session');
@@ -438,136 +507,116 @@ export default function App() {
 
   const handleSignup = async () => {
     setAuthError(null);
-    if (!signupName || !password || !signupConfirmPassword) {
+    if (!signupName || !email || !password) {
       setAuthError('Please fill all required fields');
       return;
     }
-    if (signupContactType === 'email' && !email) {
-      setAuthError('Please enter email address');
-      return;
-    }
-    if (signupContactType === 'mobile' && !signupMobile) {
-      setAuthError('Please enter mobile number');
-      return;
-    }
-    if (password !== signupConfirmPassword) {
-      setAuthError('Password and confirm password do not match');
-      return;
-    }
-    setIsAuthenticating(true);
     
+    setIsAuthenticating(true);
     try {
-      // Fetch latest DB state before signup to avoid overwriting existing
-      const dbUsers = await fetchUsersFromSupabase();
-      if (dbUsers && dbUsers.length > 0) {
-        localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
-      }
-    } catch (e) {
-      console.error("Signup sync failed", e);
-    }
-
-    const users = getUsers();
-
-      // Check for duplicate email
-      if (signupContactType === 'email' && email && users.find((u: any) => u.email === email)) {
-        setAuthError('Account already exists with this email. Please login instead.');
-        setIsAuthenticating(false);
-        return;
-      }
-
-      // Check for duplicate mobile
-      if (signupContactType === 'mobile' && signupMobile && users.find((u: any) => u.mobile === signupMobile)) {
-        alert('Account already exists with this mobile number. Please login instead.');
-        setIsAuthenticating(false);
-        return;
-      }
-
-      // Check for duplicate display name
-      if (users.find((u: any) => u.displayName && u.displayName.toLowerCase() === signupName.toLowerCase())) {
-        setAuthError('This display name is already taken. Please choose a different name.');
-        setIsAuthenticating(false);
-        return;
-      }
-
-      // Validate referral code if provided
-      let referredBy = '';
-      if (signupReferCode) {
-        const referrer = users.find((u: any) => u.referralCode === signupReferCode);
-        if (!referrer) {
-          alert('Invalid referral code. Please check and try again, or leave it empty.');
-          setIsAuthenticating(false);
-          return;
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: true,
+          data: { 
+            displayName: signupName,
+            referralCode: generateReferralCode(email),
+            signupReferCode: signupReferCode
+          }
         }
-        // Prevent self-referral
-        if (referrer.email === email || referrer.mobile === signupMobile) {
-          alert('You cannot use your own referral code.');
-          setIsAuthenticating(false);
-          return;
-        }
-        referredBy = signupReferCode;
-      }
+      });
 
-      const userEmail = signupContactType === 'email' ? email : '';
-      const userMobile = signupContactType === 'mobile' ? signupMobile : '';
-      const newUser = {
-        email: userEmail,
-        password,
-        credits: 100,
-        plan: 'Basic',
-        displayName: signupName,
-        avatar: '',
-        name: signupName,
-        mobile: userMobile,
-        referCode: signupReferCode,
-        referralCode: generateReferralCode(userEmail || userMobile || signupName),
-        referredBy: referredBy,
-        referralRewarded: false,
-        deviceId: getDeviceId(),
-        referralEarnings: 0
-      };
-      if (referredBy) {
-        const referrerIdx = users.findIndex((u: any) => u.referralCode === referredBy);
-        if (referrerIdx !== -1) {
-          users[referrerIdx].credits = (users[referrerIdx].credits || 0) + 50;
-          users[referrerIdx].referralEarnings = (users[referrerIdx].referralEarnings || 0) + 50;
-          newUser.credits += 50; // Referee also gets 50
-        }
-      }
-
-      users.push(newUser);
-      saveUsers(users);
-      localStorage.setItem('smartai_session', JSON.stringify(newUser));
-      setCredits(newUser.credits);
-      setPlan('Basic');
-      setDisplayName(signupName);
-      setAvatar('');
-      setIsLoggedIn(true);
-
-      if (referredBy) {
-        alert("Account created! You received +50 referral bonus credits. Your friend also received a reward!");
+      if (error) {
+        setAuthError(error.message);
       } else {
-        alert('Account created successfully!');
+        setIsVerifyingOtp(true);
+        setOtpType('signup');
+        alert(`Verification code sent to ${email}!`);
       }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
       setIsAuthenticating(false);
+    }
+  };
+
+  const completeSignup = () => {
+    const users = getUsers();
+    const newUser = JSON.parse(localStorage.getItem('smartai_session') || '{}');
+    
+    // Final save if needed, but session is already set in handleSignup for flow
+    setIsLoggedIn(true);
+    setIsVerifyingOtp(false);
+  };
+
+  const handleOtpVerify = async () => {
+    const enteredOtp = otp.join('');
+    const currentContactType = otpType === 'login' ? loginContactType : signupContactType;
+    const target = otpType === 'login' ? (loginContactType === 'email' ? email : loginMobile) : (signupContactType === 'email' ? email : signupMobile);
+    
+    setIsAuthenticating(true);
+    const { error } = await supabase.auth.verifyOtp({
+      [currentContactType === 'email' ? 'email' : 'phone']: target,
+      token: enteredOtp,
+      type: currentContactType === 'email' ? 'magiclink' : 'sms'
+    });
+
+    if (error) {
+      setAuthError(error.message);
+      setIsAuthenticating(false);
+    } else {
+      setIsVerifyingOtp(false);
+    }
   };
 
   const handleForgotPassword = async () => {
-    if (!resetEmail) return alert('Please enter your email');
-    const dbUsers = await fetchUsersFromSupabase();
-    if (dbUsers && dbUsers.length > 0) {
-      localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
-    }
-    const users = getUsers();
-    const user = users.find((u: any) => u.email === resetEmail);
-    if (!user) return alert('No account found with this email.');
-    if (!newPassword) return alert('Please enter a new password');
-    user.password = newPassword;
-    saveUsers(users);
-    alert('Password reset successful! Please login with your new password.');
-    setAuthMode('login');
-    setEmail(resetEmail);
-    setResetEmail('');
-    setNewPassword('');
+    setAuthError(null);
+    if (!resetEmail) return setAuthError('Please enter your email');
+    setIsAuthenticating(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: resetEmail,
+      });
+      if (error) setAuthError(error.message);
+      else {
+        setForgotPasswordStep('otp');
+        alert(`OTP sent to ${resetEmail}`);
+      }
+    } catch (err: any) { setAuthError(err.message); }
+    finally { setIsAuthenticating(false); }
+  };
+
+  const handleVerifyResetOtp = async () => {
+    setAuthError(null);
+    setIsAuthenticating(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: resetEmail,
+        token: resetOtp.join(''),
+        type: 'magiclink'
+      });
+      if (error) setAuthError(error.message);
+      else setForgotPasswordStep('reset');
+    } catch (err: any) { setAuthError(err.message); }
+    finally { setIsAuthenticating(false); }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmNewPassword) return setAuthError('Passwords do not match');
+    if (newPassword.length < 6) return setAuthError('Password must be at least 6 characters');
+    
+    setAuthError(null);
+    setIsAuthenticating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) setAuthError(error.message);
+      else {
+        alert('Password updated successfully! Please login.');
+        setAuthMode('login');
+        setForgotPasswordStep('email');
+      }
+    } catch (err: any) { setAuthError(err.message); }
+    finally { setIsAuthenticating(false); }
   };
   const handleLogout = () => { localStorage.removeItem('smartai_session'); window.location.reload(); };
 
@@ -1560,59 +1609,103 @@ export default function App() {
     } catch (e) { alert('Payment initiation failed'); }
   };
 
+   const renderOtpScreen = () => {
+     const target = otpType === 'login' ? (loginContactType === 'email' ? email : loginMobile) : (signupContactType === 'email' ? email : signupMobile);
+     return (
+       <div className="space-y-6">
+         <div className="text-center">
+            <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
+               <LockIcon className="w-8 h-8 text-indigo-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white">Verify Identity</h2>
+            <p className="text-slate-500 text-xs mt-2 leading-relaxed">We've sent a 6-digit verification code to <br/><span className="text-indigo-400 font-mono">{target}</span></p>
+         </div>
+
+         <div className="flex justify-between gap-2">
+            {otp.map((digit, i) => (
+              <input 
+                key={i} 
+                id={`otp-${i}`}
+                type="text" 
+                maxLength={1} 
+                value={digit} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) {
+                    const newOtp = [...otp];
+                    newOtp[i] = val;
+                    setOtp(newOtp);
+                    if (val && i < 5) document.getElementById(`otp-${i+1}`)?.focus();
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Backspace' && !otp[i] && i > 0) document.getElementById(`otp-${i-1}`)?.focus();
+                }}
+                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500 outline-none transition-all shadow-inner"
+              />
+            ))}
+         </div>
+
+         <button onClick={handleOtpVerify} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 active:scale-95">
+           Verify Code
+         </button>
+
+         <div className="text-center space-y-3">
+            <button onClick={() => sendOtp(otpType)} className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Resend Code</button>
+            <br/>
+            <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
+         </div>
+       </div>
+     );
+   };
+
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-4 font-sans">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-slate-900/50 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[min(400px,95vw)] bg-slate-900/80 border border-slate-800 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl backdrop-blur-2xl relative z-10 mx-auto">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(79,70,229,0.3)]"><Zap className="text-white w-7 h-7 fill-white" /></div>
-            <h1 className="text-3xl font-medium tracking-tight text-white italic">SmartAI <span className="font-light text-slate-400 not-italic">Pro</span></h1>
-            <p className="text-slate-500 text-sm mt-2 font-serif italic text-center">Modern intelligence for the creative mind</p>
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(79,70,229,0.4)] rotate-3"><Zap className="text-white w-8 h-8 fill-white" /></div>
+            <h1 className="text-3xl font-black tracking-tight text-white italic">SmartAI <span className="font-light text-slate-500 not-italic">PRO</span></h1>
+            <p className="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-[0.3em] text-center">Neural Creative Engine</p>
           </div>
 
           {authError && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-bold text-center animate-pulse">
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[10px] font-black uppercase tracking-widest text-center shadow-lg shadow-red-500/5">
               {authError}
-            </div>
+            </motion.div>
           )}
 
-          {authMode === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="flex gap-2 mb-2">
-                <button type="button" onClick={() => setLoginContactType('email')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'email' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Email</button>
-                <button type="button" onClick={() => setLoginContactType('mobile')} className={`flex-1 py-2 rounded-lg text-sm uppercase tracking-widest font-bold transition-all ${loginContactType === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>Mobile</button>
-              </div>
+          {isVerifyingOtp ? renderOtpScreen() : (
+            <>
+              {authMode === 'login' && (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
+                  </div>
 
-              {loginContactType === 'email' ? (
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email Address</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Mobile Number</label>
-                  <input type="tel" value={loginMobile} onChange={e => setLoginMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" />
-                </div>
-              )}
+               <div>
+                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
+                 <div className="relative">
+                   <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
+                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                   </button>
+                 </div>
+               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
-                <div className="relative">
-                  <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
+               <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
+                 {isAuthenticating ? 'Logging in...' : 'Login'}
+               </button>
 
-              <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-bold uppercase tracking-widest text-xs mt-4">
-                {isAuthenticating ? 'Logging in...' : 'Login'}
-              </button>
-
-              <div className="flex justify-between text-[10px] text-slate-500 mt-4">
-                <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-indigo-400 transition-colors">Sign Up</button>
-                <button type="button" onClick={() => setAuthMode('forgot')} className="hover:text-indigo-400 transition-colors">Forgot Password?</button>
-              </div>
+               <div className="flex justify-between text-[10px] text-slate-500 mt-4">
+                 <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest">Sign Up</button>
+                 <button type="button" onClick={() => { setAuthMode('forgot'); setForgotPasswordStep('email'); }} className="hover:text-indigo-400 transition-colors font-bold uppercase tracking-widest">Forgot Password?</button>
+               </div>
             </form>
           )}
 
@@ -1639,51 +1732,103 @@ export default function App() {
                   <input type="tel" value={signupMobile} onChange={e => setSignupMobile(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="+91 98765 43210" />
                 </div>
               )}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Password</label>
-                <div className="relative">
-                  <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Confirm Password</label>
-                <div className="relative">
-                  <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
-                </div>
-              </div>
+               <div>
+                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Create Password</label>
+                 <div className="relative">
+                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
+                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                   </button>
+                 </div>
+               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Referral Code (Optional)</label>
-                <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm uppercase" placeholder="ABC123" />
-              </div>
+               <div>
+                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Confirm Password</label>
+                 <div className="relative">
+                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="••••••••" />
+                 </div>
+               </div>
 
-              <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-bold uppercase tracking-widest text-xs mt-4">
-                {isAuthenticating ? 'Creating account...' : 'Create Account'}
-              </button>
+               <div className="pt-2">
+                 <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Referral Code (Optional)</label>
+                 <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm uppercase" placeholder="ABC123" />
+               </div>
+
+               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-6">
+                 {isAuthenticating ? 'Creating Account...' : 'Get Signup OTP'}
+               </button>
 
               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-bold transition-colors">Already have an account? Login</button>
             </div>
           )}
 
           {authMode === 'forgot' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Email</label>
-                <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="name@example.com" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">New Password</label>
-                <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
-              </div>
-              <button onClick={handleForgotPassword} className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-xs">Reset Password</button>
-              <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-bold">Back to Login</button>
-            </div>
+             <div className="space-y-6">
+               <div className="text-center">
+                 <h2 className="text-xl font-bold text-white mb-2">Reset Password</h2>
+                 <p className="text-slate-500 text-[10px] uppercase tracking-widest">
+                   {forgotPasswordStep === 'email' && 'Enter your email or mobile to get OTP'}
+                   {forgotPasswordStep === 'otp' && 'Enter the 6-digit code we sent you'}
+                   {forgotPasswordStep === 'reset' && 'Create a new secure password'}
+                 </p>
+               </div>
+
+               {forgotPasswordStep === 'email' && (
+                 <div className="space-y-4">
+                   <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 font-mono text-sm text-white" placeholder="Enter your email address" />
+                   <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
+                     {isAuthenticating ? 'Sending...' : 'Send OTP'}
+                   </button>
+                 </div>
+               )}
+
+               {forgotPasswordStep === 'otp' && (
+                 <div className="space-y-6">
+                    <div className="flex justify-between gap-2">
+                       {resetOtp.map((digit, i) => (
+                         <input key={i} id={`reset-otp-${i}`} type="text" maxLength={1} value={digit} onChange={(e) => {
+                             const val = e.target.value;
+                             if (/^\d*$/.test(val)) {
+                               const newOtp = [...resetOtp];
+                               newOtp[i] = val;
+                               setResetOtp(newOtp);
+                               if (val && i < 5) document.getElementById(`reset-otp-${i+1}`)?.focus();
+                             }
+                           }}
+                           onKeyDown={(e) => { if (e.key === 'Backspace' && !resetOtp[i] && i > 0) document.getElementById(`reset-otp-${i-1}`)?.focus(); }}
+                           className="w-10 sm:w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500 outline-none transition-all"
+                         />
+                       ))}
+                    </div>
+                    <button onClick={handleVerifyResetOtp} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95">
+                      {isAuthenticating ? 'Verifying...' : 'Verify OTP'}
+                    </button>
+                 </div>
+               )}
+
+               {forgotPasswordStep === 'reset' && (
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">New Password</label>
+                     <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 font-mono text-sm text-white" placeholder="••••••••" />
+                   </div>
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confirm New Password</label>
+                     <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 font-mono text-sm text-white" placeholder="••••••••" />
+                   </div>
+                   <button onClick={handleUpdatePassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95">
+                     {isAuthenticating ? 'Updating...' : 'Update Password'}
+                   </button>
+                 </div>
+               )}
+
+               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-indigo-400 mt-2 uppercase tracking-widest font-black transition-colors">Back to Login</button>
+             </div>
           )}
-        </motion.div>
+          </>
+        )}
+      </motion.div>
       </div>
     );
   }
