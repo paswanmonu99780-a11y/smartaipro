@@ -383,7 +383,7 @@ export default function App() {
   };
   const saveUsers = (users: Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }>) => {
     localStorage.setItem('smartai_users', JSON.stringify(users));
-    syncUsersToSupabase(users);
+    // Note: syncUsersToSupabase removed from here to prevent blocking
   };
 
   const sendOtp = async (type: 'login' | 'signup') => {
@@ -520,80 +520,66 @@ export default function App() {
 
   const handleOtpVerify = async () => {
     const enteredOtp = otp.join('');
+    if (enteredOtp.length !== 6) {
+      setAuthError('Please enter the complete 6-digit code');
+      return;
+    }
     const target = email;
-    
     setIsAuthenticating(true);
-    let verifyType = otpType === 'signup' ? 'signup' : 'email';
-    console.log(`Verifying OTP for ${target} with type: ${verifyType}`);
+    setAuthError(null);
     
     try {
-      let { data, error } = await supabase.auth.verifyOtp({
+      // Supabase v2: OTP type is always 'email' for signInWithOtp flows
+      const { data, error } = await supabase.auth.verifyOtp({
         email: target,
         token: enteredOtp,
-        type: verifyType as any
+        type: 'email'
       });
-
-      // Smart Fallback: If first type fails, try the other one automatically
-      if (error && (error.message.includes('expired') || error.message.includes('invalid'))) {
-        const fallbackType = verifyType === 'signup' ? 'email' : 'signup';
-        console.log(`Initial attempt failed. Trying fallback type: ${fallbackType}`);
-        const fallbackResult = await supabase.auth.verifyOtp({
-          email: target,
-          token: enteredOtp,
-          type: fallbackType as any
-        });
-        data = fallbackResult.data;
-        error = fallbackResult.error;
-      }
 
       if (error) {
         console.error('OTP Verify Error:', error);
         setAuthError(error.message);
-        setIsAuthenticating(false);
-      } else if (data.user) {
-        console.log('OTP Verified successfully for:', data.user.email);
+      } else if (data?.user) {
         const meta = data.user.user_metadata;
         const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
         
-        // Immediate UI update to prevent hanging
-        setDisplayName(userName);
-        setIsLoggedIn(true);
-        setIsVerifyingOtp(false);
-        setIsAuthenticating(false);
-
-        // Perform storage and sync in background
-        setTimeout(() => {
-          const users = getUsers();
-          let userIdx = users.findIndex(u => u.email === data.user?.email);
-          
-          if (userIdx === -1) {
-            const newUser = {
-              email: data.user.email || '',
-              password: '',
-              credits: 100,
-              plan: 'Basic',
-              displayName: userName,
-              avatar: '',
-              name: userName,
-              referCode: '',
-              referralCode: generateReferralCode(data.user.email || userName),
-              referredBy: '',
-              referralRewarded: false,
-              deviceId: getDeviceId(),
-              referralEarnings: 0
-            };
-            users.push(newUser);
-            saveUsers(users);
-            localStorage.setItem('smartai_session', JSON.stringify(newUser));
-          } else {
-            if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
-              users[userIdx].displayName = userName;
-              users[userIdx].name = userName;
-              saveUsers(users);
-            }
-            localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
+        // Save to localStorage immediately
+        const users = getUsers();
+        const userIdx = users.findIndex(u => u.email === data.user?.email);
+        if (userIdx === -1) {
+          const newUser = {
+            email: data.user.email || '',
+            password: '',
+            credits: 100,
+            plan: 'Basic',
+            displayName: userName,
+            avatar: '',
+            name: userName,
+            referCode: '',
+            referralCode: generateReferralCode(data.user.email || userName),
+            referredBy: '',
+            referralRewarded: false,
+            deviceId: getDeviceId(),
+            referralEarnings: 0
+          };
+          users.push(newUser);
+          localStorage.setItem('smartai_users', JSON.stringify(users));
+          localStorage.setItem('smartai_session', JSON.stringify(newUser));
+        } else {
+          if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
+            users[userIdx].displayName = userName;
+            users[userIdx].name = userName;
+            localStorage.setItem('smartai_users', JSON.stringify(users));
           }
-        }, 10);
+          localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
+        }
+
+        // Update UI state
+        setDisplayName(userName);
+        setIsVerifyingOtp(false);
+        setIsLoggedIn(true);
+      } else {
+        setAuthError('Verification failed. Please try again.');
       }
     } catch (err: any) {
       console.error('OTP Verify Catch:', err);
