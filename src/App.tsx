@@ -1666,11 +1666,11 @@ export default function App() {
      return (
        <div className="space-y-6">
          <div className="text-center">
-            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
-               <LockIcon className="w-8 h-8 text-slate-400" />
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(79,70,229,0.3)] rotate-3">
+               <LockIcon className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-xl font-bold text-white">Verify Identity</h2>
-            <p className="text-slate-500 text-xs mt-2 leading-relaxed">We've sent a 6-digit verification code to <br/><span className="text-slate-300 font-mono">{email}</span></p>
+            <p className="text-slate-500 text-[11px] mt-2 leading-relaxed uppercase tracking-wider font-bold">Code sent to <span className="text-indigo-400">{email}</span></p>
          </div>
 
          <div className="flex justify-between gap-2">
@@ -1693,28 +1693,28 @@ export default function App() {
                 onKeyDown={(e) => {
                   if (e.key === 'Backspace' && !otp[i] && i > 0) document.getElementById(`otp-${i-1}`)?.focus();
                 }}
-                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-slate-500 outline-none transition-all shadow-inner"
+                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
               />
             ))}
          </div>
 
-         <button onClick={handleOtpVerify} className="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-700 transition-all active:scale-95">
-           Verify Code
+         <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95">
+           {isAuthenticating ? 'Verifying...' : 'Verify Code'}
          </button>
 
          <div className="text-center space-y-3">
              <button 
                onClick={async () => {
-                 await handleForgotPassword();
+                 await sendOtp(otpType);
                  setResendSuccess(true);
                  setTimeout(() => setResendSuccess(false), 3000);
                }} 
-               className={`text-[10px] font-black uppercase tracking-widest transition-all ${resendSuccess ? 'text-emerald-400 scale-110' : 'text-slate-500 hover:text-white'}`}
+               className={`text-[10px] font-black uppercase tracking-widest transition-all ${resendSuccess ? 'text-emerald-400' : 'text-slate-500 hover:text-white'}`}
              >
-               {resendSuccess ? 'Code Sent Successfully!' : 'Resend Code'}
+               {resendSuccess ? 'Code Sent Successfully!' : "Didn't receive code? Resend"}
              </button>
              <br/>
-             <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
+             <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
           </div>
        </div>
      );
