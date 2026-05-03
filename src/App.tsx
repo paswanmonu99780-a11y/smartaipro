@@ -524,54 +524,64 @@ export default function App() {
     
     setIsAuthenticating(true);
     const verifyType = otpType === 'signup' ? 'signup' : 'email';
+    console.log(`Verifying OTP for ${target} with type: ${verifyType}`);
     
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: target,
-      token: enteredOtp,
-      type: verifyType
-    });
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: target,
+        token: enteredOtp,
+        type: verifyType
+      });
 
-    if (error) {
-      setAuthError(error.message);
-      setIsAuthenticating(false);
-    } else if (data.user) {
-      const meta = data.user.user_metadata;
-      const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
-      
-      const users = getUsers();
-      let userIdx = users.findIndex(u => u.email === data.user?.email);
-      
-      if (userIdx === -1) {
-        const newUser = {
-          email: data.user.email || '',
-          password: '',
-          credits: 100,
-          plan: 'Basic',
-          displayName: userName,
-          avatar: '',
-          name: userName,
-          referCode: '',
-          referralCode: generateReferralCode(data.user.email || userName),
-          referredBy: '',
-          referralRewarded: false,
-          deviceId: getDeviceId(),
-          referralEarnings: 0
-        };
-        users.push(newUser);
-        saveUsers(users);
-        localStorage.setItem('smartai_session', JSON.stringify(newUser));
-      } else {
-        if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
-          users[userIdx].displayName = userName;
-          users[userIdx].name = userName;
+      if (error) {
+        console.error('OTP Verify Error:', error);
+        setAuthError(error.message);
+        setIsAuthenticating(false);
+      } else if (data.user) {
+        console.log('OTP Verified successfully for:', data.user.email);
+        const meta = data.user.user_metadata;
+        const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
+        
+        const users = getUsers();
+        let userIdx = users.findIndex(u => u.email === data.user?.email);
+        
+        if (userIdx === -1) {
+          const newUser = {
+            email: data.user.email || '',
+            password: '',
+            credits: 100,
+            plan: 'Basic',
+            displayName: userName,
+            avatar: '',
+            name: userName,
+            referCode: '',
+            referralCode: generateReferralCode(data.user.email || userName),
+            referredBy: '',
+            referralRewarded: false,
+            deviceId: getDeviceId(),
+            referralEarnings: 0
+          };
+          users.push(newUser);
           saveUsers(users);
+          localStorage.setItem('smartai_session', JSON.stringify(newUser));
+        } else {
+          if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
+            users[userIdx].displayName = userName;
+            users[userIdx].name = userName;
+            saveUsers(users);
+          }
+          localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
         }
-        localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
-      }
 
-      setDisplayName(userName);
-      setIsLoggedIn(true);
-      setIsVerifyingOtp(false);
+        setDisplayName(userName);
+        setIsLoggedIn(true);
+        setIsVerifyingOtp(false);
+      }
+    } catch (err: any) {
+      console.error('OTP Verify Catch:', err);
+      setAuthError(err.message || 'Verification failed. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
