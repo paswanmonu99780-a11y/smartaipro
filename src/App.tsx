@@ -167,7 +167,7 @@ export default function App() {
   const [negativePrompt, setNegativePrompt] = useState('');
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [imageHistory, setImageHistory] = useState<Array<{ url: string; prompt: string; style: string; quality: string; aspect: string; date: string }>>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -178,7 +178,11 @@ export default function App() {
   const [creativeToolResult, setCreativeToolResult] = useState('');
   const [isCreativeToolThinking, setIsCreativeToolThinking] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [activeTool, setActiveTool] = useState<{name: string, desc: string, icon: any} | null>(null);
+  const [toolImage, setToolImage] = useState<string | null>(null);
+  const [toolPrompt, setToolPrompt] = useState('');
+  const [isToolProcessing, setIsToolProcessing] = useState(false);
+  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null);  const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [creativeHistory, setCreativeHistory] = useState<Array<{ tool: string; toolName: string; input: string; result: string; time: string }>>([]);
   const [activeExpertTool, setActiveExpertTool] = useState<string | null>(null);
@@ -1057,14 +1061,7 @@ export default function App() {
     const prompt = normalizePrompt(promptText);
     if (!prompt || isAiThinking) return;
 
-    if (smartMode === 'normal' && usage.messages >= 10) {
-      alert('Daily message limit reached (10/day). Upgrade to Creative or Expert mode for unlimited access!');
-      return;
-    }
-    if (smartMode === 'creative' && usage.messages >= 100) {
-      alert('Daily message limit reached (100/day). Upgrade to Expert mode for unlimited access!');
-      return;
-    }
+    // Limits removed as requested
 
     // Check and process referral reward on first message
     processReferralReward();
@@ -1714,18 +1711,271 @@ export default function App() {
     );
   }
 
-  function renderHome() {
-    if (smartMode === 'creative') return renderCreativeDashboard();
-    
+  function renderNormalDashboard() {
+    const handleToolClick = (tool: any) => {
+      if (tool.name === 'Text to Image') {
+         setActiveTab('image');
+         setImgPrompt('');
+      } else {
+         setActiveTool({ name: tool.name, desc: tool.desc, icon: tool.icon });
+         setToolImage(null);
+         setProcessedToolImage(null);
+         setToolPrompt('');
+      }
+    };
+
     return (
-      <div className="h-[calc(100vh-100px)] flex flex-col items-center justify-center max-w-[1400px] mx-auto p-4 text-center">
-         <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 mb-6 shadow-lg shadow-indigo-600/5">
-            <Sparkles className="w-8 h-8 text-indigo-400" />
-         </div>
-         <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-widest mb-2">SmartAI <span className="text-indigo-400">Normal Mode</span></h1>
-         <p className="text-slate-500 text-sm md:text-base max-w-md uppercase tracking-wider font-bold">Your basic neural interface is active. Select a tool from the sidebar to begin.</p>
+      <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-4 md:px-8 gap-5 py-2 relative">
+        {/* Header Section */}
+        <div className="flex items-center justify-between shrink-0">
+           <div>
+              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">Normal Mode</h1>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Your everyday AI tools for quick and easy tasks.</p>
+           </div>
+           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3 px-5 flex items-center gap-5">
+              <div>
+                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Credits Left</p>
+                 <p className="text-xl font-black text-white">{credits}</p>
+              </div>
+              <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
+                 <Sparkles className="w-5 h-5 text-indigo-400" />
+              </div>
+           </div>
+        </div>
+
+        {/* Quick Tools */}
+        <div className="shrink-0">
+           <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Quick Tools</h2>
+           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {[
+                { name: 'Text to Image', desc: 'Generate images from text prompts.', icon: ImageIcon, color: 'text-indigo-400' },
+                { name: 'Image to Image', desc: 'Transform and restyle your images.', icon: Copy, color: 'text-blue-400' },
+                { name: 'Background Remover', desc: 'Remove background from any image.', icon: Layers, color: 'text-slate-400' },
+                { name: 'Image Enhance', desc: 'Improve image quality and resolution.', icon: Sparkles, color: 'text-purple-400' },
+                { name: 'Compress Image', desc: 'Reduce image size without losing quality.', icon: Download, color: 'text-emerald-400' }
+              ].map((tool, i) => (
+                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-2xl p-4 text-left group">
+                   <div className="flex items-start justify-between mb-3">
+                      <div className={`w-9 h-9 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-slate-700 transition-colors`}>
+                         <tool.icon className={`w-4 h-4 ${tool.color}`} />
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors" />
+                   </div>
+                   <h3 className="text-[13px] font-bold text-white mb-1.5">{tool.name}</h3>
+                   <p className="text-[10px] text-slate-500 leading-snug">{tool.desc}</p>
+                </button>
+              ))}
+           </div>
+        </div>
+
+        {/* More Tools */}
+        <div className="flex-1 min-h-0 flex flex-col pb-6">
+           <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">More Tools</h2>
+           <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-3 gap-3 flex-1 min-h-0">
+              {[
+                { name: 'Resize Image', desc: 'Change dimensions of your image.', icon: Monitor },
+                { name: 'Crop Image', desc: 'Crop your image to any size.', icon: Layout },
+                { name: 'Rotate / Flip', desc: 'Rotate or flip your image.', icon: RefreshCcw },
+                { name: 'Image Converter', desc: 'Convert image to different formats.', icon: FileText },
+                { name: 'Add Text', desc: 'Add custom text to your image.', icon: PenTool },
+                { name: 'Color Adjust', desc: 'Adjust brightness, contrast and more.', icon: Eye },
+                { name: 'Filters & Effects', desc: 'Apply filters and artistic effects.', icon: Sparkles },
+                { name: 'Collage Maker', desc: 'Create collage from multiple images.', icon: Layout },
+                { name: 'Meme Generator', desc: 'Create memes easily.', icon: User },
+                { name: 'Sticker Maker', desc: 'Add stickers to your images.', icon: Layers },
+                { name: 'Watermark Add', desc: 'Add custom watermark to image.', icon: CloudSun },
+                { name: 'QR Code Generator', desc: 'Generate QR code images.', icon: Code }
+              ].map((tool, i) => (
+                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl p-3.5 flex items-center gap-4 text-left group h-full">
+                   <div className="w-9 h-9 shrink-0 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
+                      <tool.icon className="w-4 h-4 text-indigo-400" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <h3 className="text-xs font-bold text-white mb-0.5 truncate">{tool.name}</h3>
+                      <p className="text-[10px] text-slate-500 truncate">{tool.desc}</p>
+                   </div>
+                   <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 group-hover:text-white transition-colors" />
+                </button>
+              ))}
+           </div>
+        </div>
+
+        {/* Tool Processor Modal */}
+        <AnimatePresence>
+          {activeTool && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4">
+               <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                  <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                           <activeTool.icon className="w-5 h-5 text-indigo-400" />
+                        </div>
+                        <div>
+                           <h3 className="text-white font-black text-lg">{activeTool.name}</h3>
+                           <p className="text-slate-500 text-xs">{activeTool.desc}</p>
+                        </div>
+                     </div>
+                     <button onClick={() => setActiveTool(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                        <X className="w-5 h-5 text-slate-400" />
+                     </button>
+                  </div>
+                  
+                  <div className="p-6 flex-1 overflow-y-auto flex flex-col items-center justify-center gap-4">
+                     {!toolImage ? (
+                       <label className="w-full aspect-video border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-800/50 hover:bg-slate-800 transition-all rounded-2xl flex flex-col items-center justify-center cursor-pointer group">
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                             const file = e.target.files?.[0];
+                             if (file) {
+                               const reader = new FileReader();
+                               reader.onload = (ev) => setToolImage(ev.target?.result as string);
+                               reader.readAsDataURL(file);
+                             }
+                          }} />
+                          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                             <ImageIcon className="w-8 h-8 text-indigo-400" />
+                          </div>
+                          <p className="text-white font-bold text-lg mb-1">{activeTool.name === 'QR Code Generator' ? 'Upload optional logo' : 'Upload Image to Process'}</p>
+                          <p className="text-slate-500 text-sm">Click to browse files</p>
+                       </label>
+                     ) : (
+                       <div className="w-full flex flex-col items-center gap-4">
+                          <div className="grid grid-cols-2 gap-4 w-full">
+                             <div className="flex flex-col gap-2">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Original</span>
+                                <img src={toolImage} className="w-full rounded-xl border border-slate-800 opacity-70" alt="Original" />
+                             </div>
+                             <div className="flex flex-col gap-2 relative">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest text-center">Result</span>
+                                {processedToolImage ? (
+                                   <img src={processedToolImage} className="w-full rounded-xl border border-indigo-500/50 shadow-lg shadow-indigo-600/20" alt="Processed" />
+                                ) : (
+                                   <div className="w-full aspect-square bg-slate-800/50 border border-slate-700 rounded-xl flex items-center justify-center">
+                                      {isToolProcessing ? (
+                                         <div className="flex flex-col items-center gap-3">
+                                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full" />
+                                            <span className="text-xs font-bold text-indigo-400 animate-pulse">Processing...</span>
+                                         </div>
+                                      ) : (
+                                         <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Ready</span>
+                                      )}
+                                   </div>
+                                )}
+                             </div>
+                          </div>
+
+                          {/* Prompt input for Image to Image */}
+                          {activeTool.name === 'Image to Image' && (
+                            <div className="w-full">
+                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Describe what you want to change</label>
+                               <input value={toolPrompt} onChange={e => setToolPrompt(e.target.value)} placeholder="e.g. Add sunglasses, make it cartoon style, remove person..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 placeholder:text-slate-600" />
+                            </div>
+                          )}
+                          
+                          {!processedToolImage ? (
+                            <button onClick={async () => {
+                               setIsToolProcessing(true);
+                               try {
+                                 if (activeTool.name === 'Image to Image') {
+                                    // Use AI proxy to generate new image based on prompt
+                                    const seed = Math.floor(Math.random() * 999999);
+                                    const fullP = `${toolPrompt}, based on uploaded reference image, Masterpiece, highest quality, hyper detailed, 8k`;
+                                    const url = `/api/image?prompt=${encodeURIComponent(fullP)}&width=768&height=768&seed=${seed}&model=flux&nologo=true&negative_prompt=${encodeURIComponent('lowres, blurry, bad quality')}`;
+                                    const tryLoad = (u: string) => new Promise<boolean>((resolve) => { const i = new window.Image(); i.onload = () => resolve(true); i.onerror = () => resolve(false); i.src = u; });
+                                    const ok = await tryLoad(`${url}&t=${Date.now()}`);
+                                    if (ok) { setProcessedToolImage(`${url}&t=${Date.now()}`); } else { alert('Generation failed. Try again.'); }
+                                    setIsToolProcessing(false);
+                                    setCredits(prev => prev - 5);
+                                 } else {
+                                    setTimeout(async () => {
+                                      const canvas = document.createElement('canvas');
+                                      const ctx = canvas.getContext('2d')!;
+                                      const img = new window.Image();
+                                      img.src = toolImage;
+                                      await new Promise(res => { img.onload = res; });
+                                      let outFormat = 'image/png';
+                                      let outQuality = 1.0;
+                                      if (activeTool.name === 'QR Code Generator') {
+                                         const url2 = prompt("Enter URL or Text for QR Code:", "https://smartaipro.com");
+                                         if (!url2) { setIsToolProcessing(false); return; }
+                                         const qrImg = new window.Image(); qrImg.crossOrigin = 'Anonymous';
+                                         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url2)}`;
+                                         await new Promise(res => { qrImg.onload = res; });
+                                         canvas.width = 500; canvas.height = 500; ctx.fillStyle = 'white'; ctx.fillRect(0,0,500,500); ctx.drawImage(qrImg, 0, 0);
+                                      } else {
+                                         canvas.width = img.width; canvas.height = img.height;
+                                         if (activeTool.name === 'Resize Image') {
+                                            const w = prompt("Enter new width (px):", img.width.toString());
+                                            const h = prompt("Enter new height (px):", img.height.toString());
+                                            if (!w || !h) { setIsToolProcessing(false); return; }
+                                            canvas.width = parseInt(w); canvas.height = parseInt(h);
+                                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                         } else if (activeTool.name === 'Crop Image') {
+                                            const cropPct = prompt("Enter crop percentage (e.g. 80 for center 80%):", "80");
+                                            if (!cropPct) { setIsToolProcessing(false); return; }
+                                            const c = parseInt(cropPct) / 100;
+                                            canvas.width = img.width * c; canvas.height = img.height * c;
+                                            const ox = (img.width - canvas.width) / 2, oy = (img.height - canvas.height) / 2;
+                                            ctx.drawImage(img, ox, oy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                                         } else if (activeTool.name === 'Rotate / Flip') {
+                                            const dir = prompt("Type 'rotate' or 'flip':", "flip");
+                                            if (dir === 'flip') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); }
+                                            else { canvas.width = img.height; canvas.height = img.width; ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(90 * Math.PI / 180); ctx.drawImage(img, -img.width/2, -img.height/2); }
+                                         } else if (activeTool.name === 'Background Remover' || activeTool.name === 'Sticker Maker') {
+                                            ctx.drawImage(img, 0, 0);
+                                            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                            const d = imgData.data; const bgR = d[0], bgG = d[1], bgB = d[2];
+                                            for (let i = 0; i < d.length; i += 4) { const dist = Math.sqrt((d[i]-bgR)**2 + (d[i+1]-bgG)**2 + (d[i+2]-bgB)**2); if (dist < 50) d[i+3] = 0; }
+                                            ctx.putImageData(imgData, 0, 0);
+                                         } else {
+                                            if (activeTool.name === 'Image Enhance') ctx.filter = 'contrast(1.2) saturate(1.3) brightness(1.1)';
+                                            if (activeTool.name === 'Color Adjust') ctx.filter = 'hue-rotate(45deg) saturate(1.5)';
+                                            if (activeTool.name === 'Filters & Effects') ctx.filter = 'sepia(0.8) contrast(1.1)';
+                                            ctx.drawImage(img, 0, 0); ctx.filter = 'none';
+                                            if (activeTool.name === 'Add Text' || activeTool.name === 'Watermark Add') {
+                                               const text = prompt("Enter text:", "SMART AI PRO");
+                                               if (text) { ctx.font = `bold ${canvas.width*0.08}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width*0.01; ctx.textAlign = 'center'; ctx.strokeText(text, canvas.width/2, canvas.height - 50); ctx.fillText(text, canvas.width/2, canvas.height - 50); }
+                                            } else if (activeTool.name === 'Meme Generator') {
+                                               const top = prompt("Enter Top Text:", "WHEN AI"); const bot = prompt("Enter Bottom Text:", "DOES IT PERFECTLY");
+                                               ctx.font = `bold ${canvas.width*0.1}px Impact`; ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width*0.015; ctx.textAlign = 'center';
+                                               ctx.strokeText(top||'', canvas.width/2, canvas.width*0.15); ctx.fillText(top||'', canvas.width/2, canvas.width*0.15);
+                                               ctx.strokeText(bot||'', canvas.width/2, canvas.height - canvas.width*0.05); ctx.fillText(bot||'', canvas.width/2, canvas.height - canvas.width*0.05);
+                                            } else if (activeTool.name === 'Image Converter') {
+                                               const f = prompt("Enter format (png, jpeg, webp):", "webp");
+                                               if (f === 'jpeg' || f === 'jpg') outFormat = 'image/jpeg'; else if (f === 'webp') outFormat = 'image/webp';
+                                            } else if (activeTool.name === 'Compress Image') { outFormat = 'image/jpeg'; outQuality = 0.4; }
+                                            else if (activeTool.name === 'Collage Maker') { ctx.drawImage(img, 0, 0, canvas.width/2, canvas.height/2); ctx.drawImage(img, canvas.width/2, 0, canvas.width/2, canvas.height/2); ctx.filter='hue-rotate(90deg)'; ctx.drawImage(img, 0, canvas.height/2, canvas.width/2, canvas.height/2); ctx.filter='grayscale(1)'; ctx.drawImage(img, canvas.width/2, canvas.height/2, canvas.width/2, canvas.height/2); ctx.filter='none'; }
+                                         }
+                                      }
+                                      setProcessedToolImage(canvas.toDataURL(outFormat, outQuality));
+                                      setIsToolProcessing(false);
+                                      setCredits(prev => prev - 2);
+                                    }, 1000);
+                                 }
+                               } catch (err) { alert('Processing failed.'); setIsToolProcessing(false); }
+                            }} disabled={isToolProcessing || (activeTool.name === 'Image to Image' && !toolPrompt.trim())} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50">
+                               <Sparkles className="w-5 h-5" /> {activeTool.name === 'Image to Image' ? 'Generate (-5 Credits)' : 'Execute Tool (-2 Credits)'}
+                            </button>
+                          ) : (
+                            <button onClick={() => {
+                               const a = document.createElement('a'); a.href = processedToolImage!; a.download = `smartai_${activeTool.name.toLowerCase().replace(/ /g, '_')}.png`; a.click();
+                            }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-600/20 active:scale-95">
+                               <Download className="w-5 h-5" /> Download Result
+                            </button>
+                          )}
+                       </div>
+                     )}
+                  </div>
+               </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
+  }
+
+  function renderHome() {
+    if (smartMode === 'creative') return renderCreativeDashboard();
+    return renderNormalDashboard();
   }
 
   const renderContent = () => {
@@ -1753,18 +2003,6 @@ export default function App() {
 
               {/* Chat Messages Area (Scrollable) */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar scroll-smooth">
-                {smartMode === 'normal' && (
-                  <div className="mb-4 p-3 bg-indigo-600/5 border border-indigo-600/10 rounded-xl shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Daily Message Limit</span>
-                      <span className="text-[9px] font-bold text-slate-400">{usage.messages} / 10</span>
-                    </div>
-                    <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(usage.messages / 10, 1) * 100}%` }} className="h-full bg-indigo-500" />
-                    </div>
-                  </div>
-                )}
-
                 {messages.map((msg, idx) => (
                   <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`max-w-[85%] p-3 md:p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'}`}>
@@ -1826,7 +2064,7 @@ export default function App() {
           )}
 
           {activeTab === 'image' && (
-             <div className="max-w-5xl mx-auto pb-4">
+             <div className="max-w-5xl mx-auto w-full pb-4">
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 relative shadow-2xl overflow-hidden">
                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
                    
@@ -1924,28 +2162,36 @@ export default function App() {
 
                 {imageHistory.length > 0 && (
                   <div className="mt-16">
-                     <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 tracking-tight">
-                       <Clock className="w-6 h-6 text-indigo-400" />
-                       Recent Generations
-                     </h3>
-                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                       {imageHistory.map((item, i) => (
-                          <div key={i} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-lg">
-                             <img src={item.url} alt={item.prompt} className="w-full h-full object-cover" />
-                             <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
-                               <p className="text-[10px] text-white line-clamp-4 text-center font-medium leading-relaxed">{item.prompt}</p>
-                               <div className="flex gap-2">
-                                 <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-indigo-600 text-white p-2.5 rounded-lg hover:bg-indigo-500 transition-colors">
-                                    <Download className="w-4 h-4" />
-                                 </button>
-                                 <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-slate-700 text-white p-2.5 rounded-lg hover:bg-slate-600 transition-colors">
-                                    <Copy className="w-4 h-4" />
-                                 </button>
-                               </div>
-                             </div>
-                          </div>
-                       ))}
+                     <div className="flex items-center justify-between mb-6">
+                       <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
+                         <Clock className="w-6 h-6 text-indigo-400" />
+                         Recent Generations
+                       </h3>
+                       <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
+                         {showHistory ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
+                       </button>
                      </div>
+                     
+                     {showHistory && (
+                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                         {imageHistory.map((item, i) => (
+                            <div key={i} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-lg">
+                               <img src={item.url} alt={item.prompt} className="w-full h-full object-cover" />
+                               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
+                                 <p className="text-[10px] text-white line-clamp-4 text-center font-medium leading-relaxed">{item.prompt}</p>
+                                 <div className="flex gap-2">
+                                   <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-indigo-600 text-white p-2.5 rounded-lg hover:bg-indigo-500 transition-colors">
+                                      <Download className="w-4 h-4" />
+                                   </button>
+                                   <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-slate-700 text-white p-2.5 rounded-lg hover:bg-slate-600 transition-colors">
+                                      <Copy className="w-4 h-4" />
+                                   </button>
+                                 </div>
+                               </div>
+                            </div>
+                         ))}
+                       </div>
+                     )}
                   </div>
                 )}
              </div>
