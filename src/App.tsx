@@ -185,11 +185,11 @@ export default function App() {
   const [creativeToolResult, setCreativeToolResult] = useState('');
   const [isCreativeToolThinking, setIsCreativeToolThinking] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [activeTool, setActiveTool] = useState<{name: string, desc: string, icon: any} | null>(null);
+  const [activeTool, setActiveTool] = useState<{ name: string, desc: string, icon: any } | null>(null);
   const [toolImage, setToolImage] = useState<string | null>(null);
   const [toolPrompt, setToolPrompt] = useState('');
   const [isToolProcessing, setIsToolProcessing] = useState(false);
-  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null);  const [copiedCode, setCopiedCode] = useState(false);
+  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null); const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [creativeHistory, setCreativeHistory] = useState<Array<{ tool: string; toolName: string; input: string; result: string; time: string }>>([]);
   const [activeExpertTool, setActiveExpertTool] = useState<string | null>(null);
@@ -389,7 +389,7 @@ export default function App() {
   const sendOtp = async (type: 'login' | 'signup') => {
     setIsAuthenticating(true);
     const target = email;
-    
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: target,
@@ -413,48 +413,48 @@ export default function App() {
   };
 
   const handleLogin = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setAuthError(null);
-      if (!email || !password) return setAuthError('Please fill all fields');
-      setIsAuthenticating(true);
+    e.preventDefault();
+    setAuthError(null);
+    if (!email || !password) return setAuthError('Please fill all fields');
+    setIsAuthenticating(true);
 
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
 
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setAuthError('Incorrect password or user not found');
-          } else {
-            setAuthError(error.message);
-          }
-        } else if (data.user) {
-          const meta = data.user.user_metadata;
-          const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
-
-          const users = getUsers();
-          const userIdx = users.findIndex(u => u.email === data.user?.email);
-          
-          if (userIdx !== -1) {
-            if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
-                users[userIdx].displayName = userName;
-                users[userIdx].name = userName;
-                saveUsers(users);
-            }
-            localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
-            setDisplayName(users[userIdx].displayName);
-          } else {
-             setDisplayName(userName);
-          }
-          setIsLoggedIn(true);
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setAuthError('Incorrect password or user not found');
+        } else {
+          setAuthError(error.message);
         }
-      } catch (err: any) {
-        setAuthError(err.message);
-      } finally {
-        setIsAuthenticating(false);
+      } else if (data.user) {
+        const meta = data.user.user_metadata;
+        const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
+
+        const users = getUsers();
+        const userIdx = users.findIndex(u => u.email === data.user?.email);
+
+        if (userIdx !== -1) {
+          if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
+            users[userIdx].displayName = userName;
+            users[userIdx].name = userName;
+            saveUsers(users);
+          }
+          localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
+          setDisplayName(users[userIdx].displayName);
+        } else {
+          setDisplayName(userName);
+        }
+        setIsLoggedIn(true);
       }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const syncUserData = (updates: Partial<{ credits: number; plan: string; displayName: string; avatar: string; referralRewarded: boolean; referralEarnings: number }>) => {
@@ -489,12 +489,12 @@ export default function App() {
     setIsAuthenticating(true);
     try {
       console.log('Initiating signup for:', email);
-      
+
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: true,
-          data: { 
+          data: {
             displayName: signupName,
             referralCode: generateReferralCode(email),
             signupReferCode: signupReferCode
@@ -518,7 +518,7 @@ export default function App() {
     }
   };
 
-  const handleOtpVerify = async () => {
+    const handleOtpVerify = async () => {
     const enteredOtp = otp.join('');
     if (enteredOtp.length !== 6) {
       setAuthError('Please enter the complete 6-digit code');
@@ -527,23 +527,53 @@ export default function App() {
     const target = email;
     setIsAuthenticating(true);
     setAuthError(null);
+    console.log('Starting OTP verification for:', target);
+
+    // Safety timeout to prevent infinite hang
+    const safetyTimeout = setTimeout(() => {
+      setIsAuthenticating(false);
+      setAuthError('Verification timed out. Please try again.');
+    }, 15000);
     
     try {
-      // Supabase v2: OTP type is always 'email' for signInWithOtp flows
-      const { data, error } = await supabase.auth.verifyOtp({
+      // Step 1: Try 'signup' type (required for new users in Supabase v2)
+      console.log('Trying signup type verification...');
+      let { data, error } = await supabase.auth.verifyOtp({
         email: target,
         token: enteredOtp,
-        type: 'email'
+        type: 'signup'
       });
 
+      // Step 2: Fallback to 'email' type if signup fails (required for existing users)
+      if (error || !data?.user) {
+        console.log('Signup type failed, trying email type fallback...');
+        const secondAttempt = await supabase.auth.verifyOtp({
+          email: target,
+          token: enteredOtp,
+          type: 'email'
+        });
+        data = secondAttempt.data;
+        error = secondAttempt.error;
+      }
+
+      clearTimeout(safetyTimeout);
+
       if (error) {
-        console.error('OTP Verify Error:', error);
+        console.error('Final OTP Verify Error:', error);
         setAuthError(error.message);
+        setIsAuthenticating(false);
       } else if (data?.user) {
+        console.log('Verification successful!');
         const meta = data.user.user_metadata;
         const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
         
-        // Save to localStorage immediately
+        // IMMEDIATE UI UPDATE
+        setDisplayName(userName);
+        setIsVerifyingOtp(false);
+        setIsLoggedIn(true);
+        setIsAuthenticating(false);
+
+        // Background: Update storage
         const users = getUsers();
         const userIdx = users.findIndex(u => u.email === data.user?.email);
         if (userIdx === -1) {
@@ -573,18 +603,11 @@ export default function App() {
           }
           localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
         }
-
-        // Update UI state
-        setDisplayName(userName);
-        setIsVerifyingOtp(false);
-        setIsLoggedIn(true);
-      } else {
-        setAuthError('Verification failed. Please try again.');
       }
     } catch (err: any) {
+      clearTimeout(safetyTimeout);
       console.error('OTP Verify Catch:', err);
       setAuthError(err.message || 'Verification failed. Please try again.');
-    } finally {
       setIsAuthenticating(false);
     }
   };
@@ -663,7 +686,7 @@ export default function App() {
   const handleUpdatePassword = async () => {
     if (newPassword !== confirmNewPassword) return setAuthError('Passwords do not match');
     if (newPassword.length < 6) return setAuthError('Password must be at least 6 characters');
-    
+
     setAuthError(null);
     setIsAuthenticating(true);
     try {
@@ -893,18 +916,18 @@ export default function App() {
     if (isExpertLocked) {
       return (
         <div className="h-full flex items-center justify-center p-8 bg-[#0a0a0c] relative overflow-hidden">
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
-           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full bg-[#16161d] border border-slate-800/50 p-12 rounded-[3.5rem] text-center relative z-10 shadow-2xl">
-              <div className="w-24 h-24 bg-indigo-600/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-indigo-600/30">
-                 <Shield className="w-10 h-10 text-indigo-400" />
-              </div>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Neural Lock Active</h2>
-              <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">Expert Suite is restricted to verified Pro accounts. Admins can bypass this lock via the Neural Command Panel.</p>
-              <div className="space-y-4">
-                 <button onClick={() => setIsPricingOpen(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/30 hover:scale-105 transition-all">Upgrade to Pro</button>
-                 <button onClick={() => setActiveTab('admin')} className="w-full py-5 bg-slate-800 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:text-white transition-all">Admin Bypass</button>
-              </div>
-           </motion.div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full bg-[#16161d] border border-slate-800/50 p-12 rounded-[3.5rem] text-center relative z-10 shadow-2xl">
+            <div className="w-24 h-24 bg-indigo-600/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-indigo-600/30">
+              <Shield className="w-10 h-10 text-indigo-400" />
+            </div>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Neural Lock Active</h2>
+            <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">Expert Suite is restricted to verified Pro accounts. Admins can bypass this lock via the Neural Command Panel.</p>
+            <div className="space-y-4">
+              <button onClick={() => setIsPricingOpen(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/30 hover:scale-105 transition-all">Upgrade to Pro</button>
+              <button onClick={() => setActiveTab('admin')} className="w-full py-5 bg-slate-800 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:text-white transition-all">Admin Bypass</button>
+            </div>
+          </motion.div>
         </div>
       );
     }
@@ -914,7 +937,7 @@ export default function App() {
         <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0c]">
           <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
             <div className="flex flex-col xl:flex-row gap-8 max-w-[1600px] mx-auto">
-              
+
               {/* Left Main Section */}
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
@@ -929,17 +952,17 @@ export default function App() {
                   </div>
                 </div>
                 <p className="text-slate-400 text-sm mb-8">Next-level AI features for professionals and creators.</p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                   {EXPERT_TOOLS.map((t, idx) => (
                     <motion.button key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} onClick={() => setActiveExpertTool(t.id)} className="group relative bg-[#111116] border border-slate-800/50 rounded-2xl p-5 text-left transition-all hover:bg-[#16161d] hover:border-slate-700 h-full flex flex-col">
                       <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#0a0a0c] border border-slate-800/50 mb-4 group-hover:scale-110 transition-transform">
-                         <t.icon className="w-6 h-6" style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.color}40)` }} />
+                        <t.icon className="w-6 h-6" style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.color}40)` }} />
                       </div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-sm font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">{t.name}</span>
                         {t.badge && (
-                           <span className={`flex-shrink-0 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest ${t.badge === 'HOT' ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'}`}>{t.badge}</span>
+                          <span className={`flex-shrink-0 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest ${t.badge === 'HOT' ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'}`}>{t.badge}</span>
                         )}
                       </div>
                       <p className="text-xs text-slate-500 leading-relaxed flex-1">{t.desc}</p>
@@ -957,30 +980,30 @@ export default function App() {
                     <button className="text-xs text-indigo-400 hover:text-indigo-300">View All</button>
                   </div>
                   <div className="space-y-4">
-                     {[
-                       { title: 'AI Generated Website', time: 'Just now', img: 'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&q=80&w=200' },
-                       { title: 'Motivation Video', time: '5 mins ago', img: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200', isVideo: true },
-                       { title: 'Voice Clone Audio', time: '15 mins ago', icon: Mic2, color: 'text-indigo-400', bg: 'bg-indigo-600/10' },
-                       { title: 'Business Plan PDF', time: '25 mins ago', icon: FileText, color: 'text-red-400', bg: 'bg-red-500/10', label: 'PDF' },
-                       { title: 'AI Image (4K)', time: '1 hour ago', img: 'https://images.unsplash.com/photo-1506744626753-1fa28f6f5122?auto=format&fit=crop&q=80&w=200' },
-                     ].map((item, i) => (
-                       <div key={i} className="flex items-center gap-3 cursor-pointer group">
-                          {item.img ? (
-                            <div className="relative w-12 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                               <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                               {item.isVideo && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><div className="w-4 h-4 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-sm" /></div></div>}
-                            </div>
-                          ) : (
-                            <div className={`w-12 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${item.bg}`}>
-                               {item.label ? <span className={`text-[10px] font-bold ${item.color}`}>{item.label}</span> : <item.icon className={`w-4 h-4 ${item.color}`} />}
-                            </div>
-                          )}
-                          <div>
-                            <div className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{item.title}</div>
-                            <div className="text-[10px] text-slate-500">{item.time}</div>
+                    {[
+                      { title: 'AI Generated Website', time: 'Just now', img: 'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&q=80&w=200' },
+                      { title: 'Motivation Video', time: '5 mins ago', img: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200', isVideo: true },
+                      { title: 'Voice Clone Audio', time: '15 mins ago', icon: Mic2, color: 'text-indigo-400', bg: 'bg-indigo-600/10' },
+                      { title: 'Business Plan PDF', time: '25 mins ago', icon: FileText, color: 'text-red-400', bg: 'bg-red-500/10', label: 'PDF' },
+                      { title: 'AI Image (4K)', time: '1 hour ago', img: 'https://images.unsplash.com/photo-1506744626753-1fa28f6f5122?auto=format&fit=crop&q=80&w=200' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 cursor-pointer group">
+                        {item.img ? (
+                          <div className="relative w-12 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                            {item.isVideo && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><div className="w-4 h-4 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-sm" /></div></div>}
                           </div>
-                       </div>
-                     ))}
+                        ) : (
+                          <div className={`w-12 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${item.bg}`}>
+                            {item.label ? <span className={`text-[10px] font-bold ${item.color}`}>{item.label}</span> : <item.icon className={`w-4 h-4 ${item.color}`} />}
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{item.title}</div>
+                          <div className="text-[10px] text-slate-500">{item.time}</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -989,89 +1012,89 @@ export default function App() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-white">Live Data (Real-Time)</h3>
                     <div className="flex items-center gap-1.5">
-                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                       <span className="text-[10px] text-emerald-500 font-bold">Live</span>
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] text-emerald-500 font-bold">Live</span>
                     </div>
                   </div>
                   <div className="space-y-4">
-                     {[
-                       { title: 'Gold Price (24K)', sub: 'â‚¹72,185 / 10g', icon: TrendingUp, color: 'text-yellow-500', trend: '+1.28%', trendColor: 'text-emerald-500' },
-                       { title: 'Cricket Score (Live)', sub: 'IND 256/4 (45.2)', icon: Crown, color: 'text-blue-400', badge: 'LIVE', badgeColor: 'text-yellow-500' },
-                       { title: 'Weather (Delhi)', sub: '32Â°C', icon: CloudSun, color: 'text-orange-400', subRight: 'Clear Sky' },
-                       { title: 'Top News', sub: 'AI chips demand hits record high in 2024', icon: FileText, color: 'text-yellow-500', badge: 'LIVE', badgeColor: 'text-red-500' },
-                     ].map((item, i) => (
-                       <div key={i} className="flex items-start justify-between group cursor-pointer border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
-                          <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded bg-[#16161d] border border-slate-800 flex items-center justify-center mt-0.5">
-                               <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
-                            </div>
-                            <div>
-                               <div className="text-xs font-bold text-slate-300">{item.title}</div>
-                               <div className="text-[10px] text-slate-500 mt-0.5 w-32 truncate leading-tight">{item.sub}</div>
-                            </div>
+                    {[
+                      { title: 'Gold Price (24K)', sub: 'â‚¹72,185 / 10g', icon: TrendingUp, color: 'text-yellow-500', trend: '+1.28%', trendColor: 'text-emerald-500' },
+                      { title: 'Cricket Score (Live)', sub: 'IND 256/4 (45.2)', icon: Crown, color: 'text-blue-400', badge: 'LIVE', badgeColor: 'text-yellow-500' },
+                      { title: 'Weather (Delhi)', sub: '32Â°C', icon: CloudSun, color: 'text-orange-400', subRight: 'Clear Sky' },
+                      { title: 'Top News', sub: 'AI chips demand hits record high in 2024', icon: FileText, color: 'text-yellow-500', badge: 'LIVE', badgeColor: 'text-red-500' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start justify-between group cursor-pointer border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded bg-[#16161d] border border-slate-800 flex items-center justify-center mt-0.5">
+                            <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
                           </div>
-                          <div className="text-right flex flex-col items-end">
-                             {item.trend && <span className={`text-[10px] font-bold ${item.trendColor}`}>{item.trend}</span>}
-                             {item.badge && <span className={`text-[8px] font-bold ${item.badgeColor} uppercase tracking-widest`}>{item.badge}</span>}
-                             {item.subRight && <span className="text-[10px] text-slate-400 mt-1">{item.subRight}</span>}
+                          <div>
+                            <div className="text-xs font-bold text-slate-300">{item.title}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5 w-32 truncate leading-tight">{item.sub}</div>
                           </div>
-                       </div>
-                     ))}
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                          {item.trend && <span className={`text-[10px] font-bold ${item.trendColor}`}>{item.trend}</span>}
+                          {item.badge && <span className={`text-[8px] font-bold ${item.badgeColor} uppercase tracking-widest`}>{item.badge}</span>}
+                          {item.subRight && <span className="text-[10px] text-slate-400 mt-1">{item.subRight}</span>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Bottom Footer Panel */}
           <div className="border-t border-slate-800/50 bg-[#111116] p-4 flex flex-col shrink-0">
-             <div className="max-w-[1600px] w-full mx-auto flex flex-col lg:flex-row items-center justify-between mb-4 px-4 gap-4">
-                <div className="flex flex-wrap items-center justify-center gap-8 lg:gap-12">
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center"><Crown className="w-4 h-4 text-rose-500" /></div>
-                      <div>
-                         <div className="text-xs font-bold text-white">Unlimited Access</div>
-                         <div className="text-[10px] text-slate-500">No limits, all features</div>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center"><Monitor className="w-4 h-4 text-emerald-500" /></div>
-                      <div>
-                         <div className="text-xs font-bold text-white">4K / 8K Quality</div>
-                         <div className="text-[10px] text-slate-500">Ultra HD results</div>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center"><FastForward className="w-4 h-4 text-yellow-500" /></div>
-                      <div>
-                         <div className="text-xs font-bold text-white">Priority Speed</div>
-                         <div className="text-[10px] text-slate-500">100x faster</div>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center"><Shield className="w-4 h-4 text-green-500" /></div>
-                      <div>
-                         <div className="text-xs font-bold text-white">Secure & Private</div>
-                         <div className="text-[10px] text-slate-500">Your data is 100% safe</div>
-                      </div>
-                   </div>
+            <div className="max-w-[1600px] w-full mx-auto flex flex-col lg:flex-row items-center justify-between mb-4 px-4 gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-8 lg:gap-12">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center"><Crown className="w-4 h-4 text-rose-500" /></div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Unlimited Access</div>
+                    <div className="text-[10px] text-slate-500">No limits, all features</div>
+                  </div>
                 </div>
-                <button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 whitespace-nowrap">
-                   <Crown className="w-5 h-5 text-yellow-400" />
-                   <div className="text-left leading-tight">
-                      <div className="text-sm">Upgrade to Expert</div>
-                      <div className="text-[9px] text-indigo-200 font-medium">Unlock All Premium Features</div>
-                   </div>
-                </button>
-             </div>
-             <div className="max-w-[1600px] w-full mx-auto relative px-4">
-                <input type="text" placeholder="Enter your prompt..." className="w-full bg-[#0a0a0c] border border-slate-800 rounded-2xl pl-6 pr-32 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50" />
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                   <button className="p-2 text-slate-500 hover:text-white transition-colors"><Layers className="w-4 h-4" /></button>
-                   <button className="p-2 text-slate-500 hover:text-white transition-colors"><Mic className="w-4 h-4" /></button>
-                   <button className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"><Send className="w-4 h-4" /></button>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center"><Monitor className="w-4 h-4 text-emerald-500" /></div>
+                  <div>
+                    <div className="text-xs font-bold text-white">4K / 8K Quality</div>
+                    <div className="text-[10px] text-slate-500">Ultra HD results</div>
+                  </div>
                 </div>
-             </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center"><FastForward className="w-4 h-4 text-yellow-500" /></div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Priority Speed</div>
+                    <div className="text-[10px] text-slate-500">100x faster</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center"><Shield className="w-4 h-4 text-green-500" /></div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Secure & Private</div>
+                    <div className="text-[10px] text-slate-500">Your data is 100% safe</div>
+                  </div>
+                </div>
+              </div>
+              <button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 whitespace-nowrap">
+                <Crown className="w-5 h-5 text-yellow-400" />
+                <div className="text-left leading-tight">
+                  <div className="text-sm">Upgrade to Expert</div>
+                  <div className="text-[9px] text-indigo-200 font-medium">Unlock All Premium Features</div>
+                </div>
+              </button>
+            </div>
+            <div className="max-w-[1600px] w-full mx-auto relative px-4">
+              <input type="text" placeholder="Enter your prompt..." className="w-full bg-[#0a0a0c] border border-slate-800 rounded-2xl pl-6 pr-32 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50" />
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <button className="p-2 text-slate-500 hover:text-white transition-colors"><Layers className="w-4 h-4" /></button>
+                <button className="p-2 text-slate-500 hover:text-white transition-colors"><Mic className="w-4 h-4" /></button>
+                <button className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"><Send className="w-4 h-4" /></button>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -1133,13 +1156,13 @@ export default function App() {
                     <div className="space-y-6">
                       {messages.map((msg, i) => i > 0 && (
                         <motion.div key={msg.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className={`p-6 rounded-3xl ${msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20' : 'bg-[#0a0a0c] border border-white/5'}`}>
-                           <div className="flex items-center gap-3 mb-3">
-                             <div className={`w-6 h-6 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-800'}`}>
-                               {msg.role === 'user' ? <User className="w-3 h-3 text-white" /> : <Cpu className="w-3 h-3 text-indigo-400" />}
-                             </div>
-                             <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{msg.role === 'user' ? 'Mission Commander' : 'Neural Core'}</span>
-                           </div>
-                           <p className="text-sm text-slate-300 leading-relaxed">{msg.content}</p>
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+                              {msg.role === 'user' ? <User className="w-3 h-3 text-white" /> : <Cpu className="w-3 h-3 text-indigo-400" />}
+                            </div>
+                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{msg.role === 'user' ? 'Mission Commander' : 'Neural Core'}</span>
+                          </div>
+                          <p className="text-sm text-slate-300 leading-relaxed">{msg.content}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -1150,44 +1173,44 @@ export default function App() {
 
             {/* Right Panel: Terminal / Browser */}
             <div className="w-[450px] bg-[#08080a] flex flex-col overflow-hidden">
-               <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <div className="flex gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500/50" />
-                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
-                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
-                     </div>
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Agent Terminal</span>
+              <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500/50" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
                   </div>
-                  <Terminal className="w-4 h-4 text-slate-600" />
-               </div>
-               <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto custom-scrollbar">
-                  <div className="space-y-3">
-                     <div className="text-emerald-500 flex gap-2"><span>[SYSTEM]</span> <span>Initializing autonomous environment...</span></div>
-                     <div className="text-slate-500 flex gap-2"><span>[LINK]</span> <span>Connected to global neural grid</span></div>
-                     <div className="text-slate-500 flex gap-2"><span>[AUTH]</span> <span>Verified session: smartai_pro_admin</span></div>
-                     <div className="text-indigo-400 mt-6 flex gap-2"><span>$</span> <span className="animate-pulse">_</span></div>
-                  </div>
-                  {isAiThinking && (
-                    <div className="mt-8 space-y-4">
-                       <div className="flex items-center gap-3 text-indigo-400">
-                          <Zap className="w-3 h-3 animate-bounce" />
-                          <span className="font-bold uppercase tracking-widest text-[9px]">Analyzing Mission Data...</span>
-                       </div>
-                       <div className="space-y-2 opacity-50">
-                          <div className="h-2 bg-slate-800 rounded-full w-full" />
-                          <div className="h-2 bg-slate-800 rounded-full w-[80%]" />
-                          <div className="h-2 bg-slate-800 rounded-full w-[90%]" />
-                       </div>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Agent Terminal</span>
+                </div>
+                <Terminal className="w-4 h-4 text-slate-600" />
+              </div>
+              <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto custom-scrollbar">
+                <div className="space-y-3">
+                  <div className="text-emerald-500 flex gap-2"><span>[SYSTEM]</span> <span>Initializing autonomous environment...</span></div>
+                  <div className="text-slate-500 flex gap-2"><span>[LINK]</span> <span>Connected to global neural grid</span></div>
+                  <div className="text-slate-500 flex gap-2"><span>[AUTH]</span> <span>Verified session: smartai_pro_admin</span></div>
+                  <div className="text-indigo-400 mt-6 flex gap-2"><span>$</span> <span className="animate-pulse">_</span></div>
+                </div>
+                {isAiThinking && (
+                  <div className="mt-8 space-y-4">
+                    <div className="flex items-center gap-3 text-indigo-400">
+                      <Zap className="w-3 h-3 animate-bounce" />
+                      <span className="font-bold uppercase tracking-widest text-[9px]">Analyzing Mission Data...</span>
                     </div>
-                  )}
-               </div>
-               <div className="p-6 bg-[#0a0a0c] border-t border-white/5">
-                  <div className="relative">
-                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Command the agent..." className="w-full bg-[#050507] border border-white/10 rounded-2xl px-5 py-4 text-xs text-white focus:border-indigo-500/50 outline-none transition-all" />
-                    <button onClick={handleSendMessage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all"><Send className="w-4 h-4" /></button>
+                    <div className="space-y-2 opacity-50">
+                      <div className="h-2 bg-slate-800 rounded-full w-full" />
+                      <div className="h-2 bg-slate-800 rounded-full w-[80%]" />
+                      <div className="h-2 bg-slate-800 rounded-full w-[90%]" />
+                    </div>
                   </div>
-               </div>
+                )}
+              </div>
+              <div className="p-6 bg-[#0a0a0c] border-t border-white/5">
+                <div className="relative">
+                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Command the agent..." className="w-full bg-[#050507] border border-white/10 rounded-2xl px-5 py-4 text-xs text-white focus:border-indigo-500/50 outline-none transition-all" />
+                  <button onClick={handleSendMessage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all"><Send className="w-4 h-4" /></button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1223,38 +1246,39 @@ export default function App() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
           <div className="relative z-10 h-full flex flex-col">
             <div className="max-w-3xl mx-auto w-full flex flex-col h-full overflow-hidden">
-               <div className="flex-1 overflow-y-auto space-y-6 mb-6 custom-scrollbar pr-2">
-                 {messages.length <= 1 ? (
-                   <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
-                      <div className="w-24 h-24 bg-indigo-600/10 rounded-[2.5rem] flex items-center justify-center border border-indigo-500/20"><tool.icon className="w-10 h-10" style={{ color: tool.color }} /></div>
-                      <div>
-                         <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{tool.name} Ready</h1>
-                         <p className="text-slate-500 font-medium tracking-wide">{tool.desc}</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
-                         {SUGGESTED_PROMPTS.slice(0, 4).map((p, i) => (
-                           <button key={i} onClick={() => setChatInput(p)} className="p-6 bg-[#16161d] border border-slate-800/50 rounded-[2rem] text-left text-xs font-bold text-slate-400 hover:text-white hover:border-indigo-500/30 transition-all">{p}</button>
-                         ))}
-                      </div>
-                   </div>
-                 ) : (
-                   messages.map((msg, idx) => {
-                     if (idx === 0) return null; // hide initial system message
-                     return (
-                     <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                       <div className={`max-w-[85%] p-5 rounded-[2rem] ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-[#16161d] border border-slate-800/50 text-slate-300'}`}>
-                         <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                       </div>
-                     </motion.div>
-                   )})
-                 )}
-                 {isAiThinking && <div className="w-10 h-10 bg-indigo-600/10 rounded-full flex items-center justify-center animate-pulse"><Zap className="w-5 h-5 text-indigo-500" /></div>}
-                 <div ref={chatEndRef} />
-               </div>
-               <div className="bg-[#16161d] border border-slate-800/50 rounded-[2.5rem] p-2 flex items-center gap-2 mb-4">
-                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder={`Ask ${tool.name} a question...`} className="flex-1 bg-transparent px-6 py-4 text-sm text-white outline-none" />
-                  <button onClick={handleSendMessage} className="bg-indigo-600 text-white p-4 rounded-[2rem]"><Send className="w-5 h-5" /></button>
-               </div>
+              <div className="flex-1 overflow-y-auto space-y-6 mb-6 custom-scrollbar pr-2">
+                {messages.length <= 1 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
+                    <div className="w-24 h-24 bg-indigo-600/10 rounded-[2.5rem] flex items-center justify-center border border-indigo-500/20"><tool.icon className="w-10 h-10" style={{ color: tool.color }} /></div>
+                    <div>
+                      <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{tool.name} Ready</h1>
+                      <p className="text-slate-500 font-medium tracking-wide">{tool.desc}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
+                      {SUGGESTED_PROMPTS.slice(0, 4).map((p, i) => (
+                        <button key={i} onClick={() => setChatInput(p)} className="p-6 bg-[#16161d] border border-slate-800/50 rounded-[2rem] text-left text-xs font-bold text-slate-400 hover:text-white hover:border-indigo-500/30 transition-all">{p}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  messages.map((msg, idx) => {
+                    if (idx === 0) return null; // hide initial system message
+                    return (
+                      <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`max-w-[85%] p-5 rounded-[2rem] ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-[#16161d] border border-slate-800/50 text-slate-300'}`}>
+                          <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+                      </motion.div>
+                    )
+                  })
+                )}
+                {isAiThinking && <div className="w-10 h-10 bg-indigo-600/10 rounded-full flex items-center justify-center animate-pulse"><Zap className="w-5 h-5 text-indigo-500" /></div>}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="bg-[#16161d] border border-slate-800/50 rounded-[2.5rem] p-2 flex items-center gap-2 mb-4">
+                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder={`Ask ${tool.name} a question...`} className="flex-1 bg-transparent px-6 py-4 text-sm text-white outline-none" />
+                <button onClick={handleSendMessage} className="bg-indigo-600 text-white p-4 rounded-[2rem]"><Send className="w-5 h-5" /></button>
+              </div>
             </div>
           </div>
         </div>
@@ -1391,7 +1415,7 @@ export default function App() {
 
   const generateImageProxyUrl = (promptText: string, seedOverride?: number) => {
     const [w, h] = getDimensions(imgQuality, imgAspect);
-    
+
     let stylePrefix = '';
     if (imgStyle === 'realistic') stylePrefix = 'Photorealistic, DSLR photography, hyperrealistic: ';
     else if (imgStyle === 'anime') stylePrefix = 'Anime style, studio ghibli, makoto shinkai, masterpiece anime art: ';
@@ -1401,10 +1425,10 @@ export default function App() {
 
     const enhanceStr = imgQuality === 'Standard' ? '' : ', Masterpiece, highest visual quality, hyper detailed, intricate details, trending on artstation, 8k resolution, sharp, clear';
     const negPrompt = negativePrompt.trim() ? `lowres, blurry, pixelated, distorted, bad anatomy, ${negativePrompt.trim()}` : 'lowres, blurry, pixelated, distorted, low quality, artifact, jpeg artifacts, watermarks';
-    
+
     const fullPrompt = `${stylePrefix}${promptText}${enhanceStr}`;
     const seed = seedOverride ?? Math.floor(Math.random() * 999999);
-    
+
     const params = new URLSearchParams({
       width: String(w),
       height: String(h),
@@ -1429,15 +1453,15 @@ export default function App() {
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
-        if(ctx) {
-           ctx.drawImage(img, 0, 0);
-           const pngData = canvas.toDataURL('image/png');
-           const a = document.createElement('a');
-           a.href = pngData;
-           a.download = `SmartAI-Image-${Date.now()}.png`;
-           document.body.appendChild(a);
-           a.click();
-           document.body.removeChild(a);
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const pngData = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = pngData;
+          a.download = `SmartAI-Image-${Date.now()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
         }
         URL.revokeObjectURL(objectUrl);
       };
@@ -1455,7 +1479,7 @@ export default function App() {
   const handleGenerateImage = async (isRegenerate = false) => {
     const cleanedPrompt = normalizePrompt(imgPrompt);
     if (!cleanedPrompt || isGenerating) return;
-    
+
     const tokenCost = isRegenerate ? 2 : 5;
     if (credits < tokenCost) { alert(`Insufficient credits (${tokenCost} tokens required).`); setIsPricingOpen(true); return; }
 
@@ -1496,7 +1520,7 @@ export default function App() {
     const historyItem = { url: proxyUrl, prompt: cleanedPrompt, style: imgStyle, quality: imgQuality, aspect: imgAspect, date: new Date().toLocaleString() };
     setImageHistory(prev => [historyItem, ...prev]);
     localStorage.setItem('smartai_image_history', JSON.stringify([historyItem, ...imageHistory.slice(0, 99)]));
-    
+
     setCredits(newCredits);
     syncUserData({ credits: newCredits });
   };
@@ -1668,79 +1692,79 @@ export default function App() {
     } catch (e) { alert('Payment initiation failed'); }
   };
 
-   const renderOtpScreen = () => {
-     const handlePaste = (e: React.ClipboardEvent) => {
-       const data = e.clipboardData.getData('text').trim();
-       if (/^\d{6}$/.test(data)) {
-         const newOtp = data.split('');
-         setOtp(newOtp);
-         document.getElementById('otp-5')?.focus();
-       }
-     };
+  const renderOtpScreen = () => {
+    const handlePaste = (e: React.ClipboardEvent) => {
+      const data = e.clipboardData.getData('text').trim();
+      if (/^\d{6}$/.test(data)) {
+        const newOtp = data.split('');
+        setOtp(newOtp);
+        document.getElementById('otp-5')?.focus();
+      }
+    };
 
-     return (
-       <div className="space-y-6">
-         <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(79,70,229,0.3)] rotate-3">
-               <LockIcon className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-white">Verify Identity</h2>
-            <p className="text-slate-500 text-[11px] mt-2 leading-relaxed uppercase tracking-wider font-bold">Code sent to <span className="text-indigo-400">{email}</span></p>
-         </div>
-
-         <div className="flex justify-between gap-2">
-            {otp.map((digit, i) => (
-              <input 
-                key={i} 
-                id={`otp-${i}`}
-                type="text" 
-                inputMode="numeric"
-                maxLength={1} 
-                value={digit} 
-                onPaste={i === 0 ? handlePaste : undefined}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (/^\d*$/.test(val)) {
-                    const newOtp = [...otp];
-                    newOtp[i] = val.slice(-1);
-                    setOtp(newOtp);
-                    if (val && i < 5) document.getElementById(`otp-${i+1}`)?.focus();
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Backspace' && !otp[i] && i > 0) {
-                    const newOtp = [...otp];
-                    newOtp[i-1] = '';
-                    setOtp(newOtp);
-                    document.getElementById(`otp-${i-1}`)?.focus();
-                  }
-                }}
-                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
-              />
-            ))}
-         </div>
-
-         <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50">
-           {isAuthenticating ? 'Verifying Code...' : 'Verify Code'}
-         </button>
-
-         <div className="text-center space-y-3">
-             <button 
-               onClick={async () => {
-                 await sendOtp(otpType);
-                 setResendSuccess(true);
-                 setTimeout(() => setResendSuccess(false), 3000);
-               }} 
-               className={`text-[10px] font-black uppercase tracking-widest transition-all ${resendSuccess ? 'text-emerald-400' : 'text-slate-500 hover:text-white'}`}
-             >
-               {resendSuccess ? 'Code Sent Successfully!' : "Didn't receive code? Resend"}
-             </button>
-             <br/>
-             <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(79,70,229,0.3)] rotate-3">
+            <LockIcon className="w-8 h-8 text-white" />
           </div>
-       </div>
-     );
-   };
+          <h2 className="text-xl font-bold text-white">Verify Identity</h2>
+          <p className="text-slate-500 text-[11px] mt-2 leading-relaxed uppercase tracking-wider font-bold">Code sent to <span className="text-indigo-400">{email}</span></p>
+        </div>
+
+        <div className="flex justify-between gap-2">
+          {otp.map((digit, i) => (
+            <input
+              key={i}
+              id={`otp-${i}`}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onPaste={i === 0 ? handlePaste : undefined}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d*$/.test(val)) {
+                  const newOtp = [...otp];
+                  newOtp[i] = val.slice(-1);
+                  setOtp(newOtp);
+                  if (val && i < 5) document.getElementById(`otp-${i + 1}`)?.focus();
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Backspace' && !otp[i] && i > 0) {
+                  const newOtp = [...otp];
+                  newOtp[i - 1] = '';
+                  setOtp(newOtp);
+                  document.getElementById(`otp-${i - 1}`)?.focus();
+                }
+              }}
+              className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
+            />
+          ))}
+        </div>
+
+        <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50">
+          {isAuthenticating ? 'Verifying Code...' : 'Verify Code'}
+        </button>
+
+        <div className="text-center space-y-3">
+          <button
+            onClick={async () => {
+              await sendOtp(otpType);
+              setResendSuccess(true);
+              setTimeout(() => setResendSuccess(false), 3000);
+            }}
+            className={`text-[10px] font-black uppercase tracking-widest transition-all ${resendSuccess ? 'text-emerald-400' : 'text-slate-500 hover:text-white'}`}
+          >
+            {resendSuccess ? 'Code Sent Successfully!' : "Didn't receive code? Resend"}
+          </button>
+          <br />
+          <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
+        </div>
+      </div>
+    );
+  };
 
   if (!isLoggedIn) {
     return (
@@ -1766,146 +1790,146 @@ export default function App() {
             <>
               {authMode === 'login' && (
                 <form onSubmit={handleLogin} className="space-y-4">
-                 <div>
+                  <div>
                     <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Email Address</label>
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
-                 </div>
+                  </div>
 
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Password</label>
-                   <div className="relative">
-                     <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="••••••••" />
-                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                     </button>
-                   </div>
-                 </div>
-
-               <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
-                 {isAuthenticating ? 'Logging in...' : 'Login'}
-               </button>
-
-               <div className="flex justify-between text-[9px] text-slate-500 mt-3">
-                 <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-white transition-colors font-bold uppercase tracking-widest">Sign Up</button>
-                 <button type="button" onClick={() => { setAuthMode('forgot'); setForgotPasswordStep('email'); }} className="hover:text-white transition-colors font-bold uppercase tracking-widest">Forgot Password?</button>
-               </div>
-            </form>
-          )}
-
-          {authMode === 'signup' && (
-             <div className="space-y-2.5">
-               <div>
-                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Full Name</label>
-                 <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
-               </div>
-
-               <div>
-                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Email Address</label>
-                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="your@email.com" />
-               </div>
-
-               <div className="grid grid-cols-2 gap-2">
-                 <div className="relative">
-                   <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
-                   <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
-                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
-                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                   </button>
-                 </div>
-                 <div className="relative">
-                   <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm</label>
-                   <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
-                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
-                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                   </button>
-                 </div>
-               </div>
-
-               <div>
-                 <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Referral (Optional)</label>
-                 <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs uppercase text-white" placeholder="ABC123" />
-               </div>
-
-               <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-widest text-[10px] mt-2">
-                 {isAuthenticating ? 'Sending OTP...' : 'Get Signup OTP'}
-               </button>
-
-               <button onClick={() => setAuthMode('login')} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Already have an account? Login</button>
-             </div>
-          )}
-
-          {authMode === 'forgot' && (
-             <div className="space-y-4">
-               <div className="text-center">
-                 <h2 className="text-xl font-bold text-white mb-2">Reset Password</h2>
-                 <p className="text-slate-500 text-[10px] uppercase tracking-widest leading-relaxed">
-                   {forgotPasswordStep === 'email' && 'Enter your email to receive a code'}
-                   {forgotPasswordStep === 'otp' && 'Verify your identity with the 6-digit code'}
-                   {forgotPasswordStep === 'reset' && 'Create a new secure password'}
-                 </p>
-               </div>
-
-               {forgotPasswordStep === 'email' && (
-                 <div className="space-y-4">
-                   <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="your@email.com" />
-                   <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
-                     {isAuthenticating ? 'Sending...' : 'Send OTP'}
-                   </button>
-                 </div>
-               )}
-
-               {forgotPasswordStep === 'otp' && (
-                 <div className="space-y-6">
-                    <div className="flex justify-between gap-2">
-                       {resetOtp.map((digit, i) => (
-                         <input key={i} id={`reset-otp-${i}`} type="text" maxLength={1} value={digit} onChange={(e) => {
-                             const val = e.target.value;
-                             if (/^\d*$/.test(val)) {
-                               const newOtp = [...resetOtp];
-                               newOtp[i] = val;
-                               setResetOtp(newOtp);
-                               if (val && i < 5) document.getElementById(`reset-otp-${i+1}`)?.focus();
-                             }
-                           }}
-                           onKeyDown={(e) => { if (e.key === 'Backspace' && !resetOtp[i] && i > 0) document.getElementById(`reset-otp-${i-1}`)?.focus(); }}
-                           className="w-10 sm:w-12 h-12 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
-                         />
-                       ))}
-                    </div>
-                    <button onClick={handleVerifyResetOtp} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
-                      {isAuthenticating ? 'Verifying...' : 'Verify OTP'}
-                    </button>
-                 </div>
-               )}
-
-                {forgotPasswordStep === 'reset' && (
-                 <div className="space-y-4 text-left">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Password</label>
                     <div className="relative">
-                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">New Password</label>
-                      <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[30px] text-slate-500 hover:text-white transition-colors">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
+                    {isAuthenticating ? 'Logging in...' : 'Login'}
+                  </button>
+
+                  <div className="flex justify-between text-[9px] text-slate-500 mt-3">
+                    <button type="button" onClick={() => setAuthMode('signup')} className="hover:text-white transition-colors font-bold uppercase tracking-widest">Sign Up</button>
+                    <button type="button" onClick={() => { setAuthMode('forgot'); setForgotPasswordStep('email'); }} className="hover:text-white transition-colors font-bold uppercase tracking-widest">Forgot Password?</button>
+                  </div>
+                </form>
+              )}
+
+              {authMode === 'signup' && (
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Full Name</label>
+                    <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Email Address</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="your@email.com" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
+                      <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                     <div className="relative">
-                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm Password</label>
-                      <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[30px] text-slate-500 hover:text-white transition-colors">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm</label>
+                      <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
                     </div>
-                    <button onClick={handleFinalPasswordReset} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
-                      {isAuthenticating ? 'Saving...' : 'Reset Password'}
-                    </button>
-                 </div>
-               )}
+                  </div>
 
-               <button onClick={() => {setAuthMode('login'); setForgotPasswordStep('email');}} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Back to Login</button>
-             </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Referral (Optional)</label>
+                    <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs uppercase text-white" placeholder="ABC123" />
+                  </div>
+
+                  <button onClick={handleSignup} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-widest text-[10px] mt-2">
+                    {isAuthenticating ? 'Sending OTP...' : 'Get Signup OTP'}
+                  </button>
+
+                  <button onClick={() => setAuthMode('login')} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Already have an account? Login</button>
+                </div>
+              )}
+
+              {authMode === 'forgot' && (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-white mb-2">Reset Password</h2>
+                    <p className="text-slate-500 text-[10px] uppercase tracking-widest leading-relaxed">
+                      {forgotPasswordStep === 'email' && 'Enter your email to receive a code'}
+                      {forgotPasswordStep === 'otp' && 'Verify your identity with the 6-digit code'}
+                      {forgotPasswordStep === 'reset' && 'Create a new secure password'}
+                    </p>
+                  </div>
+
+                  {forgotPasswordStep === 'email' && (
+                    <div className="space-y-4">
+                      <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="your@email.com" />
+                      <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
+                        {isAuthenticating ? 'Sending...' : 'Send OTP'}
+                      </button>
+                    </div>
+                  )}
+
+                  {forgotPasswordStep === 'otp' && (
+                    <div className="space-y-6">
+                      <div className="flex justify-between gap-2">
+                        {resetOtp.map((digit, i) => (
+                          <input key={i} id={`reset-otp-${i}`} type="text" maxLength={1} value={digit} onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d*$/.test(val)) {
+                              const newOtp = [...resetOtp];
+                              newOtp[i] = val;
+                              setResetOtp(newOtp);
+                              if (val && i < 5) document.getElementById(`reset-otp-${i + 1}`)?.focus();
+                            }
+                          }}
+                            onKeyDown={(e) => { if (e.key === 'Backspace' && !resetOtp[i] && i > 0) document.getElementById(`reset-otp-${i - 1}`)?.focus(); }}
+                            className="w-10 sm:w-12 h-12 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-black text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
+                          />
+                        ))}
+                      </div>
+                      <button onClick={handleVerifyResetOtp} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
+                        {isAuthenticating ? 'Verifying...' : 'Verify OTP'}
+                      </button>
+                    </div>
+                  )}
+
+                  {forgotPasswordStep === 'reset' && (
+                    <div className="space-y-4 text-left">
+                      <div className="relative">
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">New Password</label>
+                        <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[30px] text-slate-500 hover:text-white transition-colors">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Confirm Password</label>
+                        <input type={showPassword ? "text" : "password"} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pr-12 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[30px] text-slate-500 hover:text-white transition-colors">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <button onClick={handleFinalPasswordReset} disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-600/20 active:scale-95">
+                        {isAuthenticating ? 'Saving...' : 'Reset Password'}
+                      </button>
+                    </div>
+                  )}
+
+                  <button onClick={() => { setAuthMode('login'); setForgotPasswordStep('email'); }} className="w-full text-center text-[9px] text-slate-500 hover:text-white mt-1 uppercase tracking-widest font-black transition-colors">Back to Login</button>
+                </div>
+              )}
+            </>
           )}
-          </>
-        )}
-      </motion.div>
+        </motion.div>
       </div>
     );
   }
@@ -1946,11 +1970,11 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-             <div className="hidden sm:flex items-center gap-2">
-                <span className="text-[9px] font-bold text-indigo-100 uppercase">Usage:</span>
-                <span className="text-[10px] font-black text-white">{usage.messages}/100</span>
-             </div>
-             <button onClick={() => setIsPricingOpen(true)} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-lg text-[9px] font-black text-white uppercase transition-all">Go Expert</button>
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-[9px] font-bold text-indigo-100 uppercase">Usage:</span>
+              <span className="text-[10px] font-black text-white">{usage.messages}/100</span>
+            </div>
+            <button onClick={() => setIsPricingOpen(true)} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-lg text-[9px] font-black text-white uppercase transition-all">Go Expert</button>
           </div>
         </div>
 
@@ -1958,97 +1982,97 @@ export default function App() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 md:min-h-0">
           {/* AI Chat */}
           <div className="md:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[400px] md:min-h-0 shadow-xl overflow-hidden">
-             <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">AI Chat</span>
-                </div>
-                <Settings className="w-3 h-3 text-slate-600" />
-             </div>
-             <div className="flex-1 overflow-y-auto p-2.5 space-y-3 bg-slate-950/20 no-scrollbar">
-                <div className="flex flex-col items-end">
-                   <div className="bg-indigo-600/80 text-white p-2 rounded-xl rounded-tr-none text-[10px] max-w-[90%]">Enhance my YouTube script prompt.</div>
-                </div>
-                <div className="flex gap-2">
-                   <div className="w-5 h-5 rounded-md bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0"><Sparkles className="w-2.5 h-2.5 text-indigo-400" /></div>
-                   <div className="bg-slate-800/50 text-slate-400 p-2 rounded-xl rounded-tl-none text-[10px] max-w-[90%] border border-slate-700/30">Sure! Use: "Write a high-retention script about AI future trends with a hook..."</div>
-                </div>
-             </div>
-             <div className="p-2 bg-slate-900 border-t border-slate-800">
-                <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5">
-                   <input placeholder="Ask anything..." className="bg-transparent text-[10px] flex-1 outline-none text-slate-400" />
-                   <Send className="w-3.5 h-3.5 text-indigo-500" />
-                </div>
-             </div>
+            <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">AI Chat</span>
+              </div>
+              <Settings className="w-3 h-3 text-slate-600" />
+            </div>
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-3 bg-slate-950/20 no-scrollbar">
+              <div className="flex flex-col items-end">
+                <div className="bg-indigo-600/80 text-white p-2 rounded-xl rounded-tr-none text-[10px] max-w-[90%]">Enhance my YouTube script prompt.</div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-5 h-5 rounded-md bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0"><Sparkles className="w-2.5 h-2.5 text-indigo-400" /></div>
+                <div className="bg-slate-800/50 text-slate-400 p-2 rounded-xl rounded-tl-none text-[10px] max-w-[90%] border border-slate-700/30">Sure! Use: "Write a high-retention script about AI future trends with a hook..."</div>
+              </div>
+            </div>
+            <div className="p-2 bg-slate-900 border-t border-slate-800">
+              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5">
+                <input placeholder="Ask anything..." className="bg-transparent text-[10px] flex-1 outline-none text-slate-400" />
+                <Send className="w-3.5 h-3.5 text-indigo-500" />
+              </div>
+            </div>
           </div>
 
           {/* Image Suite */}
           <div className="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[350px] md:min-h-0 shadow-xl overflow-hidden">
-             <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Image Suite</span>
-                </div>
-                <button className="text-[8px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-1.5 py-0.5 rounded">View</button>
-             </div>
-             <div className="flex-1 p-2 flex flex-col gap-2 overflow-hidden">
-                <div className="flex gap-1">
-                   {['Realistic', 'Anime', '3D', 'Cinematic'].map(s => (
-                     <button key={s} className="flex-1 py-1 rounded bg-slate-800/50 text-slate-500 text-[8px] font-bold uppercase hover:bg-indigo-600 hover:text-white transition-all">{s}</button>
-                   ))}
-                </div>
-                <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0 overflow-hidden">
-                   <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-lg border border-white/5" />
-                   <div className="bg-gradient-to-tr from-cyan-500/10 to-blue-500/10 rounded-lg border border-white/5" />
-                   <div className="bg-slate-800/20 rounded-lg border border-white/5" />
-                   <div className="bg-slate-800/20 rounded-lg border border-white/5" />
-                </div>
-                <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                   <Sparkles className="w-3 h-3" /> Generate
-                </button>
-             </div>
+            <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Image Suite</span>
+              </div>
+              <button className="text-[8px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-1.5 py-0.5 rounded">View</button>
+            </div>
+            <div className="flex-1 p-2 flex flex-col gap-2 overflow-hidden">
+              <div className="flex gap-1">
+                {['Realistic', 'Anime', '3D', 'Cinematic'].map(s => (
+                  <button key={s} className="flex-1 py-1 rounded bg-slate-800/50 text-slate-500 text-[8px] font-bold uppercase hover:bg-indigo-600 hover:text-white transition-all">{s}</button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0 overflow-hidden">
+                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-lg border border-white/5" />
+                <div className="bg-gradient-to-tr from-cyan-500/10 to-blue-500/10 rounded-lg border border-white/5" />
+                <div className="bg-slate-800/20 rounded-lg border border-white/5" />
+                <div className="bg-slate-800/20 rounded-lg border border-white/5" />
+              </div>
+              <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                <Sparkles className="w-3 h-3" /> Generate
+              </button>
+            </div>
           </div>
 
           {/* Templates */}
           <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[300px] md:min-h-0 shadow-xl overflow-hidden">
-             <div className="p-2 border-b border-slate-800 bg-slate-900/50"><span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Quick Templates</span></div>
-             <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 no-scrollbar">
-                {premiumTemplates.map(tmp => (
-                  <button key={tmp.name} className="w-full p-2 rounded-xl bg-slate-950/40 border border-slate-800/50 flex items-center gap-2 hover:bg-slate-800 transition-all text-left group">
-                    <div className={`w-6 h-6 rounded-lg ${tmp.color} flex items-center justify-center shrink-0 shadow-lg`}><tmp.icon className="w-3 h-3 text-white" /></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-bold text-white truncate uppercase tracking-tight">{tmp.name}</p>
-                      <p className="text-[7px] text-slate-500 truncate">{tmp.desc}</p>
-                    </div>
-                  </button>
-                ))}
-             </div>
+            <div className="p-2 border-b border-slate-800 bg-slate-900/50"><span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Quick Templates</span></div>
+            <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 no-scrollbar">
+              {premiumTemplates.map(tmp => (
+                <button key={tmp.name} className="w-full p-2 rounded-xl bg-slate-950/40 border border-slate-800/50 flex items-center gap-2 hover:bg-slate-800 transition-all text-left group">
+                  <div className={`w-6 h-6 rounded-lg ${tmp.color} flex items-center justify-center shrink-0 shadow-lg`}><tmp.icon className="w-3 h-3 text-white" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-bold text-white truncate uppercase tracking-tight">{tmp.name}</p>
+                    <p className="text-[7px] text-slate-500 truncate">{tmp.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Dynamic Tools Strip */}
         <div className="grid grid-cols-5 gap-2 shrink-0">
-           {[
-             { icon: PenTool, name: 'Enhancer', color: 'bg-indigo-500' },
-             { icon: Mic2, name: 'Pro Tone', color: 'bg-emerald-500' },
-             { icon: Download, name: 'Upload', color: 'bg-purple-500' },
-             { icon: Clock, name: 'History', color: 'bg-orange-500' },
-             { icon: User, name: 'Support', color: 'bg-cyan-500' }
-           ].map(t => (
-             <button key={t.name} className="bg-slate-900/50 border border-slate-800 p-2 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/10 transition-all">
-                <t.icon className="w-3 h-3 text-slate-400" />
-                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t.name}</span>
-             </button>
-           ))}
+          {[
+            { icon: PenTool, name: 'Enhancer', color: 'bg-indigo-500' },
+            { icon: Mic2, name: 'Pro Tone', color: 'bg-emerald-500' },
+            { icon: Download, name: 'Upload', color: 'bg-purple-500' },
+            { icon: Clock, name: 'History', color: 'bg-orange-500' },
+            { icon: User, name: 'Support', color: 'bg-cyan-500' }
+          ].map(t => (
+            <button key={t.name} className="bg-slate-900/50 border border-slate-800 p-2 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/10 transition-all">
+              <t.icon className="w-3 h-3 text-slate-400" />
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t.name}</span>
+            </button>
+          ))}
         </div>
 
         {/* Footer Active Banner */}
         <div className="bg-indigo-600 rounded-lg p-2 flex items-center justify-between shrink-0 shadow-inner">
-           <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-              <p className="text-[8px] font-bold text-white uppercase tracking-widest">Active Plan: Creative <span className="opacity-50 mx-1">|</span> No Watermarks enabled</p>
-           </div>
-           <button onClick={() => setIsPricingOpen(true)} className="bg-black/20 hover:bg-black/30 px-3 py-1 rounded text-[8px] font-bold text-white uppercase">Upgrade</button>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+            <p className="text-[8px] font-bold text-white uppercase tracking-widest">Active Plan: Creative <span className="opacity-50 mx-1">|</span> No Watermarks enabled</p>
+          </div>
+          <button onClick={() => setIsPricingOpen(true)} className="bg-black/20 hover:bg-black/30 px-3 py-1 rounded text-[8px] font-bold text-white uppercase">Upgrade</button>
         </div>
       </div>
     );
@@ -2057,13 +2081,13 @@ export default function App() {
   function renderNormalDashboard() {
     const handleToolClick = (tool: any) => {
       if (tool.name === 'Text to Image') {
-         setActiveTab('image');
-         setImgPrompt('');
+        setActiveTab('image');
+        setImgPrompt('');
       } else {
-         setActiveTool({ name: tool.name, desc: tool.desc, icon: tool.icon });
-         setToolImage(null);
-         setProcessedToolImage(null);
-         setToolPrompt('');
+        setActiveTool({ name: tool.name, desc: tool.desc, icon: tool.icon });
+        setToolImage(null);
+        setProcessedToolImage(null);
+        setToolPrompt('');
       }
     };
 
@@ -2071,315 +2095,315 @@ export default function App() {
       <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-4 md:px-8 gap-5 py-4 relative overflow-y-auto no-scrollbar">
         {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
-           <div>
-              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">Normal Mode</h1>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Your everyday AI tools for quick and easy tasks.</p>
-           </div>
-           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3 px-5 flex items-center gap-5">
-              <div>
-                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Credits Left</p>
-                 <p className="text-xl font-black text-white">{credits}</p>
-              </div>
-              <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
-                 <Sparkles className="w-5 h-5 text-indigo-400" />
-              </div>
-           </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">Normal Mode</h1>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Your everyday AI tools for quick and easy tasks.</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3 px-5 flex items-center gap-5">
+            <div>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Credits Left</p>
+              <p className="text-xl font-black text-white">{credits}</p>
+            </div>
+            <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+            </div>
+          </div>
         </div>
 
         {/* Quick Tools */}
         <div className="shrink-0">
-           <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Quick Tools</h2>
-           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[
-                { name: 'Text to Image', desc: 'Generate images from text prompts.', icon: ImageIcon, color: 'text-indigo-400' },
-                { name: 'Image to Image', desc: 'Transform and restyle your images.', icon: Copy, color: 'text-blue-400' },
-                { name: 'Background Remover', desc: 'Remove background from any image.', icon: Layers, color: 'text-slate-400' },
-                { name: 'Image Enhance', desc: 'Improve image quality and resolution.', icon: Sparkles, color: 'text-purple-400' },
-                { name: 'Compress Image', desc: 'Reduce image size without losing quality.', icon: Download, color: 'text-emerald-400' }
-              ].map((tool, i) => (
-                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl md:rounded-2xl p-3 md:p-4 text-left group">
-                   <div className="flex items-start justify-between mb-2 md:mb-3">
-                      <div className={`w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-slate-700 transition-colors`}>
-                         <tool.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${tool.color}`} />
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors" />
-                   </div>
-                   <h3 className="text-[11px] md:text-[13px] font-bold text-white mb-1 md:mb-1.5 leading-tight truncate">{tool.name}</h3>
-                   <p className="text-[9px] md:text-[10px] text-slate-500 leading-snug line-clamp-2">{tool.desc}</p>
-                </button>
-              ))}
-           </div>
+          <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Quick Tools</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              { name: 'Text to Image', desc: 'Generate images from text prompts.', icon: ImageIcon, color: 'text-indigo-400' },
+              { name: 'Image to Image', desc: 'Transform and restyle your images.', icon: Copy, color: 'text-blue-400' },
+              { name: 'Background Remover', desc: 'Remove background from any image.', icon: Layers, color: 'text-slate-400' },
+              { name: 'Image Enhance', desc: 'Improve image quality and resolution.', icon: Sparkles, color: 'text-purple-400' },
+              { name: 'Compress Image', desc: 'Reduce image size without losing quality.', icon: Download, color: 'text-emerald-400' }
+            ].map((tool, i) => (
+              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl md:rounded-2xl p-3 md:p-4 text-left group">
+                <div className="flex items-start justify-between mb-2 md:mb-3">
+                  <div className={`w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-slate-700 transition-colors`}>
+                    <tool.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${tool.color}`} />
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors" />
+                </div>
+                <h3 className="text-[11px] md:text-[13px] font-bold text-white mb-1 md:mb-1.5 leading-tight truncate">{tool.name}</h3>
+                <p className="text-[9px] md:text-[10px] text-slate-500 leading-snug line-clamp-2">{tool.desc}</p>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* More Tools */}
         <div className="pb-6 flex flex-col">
-           <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">More Tools</h2>
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pb-20 md:pb-0">
-              {[
-                { name: 'Resize Image', desc: 'Change dimensions of your image.', icon: Monitor },
-                { name: 'Crop Image', desc: 'Crop your image to any size.', icon: Layout },
-                { name: 'Rotate / Flip', desc: 'Rotate or flip your image.', icon: RefreshCcw },
-                { name: 'Image Converter', desc: 'Convert image to different formats.', icon: FileText },
-                { name: 'Add Text', desc: 'Add custom text to your image.', icon: PenTool },
-                { name: 'Color Adjust', desc: 'Adjust brightness, contrast and more.', icon: Eye },
-                { name: 'Filters & Effects', desc: 'Apply filters and artistic effects.', icon: Sparkles },
-                { name: 'Collage Maker', desc: 'Create collage from multiple images.', icon: Layout },
-                { name: 'Meme Generator', desc: 'Create memes easily.', icon: User },
-                { name: 'Sticker Maker', desc: 'Add stickers to your images.', icon: Layers },
-                { name: 'Watermark Add', desc: 'Add custom watermark to image.', icon: CloudSun },
-                { name: 'QR Code Generator', desc: 'Generate QR code images.', icon: Code }
-              ].map((tool, i) => (
-                <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl p-2.5 md:p-3.5 flex items-center gap-3 md:gap-4 text-left group h-full">
-                   <div className="w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
-                      <tool.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
-                   </div>
-                   <div className="flex-1 min-w-0">
-                      <h3 className="text-[11px] md:text-xs font-bold text-white mb-0.5 truncate">{tool.name}</h3>
-                      <p className="text-[9px] md:text-[10px] text-slate-500 truncate">{tool.desc}</p>
-                   </div>
-                   <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 group-hover:text-white transition-colors" />
-                </button>
-              ))}
-           </div>
+          <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">More Tools</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pb-20 md:pb-0">
+            {[
+              { name: 'Resize Image', desc: 'Change dimensions of your image.', icon: Monitor },
+              { name: 'Crop Image', desc: 'Crop your image to any size.', icon: Layout },
+              { name: 'Rotate / Flip', desc: 'Rotate or flip your image.', icon: RefreshCcw },
+              { name: 'Image Converter', desc: 'Convert image to different formats.', icon: FileText },
+              { name: 'Add Text', desc: 'Add custom text to your image.', icon: PenTool },
+              { name: 'Color Adjust', desc: 'Adjust brightness, contrast and more.', icon: Eye },
+              { name: 'Filters & Effects', desc: 'Apply filters and artistic effects.', icon: Sparkles },
+              { name: 'Collage Maker', desc: 'Create collage from multiple images.', icon: Layout },
+              { name: 'Meme Generator', desc: 'Create memes easily.', icon: User },
+              { name: 'Sticker Maker', desc: 'Add stickers to your images.', icon: Layers },
+              { name: 'Watermark Add', desc: 'Add custom watermark to image.', icon: CloudSun },
+              { name: 'QR Code Generator', desc: 'Generate QR code images.', icon: Code }
+            ].map((tool, i) => (
+              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl p-2.5 md:p-3.5 flex items-center gap-3 md:gap-4 text-left group h-full">
+                <div className="w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
+                  <tool.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[11px] md:text-xs font-bold text-white mb-0.5 truncate">{tool.name}</h3>
+                  <p className="text-[9px] md:text-[10px] text-slate-500 truncate">{tool.desc}</p>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 group-hover:text-white transition-colors" />
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tool Processor Modal */}
         <AnimatePresence>
           {activeTool && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4">
-               <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-                  <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-                           <activeTool.icon className="w-5 h-5 text-indigo-400" />
-                        </div>
-                        <div>
-                           <h3 className="text-white font-black text-lg">{activeTool.name}</h3>
-                           <p className="text-slate-500 text-xs">{activeTool.desc}</p>
-                        </div>
-                     </div>
-                     <button onClick={() => setActiveTool(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
-                        <X className="w-5 h-5 text-slate-400" />
-                     </button>
+              <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                      <activeTool.icon className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-black text-lg">{activeTool.name}</h3>
+                      <p className="text-slate-500 text-xs">{activeTool.desc}</p>
+                    </div>
                   </div>
-                  
-                  <div className="p-6 flex-1 overflow-y-auto flex flex-col items-center justify-center gap-4">
-                     {!toolImage ? (
-                       <label className="w-full aspect-video border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-800/50 hover:bg-slate-800 transition-all rounded-2xl flex flex-col items-center justify-center cursor-pointer group">
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                             const file = e.target.files?.[0];
-                             if (file) {
-                               const reader = new FileReader();
-                               reader.onload = (ev) => setToolImage(ev.target?.result as string);
-                               reader.readAsDataURL(file);
-                             }
-                          }} />
-                          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
-                             <ImageIcon className="w-8 h-8 text-indigo-400" />
-                          </div>
-                          <p className="text-white font-bold text-lg mb-1">{activeTool.name === 'QR Code Generator' ? 'Upload optional logo' : 'Upload Image to Process'}</p>
-                          <p className="text-slate-500 text-sm">Click to browse files</p>
-                       </label>
-                     ) : (
-                       <div className="w-full flex flex-col items-center gap-4">
-                          <div className="grid grid-cols-2 gap-4 w-full">
-                             <div className="flex flex-col gap-2">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Original</span>
-                                <img src={toolImage} className="w-full rounded-xl border border-slate-800 opacity-70" alt="Original" />
-                             </div>
-                             <div className="flex flex-col gap-2 relative">
-                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest text-center">Result</span>
-                                {processedToolImage ? (
-                                   <div className="relative group">
-                                      <img src={processedToolImage} className="w-full rounded-xl border border-indigo-500/50 shadow-lg shadow-indigo-600/20" alt="Processed" />
-                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                                         <button onClick={() => { const a = document.createElement('a'); a.href = processedToolImage!; a.download = `smartai_${activeTool.name.toLowerCase().replace(/ /g, '_')}.png`; a.click(); }} className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl text-xs">
-                                            <Download className="w-4 h-4" /> Download PNG
-                                         </button>
-                                      </div>
-                                   </div>
-                                ) : (
-                                   <div className="w-full aspect-square bg-slate-800/50 border border-slate-700 rounded-xl flex items-center justify-center">
-                                      {isToolProcessing ? (
-                                         <div className="flex flex-col items-center gap-3">
-                                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full" />
-                                            <span className="text-xs font-bold text-indigo-400 animate-pulse">Processing...</span>
-                                         </div>
-                                      ) : (
-                                         <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Ready</span>
-                                      )}
-                                   </div>
-                                )}
-                             </div>
-                          </div>
+                  <button onClick={() => setActiveTool(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-slate-400" />
+                  </button>
+                </div>
 
-                          {/* Prompt input for Image to Image */}
-                          {activeTool.name === 'Image to Image' && (
-                            <div className="w-full">
-                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">What do you want to do with this image?</label>
-                               <input value={toolPrompt} onChange={e => setToolPrompt(e.target.value)} placeholder="remove bg, blur, grayscale, vintage, flip, rotate, cartoon, enhance, add border, write 'text', bright, dark, invert..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 placeholder:text-slate-600" />
-                               <p className="text-[9px] text-slate-600 mt-1.5 leading-relaxed">🎨 blur, grayscale, vintage, cartoon, warm, cool, invert, enhance, bright, dark &nbsp;|&nbsp; ✂️ flip, rotate, resize, add border &nbsp;|&nbsp; ✏️ remove bg, write 'your text'</p>
+                <div className="p-6 flex-1 overflow-y-auto flex flex-col items-center justify-center gap-4">
+                  {!toolImage ? (
+                    <label className="w-full aspect-video border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-800/50 hover:bg-slate-800 transition-all rounded-2xl flex flex-col items-center justify-center cursor-pointer group">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setToolImage(ev.target?.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }} />
+                      <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                        <ImageIcon className="w-8 h-8 text-indigo-400" />
+                      </div>
+                      <p className="text-white font-bold text-lg mb-1">{activeTool.name === 'QR Code Generator' ? 'Upload optional logo' : 'Upload Image to Process'}</p>
+                      <p className="text-slate-500 text-sm">Click to browse files</p>
+                    </label>
+                  ) : (
+                    <div className="w-full flex flex-col items-center gap-4">
+                      <div className="grid grid-cols-2 gap-4 w-full">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Original</span>
+                          <img src={toolImage} className="w-full rounded-xl border border-slate-800 opacity-70" alt="Original" />
+                        </div>
+                        <div className="flex flex-col gap-2 relative">
+                          <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest text-center">Result</span>
+                          {processedToolImage ? (
+                            <div className="relative group">
+                              <img src={processedToolImage} className="w-full rounded-xl border border-indigo-500/50 shadow-lg shadow-indigo-600/20" alt="Processed" />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                <button onClick={() => { const a = document.createElement('a'); a.href = processedToolImage!; a.download = `smartai_${activeTool.name.toLowerCase().replace(/ /g, '_')}.png`; a.click(); }} className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl text-xs">
+                                  <Download className="w-4 h-4" /> Download PNG
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full aspect-square bg-slate-800/50 border border-slate-700 rounded-xl flex items-center justify-center">
+                              {isToolProcessing ? (
+                                <div className="flex flex-col items-center gap-3">
+                                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full" />
+                                  <span className="text-xs font-bold text-indigo-400 animate-pulse">Processing...</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Ready</span>
+                              )}
                             </div>
                           )}
-                          
-                          {!processedToolImage && (
-                            <button onClick={async () => {
-                               setIsToolProcessing(true);
-                               try {
-                                 if (activeTool.name === 'Image to Image') {
-                                    // Canvas-based processing for filters/edits on the ACTUAL uploaded image
-                                    setTimeout(async () => {
-                                      try {
-                                        const canvas = document.createElement('canvas');
-                                        const ctx = canvas.getContext('2d')!;
-                                        const img = new window.Image();
-                                        img.src = toolImage;
-                                        await new Promise(res => { img.onload = res; });
-                                        canvas.width = img.width; canvas.height = img.height;
-                                        const p = toolPrompt.toLowerCase();
-                                        
-                                        // Check if user is trying unsupported operation
-                                        const unsupported = (p.includes('add ') && !p.includes('border') && !p.includes('text') && !p.includes('write')) || (p.includes('remove ') && !p.includes('background') && !p.includes('bg'));
-                                        if (unsupported) {
-                                           alert('⚠️ This operation needs AI Inpainting API.\n\nSupported commands:\n• remove bg / remove background\n• blur, grayscale, vintage, cartoon\n• flip, rotate, enhance, bright, dark\n• add border, write "your text"\n• warm, cool, invert, sharpen');
-                                           setIsToolProcessing(false);
-                                           return;
-                                        }
-                                        
-                                        // Apply filters based on prompt keywords
-                                        let filters: string[] = [];
-                                        if (p.includes('blur')) filters.push('blur(5px)');
-                                        if (p.includes('bright')) filters.push('brightness(1.4)');
-                                        if (p.includes('dark')) filters.push('brightness(0.6)');
-                                        if (p.includes('contrast')) filters.push('contrast(1.5)');
-                                        if (p.includes('saturate') || p.includes('vibrant') || p.includes('colorful')) filters.push('saturate(2)');
-                                        if (p.includes('grayscale') || p.includes('black and white') || p.includes('b&w') || p.includes('grey')) filters.push('grayscale(1)');
-                                        if (p.includes('sepia') || p.includes('vintage') || p.includes('old') || p.includes('retro')) filters.push('sepia(0.9)');
-                                        if (p.includes('invert') || p.includes('negative')) filters.push('invert(1)');
-                                        if (p.includes('cartoon') || p.includes('poster')) filters.push('contrast(1.8) saturate(1.5)');
-                                        if (p.includes('warm')) filters.push('sepia(0.3) saturate(1.3)');
-                                        if (p.includes('cool') || p.includes('cold')) filters.push('hue-rotate(180deg) saturate(0.8)');
-                                        if (p.includes('sharpen') || p.includes('sharp') || p.includes('clear')) filters.push('contrast(1.3) brightness(1.05)');
-                                        if (p.includes('enhance') || p.includes('improve') || p.includes('hd')) filters.push('contrast(1.2) saturate(1.2) brightness(1.1)');
-                                        if (filters.length > 0) ctx.filter = filters.join(' ');
-                                        
-                                        // Handle flip/rotate
-                                        if (p.includes('flip') || p.includes('mirror')) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-                                        if (p.includes('rotate')) { canvas.width = img.height; canvas.height = img.width; ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(90 * Math.PI/180); ctx.drawImage(img, -img.width/2, -img.height/2); } else { ctx.drawImage(img, 0, 0); }
-                                        ctx.filter = 'none';
-                                        
-                                        // Handle remove background
-                                        if (p.includes('remove') && (p.includes('background') || p.includes('bg'))) {
-                                           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                                           const d = imgData.data; const bgR = d[0], bgG = d[1], bgB = d[2];
-                                           for (let i = 0; i < d.length; i += 4) { const dist = Math.sqrt((d[i]-bgR)**2 + (d[i+1]-bgG)**2 + (d[i+2]-bgB)**2); if (dist < 55) d[i+3] = 0; }
-                                           ctx.putImageData(imgData, 0, 0);
-                                        }
-                                        
-                                        // Handle add text
-                                        if (p.includes('add text') || p.includes('write') || p.includes('watermark')) {
-                                           const textMatch = toolPrompt.match(/["'](.+?)["']/);
-                                           const text = textMatch ? textMatch[1] : 'SMART AI';
-                                           ctx.font = `bold ${canvas.width*0.08}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width*0.01; ctx.textAlign = 'center';
-                                           ctx.strokeText(text, canvas.width/2, canvas.height - 40); ctx.fillText(text, canvas.width/2, canvas.height - 40);
-                                        }
-                                        
-                                        // Handle border
-                                        if (p.includes('border') || p.includes('frame')) {
-                                           const bw = canvas.width * 0.03;
-                                           ctx.strokeStyle = p.includes('white') ? 'white' : p.includes('gold') ? '#FFD700' : '#4f46e5';
-                                           ctx.lineWidth = bw; ctx.strokeRect(bw/2, bw/2, canvas.width - bw, canvas.height - bw);
-                                        }
-                                        
-                                        // Handle resize
-                                        if (p.includes('resize') || p.includes('small') || p.includes('thumbnail')) {
-                                           const newCanvas = document.createElement('canvas');
-                                           newCanvas.width = canvas.width / 2; newCanvas.height = canvas.height / 2;
-                                           newCanvas.getContext('2d')!.drawImage(canvas, 0, 0, newCanvas.width, newCanvas.height);
-                                           setProcessedToolImage(newCanvas.toDataURL('image/png'));
-                                           setIsToolProcessing(false); setCredits(prev => prev - 1); return;
-                                        }
-                                        
-                                        setProcessedToolImage(canvas.toDataURL('image/png'));
-                                        setIsToolProcessing(false);
-                                        setCredits(prev => prev - 1);
-                                      } catch (err) { alert('❌ Processing failed. Token not deducted.'); setIsToolProcessing(false); }
-                                    }, 1200);
-                                 } else {
-                                    setTimeout(async () => {
-                                      const canvas = document.createElement('canvas');
-                                      const ctx = canvas.getContext('2d')!;
-                                      const img = new window.Image();
-                                      img.src = toolImage;
-                                      await new Promise(res => { img.onload = res; });
-                                      let outFormat = 'image/png';
-                                      let outQuality = 1.0;
-                                      if (activeTool.name === 'QR Code Generator') {
-                                         const url2 = prompt("Enter URL or Text for QR Code:", "https://smartaipro.com");
-                                         if (!url2) { setIsToolProcessing(false); return; }
-                                         const qrImg = new window.Image(); qrImg.crossOrigin = 'Anonymous';
-                                         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url2)}`;
-                                         await new Promise(res => { qrImg.onload = res; });
-                                         canvas.width = 500; canvas.height = 500; ctx.fillStyle = 'white'; ctx.fillRect(0,0,500,500); ctx.drawImage(qrImg, 0, 0);
-                                      } else {
-                                         canvas.width = img.width; canvas.height = img.height;
-                                         if (activeTool.name === 'Resize Image') {
-                                            const w = prompt("Enter new width (px):", img.width.toString());
-                                            const h = prompt("Enter new height (px):", img.height.toString());
-                                            if (!w || !h) { setIsToolProcessing(false); return; }
-                                            canvas.width = parseInt(w); canvas.height = parseInt(h);
-                                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                         } else if (activeTool.name === 'Crop Image') {
-                                            const cropPct = prompt("Enter crop percentage (e.g. 80 for center 80%):", "80");
-                                            if (!cropPct) { setIsToolProcessing(false); return; }
-                                            const c = parseInt(cropPct) / 100;
-                                            canvas.width = img.width * c; canvas.height = img.height * c;
-                                            const ox = (img.width - canvas.width) / 2, oy = (img.height - canvas.height) / 2;
-                                            ctx.drawImage(img, ox, oy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-                                         } else if (activeTool.name === 'Rotate / Flip') {
-                                            const dir = prompt("Type 'rotate' or 'flip':", "flip");
-                                            if (dir === 'flip') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); }
-                                            else { canvas.width = img.height; canvas.height = img.width; ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(90 * Math.PI / 180); ctx.drawImage(img, -img.width/2, -img.height/2); }
-                                         } else if (activeTool.name === 'Background Remover' || activeTool.name === 'Sticker Maker') {
-                                            ctx.drawImage(img, 0, 0);
-                                            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                                            const d = imgData.data; const bgR = d[0], bgG = d[1], bgB = d[2];
-                                            for (let i = 0; i < d.length; i += 4) { const dist = Math.sqrt((d[i]-bgR)**2 + (d[i+1]-bgG)**2 + (d[i+2]-bgB)**2); if (dist < 50) d[i+3] = 0; }
-                                            ctx.putImageData(imgData, 0, 0);
-                                         } else {
-                                            if (activeTool.name === 'Image Enhance') ctx.filter = 'contrast(1.2) saturate(1.3) brightness(1.1)';
-                                            if (activeTool.name === 'Color Adjust') ctx.filter = 'hue-rotate(45deg) saturate(1.5)';
-                                            if (activeTool.name === 'Filters & Effects') ctx.filter = 'sepia(0.8) contrast(1.1)';
-                                            ctx.drawImage(img, 0, 0); ctx.filter = 'none';
-                                            if (activeTool.name === 'Add Text' || activeTool.name === 'Watermark Add') {
-                                               const text = prompt("Enter text:", "SMART AI PRO");
-                                               if (text) { ctx.font = `bold ${canvas.width*0.08}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width*0.01; ctx.textAlign = 'center'; ctx.strokeText(text, canvas.width/2, canvas.height - 50); ctx.fillText(text, canvas.width/2, canvas.height - 50); }
-                                            } else if (activeTool.name === 'Meme Generator') {
-                                               const top = prompt("Enter Top Text:", "WHEN AI"); const bot = prompt("Enter Bottom Text:", "DOES IT PERFECTLY");
-                                               ctx.font = `bold ${canvas.width*0.1}px Impact`; ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width*0.015; ctx.textAlign = 'center';
-                                               ctx.strokeText(top||'', canvas.width/2, canvas.width*0.15); ctx.fillText(top||'', canvas.width/2, canvas.width*0.15);
-                                               ctx.strokeText(bot||'', canvas.width/2, canvas.height - canvas.width*0.05); ctx.fillText(bot||'', canvas.width/2, canvas.height - canvas.width*0.05);
-                                            } else if (activeTool.name === 'Image Converter') {
-                                               const f = prompt("Enter format (png, jpeg, webp):", "webp");
-                                               if (f === 'jpeg' || f === 'jpg') outFormat = 'image/jpeg'; else if (f === 'webp') outFormat = 'image/webp';
-                                            } else if (activeTool.name === 'Compress Image') { outFormat = 'image/jpeg'; outQuality = 0.4; }
-                                            else if (activeTool.name === 'Collage Maker') { ctx.drawImage(img, 0, 0, canvas.width/2, canvas.height/2); ctx.drawImage(img, canvas.width/2, 0, canvas.width/2, canvas.height/2); ctx.filter='hue-rotate(90deg)'; ctx.drawImage(img, 0, canvas.height/2, canvas.width/2, canvas.height/2); ctx.filter='grayscale(1)'; ctx.drawImage(img, canvas.width/2, canvas.height/2, canvas.width/2, canvas.height/2); ctx.filter='none'; }
-                                         }
-                                      }
-                                      setProcessedToolImage(canvas.toDataURL(outFormat, outQuality));
-                                      setIsToolProcessing(false);
-                                      setCredits(prev => prev - 1);
-                                    }, 1000);
-                                 }
-                               } catch (err) { alert('❌ Processing failed. Token not deducted.'); setIsToolProcessing(false); }
-                            }} disabled={isToolProcessing || (activeTool.name === 'Image to Image' && !toolPrompt.trim())} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50">
-                               <Sparkles className="w-5 h-5" /> {activeTool.name === 'Image to Image' ? 'Generate (-1 Token)' : 'Execute Tool (-1 Token)'}
-                            </button>
-                          )}
-                       </div>
-                     )}
-                  </div>
-               </motion.div>
+                        </div>
+                      </div>
+
+                      {/* Prompt input for Image to Image */}
+                      {activeTool.name === 'Image to Image' && (
+                        <div className="w-full">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">What do you want to do with this image?</label>
+                          <input value={toolPrompt} onChange={e => setToolPrompt(e.target.value)} placeholder="remove bg, blur, grayscale, vintage, flip, rotate, cartoon, enhance, add border, write 'text', bright, dark, invert..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 placeholder:text-slate-600" />
+                          <p className="text-[9px] text-slate-600 mt-1.5 leading-relaxed">🎨 blur, grayscale, vintage, cartoon, warm, cool, invert, enhance, bright, dark &nbsp;|&nbsp; ✂️ flip, rotate, resize, add border &nbsp;|&nbsp; ✏️ remove bg, write 'your text'</p>
+                        </div>
+                      )}
+
+                      {!processedToolImage && (
+                        <button onClick={async () => {
+                          setIsToolProcessing(true);
+                          try {
+                            if (activeTool.name === 'Image to Image') {
+                              // Canvas-based processing for filters/edits on the ACTUAL uploaded image
+                              setTimeout(async () => {
+                                try {
+                                  const canvas = document.createElement('canvas');
+                                  const ctx = canvas.getContext('2d')!;
+                                  const img = new window.Image();
+                                  img.src = toolImage;
+                                  await new Promise(res => { img.onload = res; });
+                                  canvas.width = img.width; canvas.height = img.height;
+                                  const p = toolPrompt.toLowerCase();
+
+                                  // Check if user is trying unsupported operation
+                                  const unsupported = (p.includes('add ') && !p.includes('border') && !p.includes('text') && !p.includes('write')) || (p.includes('remove ') && !p.includes('background') && !p.includes('bg'));
+                                  if (unsupported) {
+                                    alert('⚠️ This operation needs AI Inpainting API.\n\nSupported commands:\n• remove bg / remove background\n• blur, grayscale, vintage, cartoon\n• flip, rotate, enhance, bright, dark\n• add border, write "your text"\n• warm, cool, invert, sharpen');
+                                    setIsToolProcessing(false);
+                                    return;
+                                  }
+
+                                  // Apply filters based on prompt keywords
+                                  let filters: string[] = [];
+                                  if (p.includes('blur')) filters.push('blur(5px)');
+                                  if (p.includes('bright')) filters.push('brightness(1.4)');
+                                  if (p.includes('dark')) filters.push('brightness(0.6)');
+                                  if (p.includes('contrast')) filters.push('contrast(1.5)');
+                                  if (p.includes('saturate') || p.includes('vibrant') || p.includes('colorful')) filters.push('saturate(2)');
+                                  if (p.includes('grayscale') || p.includes('black and white') || p.includes('b&w') || p.includes('grey')) filters.push('grayscale(1)');
+                                  if (p.includes('sepia') || p.includes('vintage') || p.includes('old') || p.includes('retro')) filters.push('sepia(0.9)');
+                                  if (p.includes('invert') || p.includes('negative')) filters.push('invert(1)');
+                                  if (p.includes('cartoon') || p.includes('poster')) filters.push('contrast(1.8) saturate(1.5)');
+                                  if (p.includes('warm')) filters.push('sepia(0.3) saturate(1.3)');
+                                  if (p.includes('cool') || p.includes('cold')) filters.push('hue-rotate(180deg) saturate(0.8)');
+                                  if (p.includes('sharpen') || p.includes('sharp') || p.includes('clear')) filters.push('contrast(1.3) brightness(1.05)');
+                                  if (p.includes('enhance') || p.includes('improve') || p.includes('hd')) filters.push('contrast(1.2) saturate(1.2) brightness(1.1)');
+                                  if (filters.length > 0) ctx.filter = filters.join(' ');
+
+                                  // Handle flip/rotate
+                                  if (p.includes('flip') || p.includes('mirror')) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+                                  if (p.includes('rotate')) { canvas.width = img.height; canvas.height = img.width; ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(90 * Math.PI / 180); ctx.drawImage(img, -img.width / 2, -img.height / 2); } else { ctx.drawImage(img, 0, 0); }
+                                  ctx.filter = 'none';
+
+                                  // Handle remove background
+                                  if (p.includes('remove') && (p.includes('background') || p.includes('bg'))) {
+                                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                    const d = imgData.data; const bgR = d[0], bgG = d[1], bgB = d[2];
+                                    for (let i = 0; i < d.length; i += 4) { const dist = Math.sqrt((d[i] - bgR) ** 2 + (d[i + 1] - bgG) ** 2 + (d[i + 2] - bgB) ** 2); if (dist < 55) d[i + 3] = 0; }
+                                    ctx.putImageData(imgData, 0, 0);
+                                  }
+
+                                  // Handle add text
+                                  if (p.includes('add text') || p.includes('write') || p.includes('watermark')) {
+                                    const textMatch = toolPrompt.match(/["'](.+?)["']/);
+                                    const text = textMatch ? textMatch[1] : 'SMART AI';
+                                    ctx.font = `bold ${canvas.width * 0.08}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width * 0.01; ctx.textAlign = 'center';
+                                    ctx.strokeText(text, canvas.width / 2, canvas.height - 40); ctx.fillText(text, canvas.width / 2, canvas.height - 40);
+                                  }
+
+                                  // Handle border
+                                  if (p.includes('border') || p.includes('frame')) {
+                                    const bw = canvas.width * 0.03;
+                                    ctx.strokeStyle = p.includes('white') ? 'white' : p.includes('gold') ? '#FFD700' : '#4f46e5';
+                                    ctx.lineWidth = bw; ctx.strokeRect(bw / 2, bw / 2, canvas.width - bw, canvas.height - bw);
+                                  }
+
+                                  // Handle resize
+                                  if (p.includes('resize') || p.includes('small') || p.includes('thumbnail')) {
+                                    const newCanvas = document.createElement('canvas');
+                                    newCanvas.width = canvas.width / 2; newCanvas.height = canvas.height / 2;
+                                    newCanvas.getContext('2d')!.drawImage(canvas, 0, 0, newCanvas.width, newCanvas.height);
+                                    setProcessedToolImage(newCanvas.toDataURL('image/png'));
+                                    setIsToolProcessing(false); setCredits(prev => prev - 1); return;
+                                  }
+
+                                  setProcessedToolImage(canvas.toDataURL('image/png'));
+                                  setIsToolProcessing(false);
+                                  setCredits(prev => prev - 1);
+                                } catch (err) { alert('❌ Processing failed. Token not deducted.'); setIsToolProcessing(false); }
+                              }, 1200);
+                            } else {
+                              setTimeout(async () => {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d')!;
+                                const img = new window.Image();
+                                img.src = toolImage;
+                                await new Promise(res => { img.onload = res; });
+                                let outFormat = 'image/png';
+                                let outQuality = 1.0;
+                                if (activeTool.name === 'QR Code Generator') {
+                                  const url2 = prompt("Enter URL or Text for QR Code:", "https://smartaipro.com");
+                                  if (!url2) { setIsToolProcessing(false); return; }
+                                  const qrImg = new window.Image(); qrImg.crossOrigin = 'Anonymous';
+                                  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url2)}`;
+                                  await new Promise(res => { qrImg.onload = res; });
+                                  canvas.width = 500; canvas.height = 500; ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 500, 500); ctx.drawImage(qrImg, 0, 0);
+                                } else {
+                                  canvas.width = img.width; canvas.height = img.height;
+                                  if (activeTool.name === 'Resize Image') {
+                                    const w = prompt("Enter new width (px):", img.width.toString());
+                                    const h = prompt("Enter new height (px):", img.height.toString());
+                                    if (!w || !h) { setIsToolProcessing(false); return; }
+                                    canvas.width = parseInt(w); canvas.height = parseInt(h);
+                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                  } else if (activeTool.name === 'Crop Image') {
+                                    const cropPct = prompt("Enter crop percentage (e.g. 80 for center 80%):", "80");
+                                    if (!cropPct) { setIsToolProcessing(false); return; }
+                                    const c = parseInt(cropPct) / 100;
+                                    canvas.width = img.width * c; canvas.height = img.height * c;
+                                    const ox = (img.width - canvas.width) / 2, oy = (img.height - canvas.height) / 2;
+                                    ctx.drawImage(img, ox, oy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                                  } else if (activeTool.name === 'Rotate / Flip') {
+                                    const dir = prompt("Type 'rotate' or 'flip':", "flip");
+                                    if (dir === 'flip') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); }
+                                    else { canvas.width = img.height; canvas.height = img.width; ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(90 * Math.PI / 180); ctx.drawImage(img, -img.width / 2, -img.height / 2); }
+                                  } else if (activeTool.name === 'Background Remover' || activeTool.name === 'Sticker Maker') {
+                                    ctx.drawImage(img, 0, 0);
+                                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                    const d = imgData.data; const bgR = d[0], bgG = d[1], bgB = d[2];
+                                    for (let i = 0; i < d.length; i += 4) { const dist = Math.sqrt((d[i] - bgR) ** 2 + (d[i + 1] - bgG) ** 2 + (d[i + 2] - bgB) ** 2); if (dist < 50) d[i + 3] = 0; }
+                                    ctx.putImageData(imgData, 0, 0);
+                                  } else {
+                                    if (activeTool.name === 'Image Enhance') ctx.filter = 'contrast(1.2) saturate(1.3) brightness(1.1)';
+                                    if (activeTool.name === 'Color Adjust') ctx.filter = 'hue-rotate(45deg) saturate(1.5)';
+                                    if (activeTool.name === 'Filters & Effects') ctx.filter = 'sepia(0.8) contrast(1.1)';
+                                    ctx.drawImage(img, 0, 0); ctx.filter = 'none';
+                                    if (activeTool.name === 'Add Text' || activeTool.name === 'Watermark Add') {
+                                      const text = prompt("Enter text:", "SMART AI PRO");
+                                      if (text) { ctx.font = `bold ${canvas.width * 0.08}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width * 0.01; ctx.textAlign = 'center'; ctx.strokeText(text, canvas.width / 2, canvas.height - 50); ctx.fillText(text, canvas.width / 2, canvas.height - 50); }
+                                    } else if (activeTool.name === 'Meme Generator') {
+                                      const top = prompt("Enter Top Text:", "WHEN AI"); const bot = prompt("Enter Bottom Text:", "DOES IT PERFECTLY");
+                                      ctx.font = `bold ${canvas.width * 0.1}px Impact`; ctx.fillStyle = 'white'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width * 0.015; ctx.textAlign = 'center';
+                                      ctx.strokeText(top || '', canvas.width / 2, canvas.width * 0.15); ctx.fillText(top || '', canvas.width / 2, canvas.width * 0.15);
+                                      ctx.strokeText(bot || '', canvas.width / 2, canvas.height - canvas.width * 0.05); ctx.fillText(bot || '', canvas.width / 2, canvas.height - canvas.width * 0.05);
+                                    } else if (activeTool.name === 'Image Converter') {
+                                      const f = prompt("Enter format (png, jpeg, webp):", "webp");
+                                      if (f === 'jpeg' || f === 'jpg') outFormat = 'image/jpeg'; else if (f === 'webp') outFormat = 'image/webp';
+                                    } else if (activeTool.name === 'Compress Image') { outFormat = 'image/jpeg'; outQuality = 0.4; }
+                                    else if (activeTool.name === 'Collage Maker') { ctx.drawImage(img, 0, 0, canvas.width / 2, canvas.height / 2); ctx.drawImage(img, canvas.width / 2, 0, canvas.width / 2, canvas.height / 2); ctx.filter = 'hue-rotate(90deg)'; ctx.drawImage(img, 0, canvas.height / 2, canvas.width / 2, canvas.height / 2); ctx.filter = 'grayscale(1)'; ctx.drawImage(img, canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2); ctx.filter = 'none'; }
+                                  }
+                                }
+                                setProcessedToolImage(canvas.toDataURL(outFormat, outQuality));
+                                setIsToolProcessing(false);
+                                setCredits(prev => prev - 1);
+                              }, 1000);
+                            }
+                          } catch (err) { alert('❌ Processing failed. Token not deducted.'); setIsToolProcessing(false); }
+                        }} disabled={isToolProcessing || (activeTool.name === 'Image to Image' && !toolPrompt.trim())} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50">
+                          <Sparkles className="w-5 h-5" /> {activeTool.name === 'Image to Image' ? 'Generate (-1 Token)' : 'Execute Tool (-1 Token)'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -2397,7 +2421,7 @@ export default function App() {
     return (
       <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-4 md:p-6'}`}>
         {activeTab === 'chat' && (
-            smartMode === 'expert' ? renderExpertPro() : (
+          smartMode === 'expert' ? renderExpertPro() : (
             <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
               {/* Chat Header */}
               <div className="flex justify-between items-center p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
@@ -2451,17 +2475,17 @@ export default function App() {
               {/* Chat Input Area (Fixed at bottom of container) */}
               <div className="p-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
                 <div className="flex gap-2 items-center bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
-                  <input 
-                    value={chatInput} 
-                    onChange={e => setChatInput(e.target.value)} 
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
                     onKeyDown={e => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
-                    }} 
-                    placeholder="Enter your prompt here..." 
-                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium" 
+                    }}
+                    placeholder="Enter your prompt here..."
+                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
                   />
                   <div className="flex items-center gap-1 shrink-0">
                     <button onClick={startListening} className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
@@ -2474,276 +2498,276 @@ export default function App() {
                 </div>
               </div>
             </div>
-            )
-          )}
+          )
+        )}
 
-          {activeTab === 'image' && (
-             <div className="max-w-5xl mx-auto w-full pb-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-8 mb-6 md:mb-8 relative shadow-2xl overflow-hidden">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
-                   
-                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3 md:gap-4 relative z-10">
-                     <div>
-                       <h2 className="text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2 md:gap-3">
-                         <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-indigo-400" />
-                         Image Synthesis
-                       </h2>
-                       <p className="text-slate-400 text-xs md:text-sm mt-1">Generate high-quality visuals instantly.</p>
-                     </div>
-                     <div className="flex items-center gap-2 md:gap-3 bg-slate-950 border border-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-inner w-full md:w-auto justify-between md:justify-start">
-                        <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cost</span>
-                        <div className="flex items-center gap-1.5 text-indigo-400 font-black text-sm md:text-base">
-                          <Zap className="w-3 h-3 md:w-4 md:h-4" /> 5 Tokens
-                        </div>
-                     </div>
-                   </div>
+        {activeTab === 'image' && (
+          <div className="max-w-5xl mx-auto w-full pb-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-8 mb-6 md:mb-8 relative shadow-2xl overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 relative z-10 mb-6">
-                      <div className="md:col-span-8 space-y-3 md:space-y-4">
-                         <div>
-                           <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 flex justify-between">
-                             <span>Prompt</span>
-                             <button onClick={handleEnhancePrompt} disabled={isEnhancing} className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
-                                <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Enhance'}
-                             </button>
-                           </label>
-                           <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate in detail..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 md:p-4 text-xs md:text-sm h-20 md:h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
-                         </div>
-                         <div>
-                           <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Negative Prompt (Optional)</label>
-                           <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What should NOT be in the image..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 md:p-3 text-xs md:text-sm h-12 md:h-16 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
-                         </div>
-                      </div>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3 md:gap-4 relative z-10">
+                <div>
+                  <h2 className="text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2 md:gap-3">
+                    <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-indigo-400" />
+                    Image Synthesis
+                  </h2>
+                  <p className="text-slate-400 text-xs md:text-sm mt-1">Generate high-quality visuals instantly.</p>
+                </div>
+                <div className="flex items-center gap-2 md:gap-3 bg-slate-950 border border-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-inner w-full md:w-auto justify-between md:justify-start">
+                  <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cost</span>
+                  <div className="flex items-center gap-1.5 text-indigo-400 font-black text-sm md:text-base">
+                    <Zap className="w-3 h-3 md:w-4 md:h-4" /> 5 Tokens
+                  </div>
+                </div>
+              </div>
 
-                      <div className="md:col-span-4 bg-slate-950/50 border border-slate-800/50 rounded-2xl p-3 md:p-4">
-                         <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
-                           <div>
-                             <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Style</label>
-                             <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
-                               {STYLES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-                             </select>
-                           </div>
-                           <div>
-                             <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Quality</label>
-                             <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
-                               <option value="Standard">Standard</option>
-                               <option value="HD">HD Quality</option>
-                               <option value="4K">4K Ultra</option>
-                               <option value="8K">8K</option>
-                             </select>
-                           </div>
-                           <div className="col-span-2 md:col-span-1">
-                             <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Aspect Ratio</label>
-                             <div className="grid grid-cols-4 gap-1 md:gap-2">
-                                {ASPECTS.map(a => (
-                                  <button key={a} onClick={() => setImgAspect(a as any)} className={`py-1.5 md:py-2 rounded-lg text-[9px] md:text-[10px] font-bold transition-all border ${imgAspect === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}>{a}</button>
-                                ))}
-                             </div>
-                           </div>
-                         </div>
-                      </div>
-                   </div>
-
-                   <button onClick={() => handleGenerateImage(false)} disabled={isGenerating || !imgPrompt.trim()} className="w-full relative group overflow-hidden bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-sm transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50">
-                      <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                      {isGenerating ? (
-                         <span className="flex items-center justify-center gap-3">
-                           <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-                           Synthesizing...
-                         </span>
-                      ) : (
-                         <span className="flex items-center justify-center gap-2">
-                           <Sparkles className="w-5 h-5" /> Generate Image <span className="opacity-70 font-medium ml-2">-5 Tokens</span>
-                         </span>
-                      )}
-                   </button>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 relative z-10 mb-6">
+                <div className="md:col-span-8 space-y-3 md:space-y-4">
+                  <div>
+                    <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 flex justify-between">
+                      <span>Prompt</span>
+                      <button onClick={handleEnhancePrompt} disabled={isEnhancing} className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
+                        <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Enhance'}
+                      </button>
+                    </label>
+                    <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate in detail..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 md:p-4 text-xs md:text-sm h-20 md:h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Negative Prompt (Optional)</label>
+                    <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What should NOT be in the image..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 md:p-3 text-xs md:text-sm h-12 md:h-16 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                  </div>
                 </div>
 
-                {generatedImg && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 mx-auto max-w-2xl">
-                    <div className="relative group overflow-hidden rounded-[2rem] border border-slate-800 shadow-2xl bg-slate-900 p-2">
-                      <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-3xl" />
-                      {/* Desktop Hover Overlay */}
-                      <div className="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm rounded-[2rem] flex-row items-center justify-center gap-4 p-4 z-10">
-                         <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl hover:scale-105">
-                           <Download className="w-4 h-4" /> Download PNG
-                         </button>
-                         <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500 transition-colors shadow-xl hover:scale-105 disabled:opacity-50">
-                           <RefreshCcw className="w-4 h-4" /> Regenerate (-2 Tokens)
-                         </button>
-                         <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="bg-slate-700 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-600 transition-colors shadow-xl hover:scale-105">
-                           <Copy className="w-4 h-4" /> Share
-                         </button>
+                <div className="md:col-span-4 bg-slate-950/50 border border-slate-800/50 rounded-2xl p-3 md:p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
+                    <div>
+                      <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Style</label>
+                      <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                        {STYLES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Quality</label>
+                      <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                        <option value="Standard">Standard</option>
+                        <option value="HD">HD Quality</option>
+                        <option value="4K">4K Ultra</option>
+                        <option value="8K">8K</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Aspect Ratio</label>
+                      <div className="grid grid-cols-4 gap-1 md:gap-2">
+                        {ASPECTS.map(a => (
+                          <button key={a} onClick={() => setImgAspect(a as any)} className={`py-1.5 md:py-2 rounded-lg text-[9px] md:text-[10px] font-bold transition-all border ${imgAspect === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}>{a}</button>
+                        ))}
                       </div>
                     </div>
-                    {/* Mobile Action Buttons */}
-                    <div className="flex md:hidden flex-col gap-3 mt-4 w-full">
-                       <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="w-full bg-indigo-600 text-white px-5 py-4 rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-indigo-500 transition-colors shadow-xl">
-                         <Download className="w-5 h-5" /> Download Image
-                       </button>
-                       <div className="flex gap-3">
-                         <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="flex-1 bg-emerald-600 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-emerald-500 transition-colors shadow-xl disabled:opacity-50">
-                           <RefreshCcw className="w-4 h-4" /> Regenerate
-                         </button>
-                         <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-slate-700 transition-colors shadow-xl">
-                           <Copy className="w-4 h-4" /> Share Link
-                         </button>
-                       </div>
-                    </div>
-                  </motion.div>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={() => handleGenerateImage(false)} disabled={isGenerating || !imgPrompt.trim()} className="w-full relative group overflow-hidden bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-sm transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50">
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                {isGenerating ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
+                    Synthesizing...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <Sparkles className="w-5 h-5" /> Generate Image <span className="opacity-70 font-medium ml-2">-5 Tokens</span>
+                  </span>
                 )}
-
-                {imageHistory.length > 0 && (
-                  <div className="mt-16">
-                     <div className="flex items-center justify-between mb-6">
-                       <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
-                         <Clock className="w-6 h-6 text-indigo-400" />
-                         Recent Generations
-                       </h3>
-                       <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
-                         {showHistory ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
-                       </button>
-                     </div>
-                     
-                     {showHistory && (
-                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                         {imageHistory.map((item, i) => (
-                            <div key={i} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-lg">
-                               <img src={item.url} alt={item.prompt} className="w-full h-full object-cover" />
-                               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
-                                 <p className="text-[10px] text-white line-clamp-4 text-center font-medium leading-relaxed">{item.prompt}</p>
-                                 <div className="flex gap-2">
-                                   <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-indigo-600 text-white p-2.5 rounded-lg hover:bg-indigo-500 transition-colors">
-                                      <Download className="w-4 h-4" />
-                                   </button>
-                                   <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-slate-700 text-white p-2.5 rounded-lg hover:bg-slate-600 transition-colors">
-                                      <Copy className="w-4 h-4" />
-                                   </button>
-                                 </div>
-                               </div>
-                            </div>
-                         ))}
-                       </div>
-                     )}
-                  </div>
-                )}
-             </div>
-          )}
-
-          {activeTab === 'profile' && (
-            <div className="max-w-4xl mx-auto space-y-6 pb-20">
-               {/* Profile Card */}
-               <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
-                  <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                     <div className="relative">
-                        <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform overflow-hidden">
-                           {tempAvatar ? <img src={tempAvatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{tempDisplayName.charAt(0).toUpperCase()}</span>}
-                        </div>
-                        <input 
-                           type="file" 
-                           id="profile-upload" 
-                           className="hidden" 
-                           accept="image/*" 
-                           onChange={handleFileUpload}
-                        />
-                        <button 
-                           onClick={() => document.getElementById('profile-upload')?.click()} 
-                           className="absolute bottom-0 right-0 p-2 bg-slate-800 border border-slate-700 rounded-full text-indigo-400 hover:text-white transition-colors shadow-lg"
-                        >
-                           <ImageIcon className="w-4 h-4" />
-                        </button>
-                     </div>
-                     <div className="flex-1 text-center md:text-left space-y-4">
-                        <div>
-                           <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Display Name</label>
-                           <div className="flex gap-2 max-w-sm mx-auto md:mx-0">
-                              <input 
-                                value={tempDisplayName} 
-                                onChange={e => setTempDisplayName(e.target.value)} 
-                                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white font-bold focus:outline-none focus:border-indigo-500/50" 
-                              />
-                              <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all">Save Changes</button>
-                           </div>
-                        </div>
-                        <div className="flex gap-2 justify-center md:justify-start">
-                           <span className="px-3 py-1 bg-indigo-600/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-600/20">{plan} Plan</span>
-                           <span className="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full">{credits.toLocaleString()} Credits</span>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-               {/* Referral System */}
-               <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center border border-emerald-500/30">
-                           <Sparkles className="w-5 h-5 text-emerald-400" />
-                        </div>
-                        <div>
-                           <h3 className="text-white font-bold text-sm">Refer & Earn</h3>
-                           <p className="text-slate-500 text-[10px]">Invite friends to get 50 credits each.</p>
-                        </div>
-                     </div>
-                     
-                     <div className="space-y-3 pt-2">
-                        <div>
-                           <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Your Referral Code</label>
-                           <div className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-4 py-3">
-                              <span className="text-sm font-mono font-black text-indigo-400 tracking-widest">{(localStorage.getItem('smartai_session') ? JSON.parse(localStorage.getItem('smartai_session')!).referralCode : 'SIGNUP FIRST')}</span>
-                              <button onClick={() => { 
-                                const code = JSON.parse(localStorage.getItem('smartai_session')!).referralCode;
-                                navigator.clipboard.writeText(code);
-                                alert('Code copied!');
-                              }} className="text-slate-500 hover:text-white"><Copy className="w-4 h-4" /></button>
-                           </div>
-                        </div>
-                        <div>
-                           <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Referral Link</label>
-                           <button onClick={() => {
-                             const code = JSON.parse(localStorage.getItem('smartai_session')!).referralCode;
-                             const link = `${window.location.origin}?ref=${code}`;
-                             navigator.clipboard.writeText(link);
-                             alert('Referral link copied!');
-                           }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-left text-xs text-slate-400 truncate hover:border-indigo-500/50 transition-colors">
-                             {window.location.origin}?ref={(localStorage.getItem('smartai_session') ? JSON.parse(localStorage.getItem('smartai_session')!).referralCode : '...')}
-                           </button>
-                        </div>
-                     </div>
-                  </div>
-
-                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-                           <TrendingUp className="w-5 h-5 text-indigo-400" />
-                        </div>
-                        <div>
-                           <h3 className="text-white font-bold text-sm">Usage Stats</h3>
-                           <p className="text-slate-500 text-[10px]">Your activity across all neural modes.</p>
-                        </div>
-                     </div>
-                     
-                     <div className="grid grid-cols-2 gap-4 mt-4">
-                        <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                           <div className="text-xs font-bold text-slate-500 mb-1">Messages</div>
-                           <div className="text-2xl font-black text-white">{messages.length}</div>
-                        </div>
-                        <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                           <div className="text-xs font-bold text-slate-500 mb-1">Images</div>
-                           <div className="text-2xl font-black text-white">{imageHistory.length}</div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-               <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 text-red-500 border border-red-600/20 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2">
-                  <LogOut className="w-5 h-5" /> Sign Out from System
-               </button>
+              </button>
             </div>
-          )}
 
-          {activeTab === 'admin' && <AdminPanel />}
+            {generatedImg && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 mx-auto max-w-2xl">
+                <div className="relative group overflow-hidden rounded-[2rem] border border-slate-800 shadow-2xl bg-slate-900 p-2">
+                  <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-3xl" />
+                  {/* Desktop Hover Overlay */}
+                  <div className="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm rounded-[2rem] flex-row items-center justify-center gap-4 p-4 z-10">
+                    <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl hover:scale-105">
+                      <Download className="w-4 h-4" /> Download PNG
+                    </button>
+                    <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500 transition-colors shadow-xl hover:scale-105 disabled:opacity-50">
+                      <RefreshCcw className="w-4 h-4" /> Regenerate (-2 Tokens)
+                    </button>
+                    <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="bg-slate-700 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-600 transition-colors shadow-xl hover:scale-105">
+                      <Copy className="w-4 h-4" /> Share
+                    </button>
+                  </div>
+                </div>
+                {/* Mobile Action Buttons */}
+                <div className="flex md:hidden flex-col gap-3 mt-4 w-full">
+                  <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="w-full bg-indigo-600 text-white px-5 py-4 rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-indigo-500 transition-colors shadow-xl">
+                    <Download className="w-5 h-5" /> Download Image
+                  </button>
+                  <div className="flex gap-3">
+                    <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="flex-1 bg-emerald-600 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-emerald-500 transition-colors shadow-xl disabled:opacity-50">
+                      <RefreshCcw className="w-4 h-4" /> Regenerate
+                    </button>
+                    <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-slate-700 transition-colors shadow-xl">
+                      <Copy className="w-4 h-4" /> Share Link
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {imageHistory.length > 0 && (
+              <div className="mt-16">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
+                    <Clock className="w-6 h-6 text-indigo-400" />
+                    Recent Generations
+                  </h3>
+                  <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
+                    {showHistory ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
+                  </button>
+                </div>
+
+                {showHistory && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {imageHistory.map((item, i) => (
+                      <div key={i} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-lg">
+                        <img src={item.url} alt={item.prompt} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
+                          <p className="text-[10px] text-white line-clamp-4 text-center font-medium leading-relaxed">{item.prompt}</p>
+                          <div className="flex gap-2">
+                            <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-indigo-600 text-white p-2.5 rounded-lg hover:bg-indigo-500 transition-colors">
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-slate-700 text-white p-2.5 rounded-lg hover:bg-slate-600 transition-colors">
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <div className="max-w-4xl mx-auto space-y-6 pb-20">
+            {/* Profile Card */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
+              <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                <div className="relative">
+                  <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform overflow-hidden">
+                    {tempAvatar ? <img src={tempAvatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{tempDisplayName.charAt(0).toUpperCase()}</span>}
+                  </div>
+                  <input
+                    type="file"
+                    id="profile-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                  />
+                  <button
+                    onClick={() => document.getElementById('profile-upload')?.click()}
+                    className="absolute bottom-0 right-0 p-2 bg-slate-800 border border-slate-700 rounded-full text-indigo-400 hover:text-white transition-colors shadow-lg"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex-1 text-center md:text-left space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Display Name</label>
+                    <div className="flex gap-2 max-w-sm mx-auto md:mx-0">
+                      <input
+                        value={tempDisplayName}
+                        onChange={e => setTempDisplayName(e.target.value)}
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white font-bold focus:outline-none focus:border-indigo-500/50"
+                      />
+                      <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all">Save Changes</button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-center md:justify-start">
+                    <span className="px-3 py-1 bg-indigo-600/10 text-indigo-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-600/20">{plan} Plan</span>
+                    <span className="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full">{credits.toLocaleString()} Credits</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Referral System */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center border border-emerald-500/30">
+                    <Sparkles className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-sm">Refer & Earn</h3>
+                    <p className="text-slate-500 text-[10px]">Invite friends to get 50 credits each.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Your Referral Code</label>
+                    <div className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-4 py-3">
+                      <span className="text-sm font-mono font-black text-indigo-400 tracking-widest">{(localStorage.getItem('smartai_session') ? JSON.parse(localStorage.getItem('smartai_session')!).referralCode : 'SIGNUP FIRST')}</span>
+                      <button onClick={() => {
+                        const code = JSON.parse(localStorage.getItem('smartai_session')!).referralCode;
+                        navigator.clipboard.writeText(code);
+                        alert('Code copied!');
+                      }} className="text-slate-500 hover:text-white"><Copy className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Referral Link</label>
+                    <button onClick={() => {
+                      const code = JSON.parse(localStorage.getItem('smartai_session')!).referralCode;
+                      const link = `${window.location.origin}?ref=${code}`;
+                      navigator.clipboard.writeText(link);
+                      alert('Referral link copied!');
+                    }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-left text-xs text-slate-400 truncate hover:border-indigo-500/50 transition-colors">
+                      {window.location.origin}?ref={(localStorage.getItem('smartai_session') ? JSON.parse(localStorage.getItem('smartai_session')!).referralCode : '...')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                    <TrendingUp className="w-5 h-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-sm">Usage Stats</h3>
+                    <p className="text-slate-500 text-[10px]">Your activity across all neural modes.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                    <div className="text-xs font-bold text-slate-500 mb-1">Messages</div>
+                    <div className="text-2xl font-black text-white">{messages.length}</div>
+                  </div>
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                    <div className="text-xs font-bold text-slate-500 mb-1">Images</div>
+                    <div className="text-2xl font-black text-white">{imageHistory.length}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 text-red-500 border border-red-600/20 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2">
+              <LogOut className="w-5 h-5" /> Sign Out from System
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'admin' && <AdminPanel />}
       </div>
     );
   }
@@ -2756,7 +2780,7 @@ export default function App() {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">S</div>
           <span className="text-xl font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span>
         </div>
-        
+
         <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between shadow-inner">
           <div>
             <span className="text-[9px] uppercase font-bold text-slate-500 tracking-[0.2em]">Credits</span>
@@ -2784,22 +2808,22 @@ export default function App() {
           </div>
 
           <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-             <Send className="w-5 h-5" />
-             <span className="text-sm font-medium">Normal Mode</span>
+            <Send className="w-5 h-5" />
+            <span className="text-sm font-medium">Normal Mode</span>
           </button>
           <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-             <Lightbulb className="w-5 h-5" />
-             <span className="text-sm font-medium">Creative Mode</span>
+            <Lightbulb className="w-5 h-5" />
+            <span className="text-sm font-medium">Creative Mode</span>
           </button>
           <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-             <Zap className="w-5 h-5" />
-             <span className="text-sm font-medium">Expert Mode</span>
+            <Zap className="w-5 h-5" />
+            <span className="text-sm font-medium">Expert Mode</span>
           </button>
-          
+
           {isAdmin && (
             <>
               <div className="my-4 px-2">
-                 <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
+                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
               </div>
               <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
                 <Shield className="w-5 h-5" />
@@ -2810,21 +2834,21 @@ export default function App() {
         </nav>
 
         <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
-          <button 
-            onClick={() => setIsPricingOpen(true)} 
+          <button
+            onClick={() => setIsPricingOpen(true)}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-600/20"
           >
             <Sparkles className="w-4 h-4" /> Upgrade Plan
           </button>
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{displayName.charAt(0)}</div>
-             <div className="flex-1 min-w-0">
-                <div className="text-[10px] font-bold text-white truncate">{displayName}</div>
-                <div className="text-[9px] text-slate-500 truncate">{email}</div>
-             </div>
-             <button onClick={() => setActiveTab('profile')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{displayName.charAt(0)}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-bold text-white truncate">{displayName}</div>
+              <div className="text-[9px] text-slate-500 truncate">{email}</div>
+            </div>
+            <button onClick={() => setActiveTab('profile')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
           </div>
-          
+
           {!isAdmin && (
             <button onClick={() => setActiveTab('admin')} className="w-full mt-2 flex items-center justify-center gap-1 opacity-10 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
               <Shield className="w-2 h-2" /> Admin Access
@@ -2837,29 +2861,29 @@ export default function App() {
       <main className="flex-1 flex flex-col min-w-0 bg-slate-950">
         {/* Header */}
         <header className="h-16 border-b border-slate-800 flex items-center justify-between px-4 sm:px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-40">
-           <div className="flex items-center gap-4">
-              <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white md:hidden"><Menu className="w-6 h-6" /></button>
-              <div className="md:hidden flex items-center gap-2">
-                <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-[10px] font-bold">S</div>
-                <span className="text-sm font-bold">SmartAI</span>
-              </div>
-              <div className="hidden md:flex items-center gap-2 text-slate-500 text-[9px] font-black uppercase tracking-[0.3em]">
-                 <span>System</span>
-                 <ChevronRight className="w-3 h-3 opacity-30" />
-                 <span className="text-white">{activeTab}</span>
-              </div>
-           </div>
-           <div className="flex items-center gap-3">
-              <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20' : 'bg-orange-600/10 text-orange-400 border-orange-600/20'}`}>
-                {smartMode} mode
-              </div>
-              <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-lg shadow-white/5">Upgrade</button>
-           </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white md:hidden"><Menu className="w-6 h-6" /></button>
+            <div className="md:hidden flex items-center gap-2">
+              <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-[10px] font-bold">S</div>
+              <span className="text-sm font-bold">SmartAI</span>
+            </div>
+            <div className="hidden md:flex items-center gap-2 text-slate-500 text-[9px] font-black uppercase tracking-[0.3em]">
+              <span>System</span>
+              <ChevronRight className="w-3 h-3 opacity-30" />
+              <span className="text-white">{activeTab}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20' : 'bg-orange-600/10 text-orange-400 border-orange-600/20'}`}>
+              {smartMode} mode
+            </div>
+            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-lg shadow-white/5">Upgrade</button>
+          </div>
         </header>
 
         {/* Dynamic Content */}
         <div className="flex-1 relative flex flex-col overflow-hidden min-h-0">
-           {renderContent()}
+          {renderContent()}
         </div>
       </main>
 
@@ -2889,16 +2913,16 @@ export default function App() {
                 </div>
 
                 <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                   <Send className="w-5 h-5" />
-                   <span className="text-base font-medium">Normal Mode</span>
+                  <Send className="w-5 h-5" />
+                  <span className="text-base font-medium">Normal Mode</span>
                 </button>
                 <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                   <Lightbulb className="w-5 h-5" />
-                   <span className="text-base font-medium">Creative Mode</span>
+                  <Lightbulb className="w-5 h-5" />
+                  <span className="text-base font-medium">Creative Mode</span>
                 </button>
                 <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                   <Zap className="w-5 h-5" />
-                   <span className="text-base font-medium">Expert Mode</span>
+                  <Zap className="w-5 h-5" />
+                  <span className="text-base font-medium">Expert Mode</span>
                 </button>
 
                 {isAdmin && (
@@ -2922,37 +2946,37 @@ export default function App() {
       <AnimatePresence>
         {isPricingOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-             <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-10 max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[90vh]">
-                <div className="flex justify-between items-center mb-10">
-                   <div>
-                      <h2 className="text-3xl font-bold italic tracking-tight text-white">Neural Network Plans</h2>
-                      <p className="text-slate-500 text-sm mt-1">Select the processing power that matches your ambition.</p>
-                   </div>
-                   <button onClick={() => setIsPricingOpen(false)} className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg"><X className="w-5 h-5" /></button>
+            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-10 max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+              <div className="flex justify-between items-center mb-10">
+                <div>
+                  <h2 className="text-3xl font-bold italic tracking-tight text-white">Neural Network Plans</h2>
+                  <p className="text-slate-500 text-sm mt-1">Select the processing power that matches your ambition.</p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-                  {PLANS.map(p => (
-                    <div key={p.name} className={`p-8 rounded-3xl border transition-all duration-500 flex flex-col relative group ${p.popular ? 'border-indigo-600 bg-indigo-600/5 shadow-2xl shadow-indigo-600/10' : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'}`}>
-                      {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-lg">Recommended</span>}
-                      <h3 className="text-xl font-bold text-white mb-2">{p.name}</h3>
-                      <div className="flex items-baseline gap-1 mb-6">
-                        <span className="text-3xl font-bold text-white">{p.price.split(' ')[0]}</span>
-                        <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{p.price.split(' ').slice(1).join(' ')}</span>
-                      </div>
-                      <ul className="space-y-4 mb-10 flex-1">
-                        {p.features.map(f => (
-                          <li key={f} className="text-xs text-slate-400 flex items-start gap-3 leading-relaxed">
-                            <Check className="w-3.5 h-3.5 text-indigo-400 mt-0.5 flex-shrink-0" /> {f}
-                          </li>
-                        ))}
-                      </ul>
-                      <button onClick={() => handleSelectPlan(p)} className={`w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg ${p.popular ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-600/20' : 'bg-white text-black hover:bg-slate-200 shadow-white/5'}`}>
-                        Initialize {p.name}
-                      </button>
+                <button onClick={() => setIsPricingOpen(false)} className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+                {PLANS.map(p => (
+                  <div key={p.name} className={`p-8 rounded-3xl border transition-all duration-500 flex flex-col relative group ${p.popular ? 'border-indigo-600 bg-indigo-600/5 shadow-2xl shadow-indigo-600/10' : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'}`}>
+                    {p.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-lg">Recommended</span>}
+                    <h3 className="text-xl font-bold text-white mb-2">{p.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-6">
+                      <span className="text-3xl font-bold text-white">{p.price.split(' ')[0]}</span>
+                      <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{p.price.split(' ').slice(1).join(' ')}</span>
                     </div>
-                  ))}
-                </div>
-             </motion.div>
+                    <ul className="space-y-4 mb-10 flex-1">
+                      {p.features.map(f => (
+                        <li key={f} className="text-xs text-slate-400 flex items-start gap-3 leading-relaxed">
+                          <Check className="w-3.5 h-3.5 text-indigo-400 mt-0.5 flex-shrink-0" /> {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={() => handleSelectPlan(p)} className={`w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg ${p.popular ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-600/20' : 'bg-white text-black hover:bg-slate-200 shadow-white/5'}`}>
+                      Initialize {p.name}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
