@@ -2862,7 +2862,7 @@ export default function App() {
           </div>
 
           {!isAdmin && (
-            <button onClick={() => setActiveTab('admin')} className="w-full mt-2 flex items-center justify-center gap-1 opacity-10 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
+            <button onClick={() => setActiveTab('admin')} className="w-full mt-2 flex items-center justify-center gap-1 opacity-30 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
               <Shield className="w-2 h-2" /> Admin Access
             </button>
           )}
@@ -2879,7 +2879,7 @@ export default function App() {
               <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-[10px] font-bold">S</div>
               <span className="text-sm font-bold">SmartAI</span>
             </div>
-            <div className="hidden md:flex items-center gap-2 text-slate-500 text-[9px] font-black uppercase tracking-[0.3em]">
+            <div onClick={() => !isAdmin && setActiveTab('admin')} className="hidden md:flex items-center gap-2 text-slate-500 text-[9px] font-black uppercase tracking-[0.3em] cursor-pointer hover:text-white transition-colors">
               <span>System</span>
               <ChevronRight className="w-3 h-3 opacity-30" />
               <span className="text-white">{activeTab}</span>

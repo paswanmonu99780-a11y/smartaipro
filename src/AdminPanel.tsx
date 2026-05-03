@@ -56,7 +56,7 @@ export default function AdminPanel() {
   }, [isLoggedIn]);
 
   const handleLogin = async () => {
-    if (password === ADMIN_PASSWORD) {
+    if (password.trim() === ADMIN_PASSWORD) {
       const newSessionId = Math.random().toString(36).substring(2, 15);
       await setAdminSession(newSessionId);
       setLocalSessionId(newSessionId);
