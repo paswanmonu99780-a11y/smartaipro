@@ -198,10 +198,6 @@ export default function App() {
   const [expertToolResult, setExpertToolResult] = useState('');
   const [isExpertToolThinking, setIsExpertToolThinking] = useState(false);
   const [tone, setTone] = useState<'Professional' | 'Funny' | 'Casual'>('Professional');
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [resendSuccess, setResendSuccess] = useState(false);
-  const [otpType, setOtpType] = useState<'login' | 'signup'>('login');
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
   const isExpertLocked = plan === 'Basic' && !isAdmin;
 
