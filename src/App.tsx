@@ -272,6 +272,15 @@ export default function App() {
     }
   }, [isAdmin]);
 
+  // Failsafe: If we get logged in via onAuthStateChange, clear all auth loading states
+  useEffect(() => {
+    if (isLoggedIn) {
+      setIsAuthenticating(false);
+      setIsVerifyingOtp(false);
+      console.log('Login detected - clearing auth states');
+    }
+  }, [isLoggedIn]);
+
   // Ensure admin panel is closed when showing auth screens
   useEffect(() => {
     if (!isLoggedIn) {
