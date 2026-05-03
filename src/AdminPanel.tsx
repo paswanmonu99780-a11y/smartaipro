@@ -44,7 +44,7 @@ export default function AdminPanel() {
           handleLogout();
           alert('Another admin has logged in. You have been logged out.');
         }
-      }, 5000); // Check every 5 seconds
+      }, 3000); // Check every 3 seconds
       return () => clearInterval(interval);
     }
   }, [isLoggedIn, localSessionId]);

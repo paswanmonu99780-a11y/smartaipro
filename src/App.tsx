@@ -246,6 +246,10 @@ export default function App() {
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
         localStorage.removeItem('smartai_session');
+        // Also clear admin session on logout
+        localStorage.removeItem('smartai_admin_session');
+        localStorage.removeItem('smartai_admin_session_id');
+        setIsAdmin(false);
       }
     });
 
@@ -263,10 +267,19 @@ export default function App() {
       }
     };
     if (isAdmin) {
-      const interval = setInterval(checkGlobalAdmin, 10000);
+      const interval = setInterval(checkGlobalAdmin, 3000); // More frequent check (3s)
       return () => clearInterval(interval);
     }
   }, [isAdmin]);
+
+  // Ensure admin panel is closed when showing auth screens
+  useEffect(() => {
+    if (!isLoggedIn) {
+      localStorage.removeItem('smartai_admin_session');
+      localStorage.removeItem('smartai_admin_session_id');
+      setIsAdmin(false);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -363,6 +376,14 @@ export default function App() {
 
     const hist = localStorage.getItem('smartai_image_history');
     if (hist) { setImageHistory(JSON.parse(hist)); }
+
+    // Ensure auth fields are empty on fresh load if not logged in
+    const session = localStorage.getItem('smartai_session');
+    if (!session) {
+      setEmail('');
+      setPassword('');
+      setSignupName('');
+    }
 
     // Load chat history
     const savedChats = localStorage.getItem('smartai_chat_history');
@@ -715,7 +736,29 @@ export default function App() {
     } catch (err: any) { setAuthError(err.message); }
     finally { setIsAuthenticating(false); }
   };
-  const handleLogout = () => { localStorage.removeItem('smartai_session'); window.location.reload(); };
+  const handleLogout = async () => { 
+    try {
+      // Manually clear any Supabase related keys to prevent auto-login loops
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') || key.includes('supabase.auth.token')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Attempt official sign out
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Supabase signout error:', e);
+    } finally {
+      // Always clear our own session and reload
+      localStorage.removeItem('smartai_session'); 
+      localStorage.removeItem('smartai_admin_session');
+      localStorage.removeItem('smartai_admin_session_id');
+      // Clear other auth-related local storage just in case
+      localStorage.removeItem('supabase.auth.token');
+      window.location.href = '/'; // Use href instead of reload to ensure clean state
+    }
+  };
 
   const getDeviceId = () => {
     let deviceId = localStorage.getItem('smartai_device_id');
@@ -1818,13 +1861,13 @@ export default function App() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Email Address</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="name@example.com" />
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-sm text-white" placeholder="Enter email" autoComplete="off" />
                   </div>
 
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-1">Password</label>
                     <div className="relative">
-                      <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-slate-500 transition-all font-mono text-sm text-white" placeholder="••••••••" autoComplete="current-password" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -1846,18 +1889,18 @@ export default function App() {
                 <div className="space-y-2.5">
                   <div>
                     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Full Name</label>
-                    <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Monu Paswan" />
+                    <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Full Name" autoComplete="off" />
                   </div>
 
                   <div>
                     <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Email Address</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="your@email.com" />
+                    <input type="email" id="user_email_field" name="user_email_field" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="Enter email" autoComplete="off" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="relative">
                       <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 ml-1">Password</label>
-                      <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} id="user_password_field" name="user_password_field" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 focus:outline-none focus:border-indigo-500/50 transition-all font-mono text-xs text-white" placeholder="••••••••" autoComplete="new-password" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-[32px] text-slate-500 hover:text-white transition-colors">
                         {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
