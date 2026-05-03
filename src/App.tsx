@@ -1591,7 +1591,7 @@ export default function App() {
     ];
 
     return (
-      <div className="h-[calc(100vh-100px)] flex flex-col gap-2 max-w-[1600px] mx-auto px-2 overflow-hidden">
+      <div className="h-full md:h-[calc(100vh-100px)] flex flex-col gap-2 max-w-[1600px] mx-auto px-2 overflow-y-auto md:overflow-hidden no-scrollbar pb-6">
         {/* Compact Mode Header */}
         <div className="flex items-center justify-between bg-indigo-600/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-white/10 shrink-0">
           <div className="flex items-center gap-3">
@@ -1611,10 +1611,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* 3-Column Grid - Fixed Height */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 min-h-0">
+        {/* 3-Column Grid - Stack on mobile, fixed height on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 md:min-h-0">
           {/* AI Chat */}
-          <div className="md:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-0 shadow-xl overflow-hidden">
+          <div className="md:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[400px] md:min-h-0 shadow-xl overflow-hidden">
              <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
@@ -1640,7 +1640,7 @@ export default function App() {
           </div>
 
           {/* Image Suite */}
-          <div className="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-0 shadow-xl overflow-hidden">
+          <div className="md:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[350px] md:min-h-0 shadow-xl overflow-hidden">
              <div className="p-2 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
@@ -1667,7 +1667,7 @@ export default function App() {
           </div>
 
           {/* Templates */}
-          <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-0 shadow-xl overflow-hidden">
+          <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col min-h-[300px] md:min-h-0 shadow-xl overflow-hidden">
              <div className="p-2 border-b border-slate-800 bg-slate-900/50"><span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Quick Templates</span></div>
              <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5 no-scrollbar">
                 {premiumTemplates.map(tmp => (
@@ -1725,7 +1725,7 @@ export default function App() {
     };
 
     return (
-      <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-4 md:px-8 gap-5 py-2 relative">
+      <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-4 md:px-8 gap-5 py-4 relative overflow-y-auto no-scrollbar">
         {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
            <div>
@@ -1771,7 +1771,7 @@ export default function App() {
         {/* More Tools */}
         <div className="flex-1 min-h-0 flex flex-col pb-6">
            <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">More Tools</h2>
-           <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-3 gap-3 flex-1 min-h-0">
+           <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-3 gap-3 flex-1 min-h-0 pb-20 md:pb-0">
               {[
                 { name: 'Resize Image', desc: 'Change dimensions of your image.', icon: Monitor },
                 { name: 'Crop Image', desc: 'Crop your image to any size.', icon: Layout },
@@ -1847,7 +1847,14 @@ export default function App() {
                              <div className="flex flex-col gap-2 relative">
                                 <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest text-center">Result</span>
                                 {processedToolImage ? (
-                                   <img src={processedToolImage} className="w-full rounded-xl border border-indigo-500/50 shadow-lg shadow-indigo-600/20" alt="Processed" />
+                                   <div className="relative group">
+                                      <img src={processedToolImage} className="w-full rounded-xl border border-indigo-500/50 shadow-lg shadow-indigo-600/20" alt="Processed" />
+                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                         <button onClick={() => { const a = document.createElement('a'); a.href = processedToolImage!; a.download = `smartai_${activeTool.name.toLowerCase().replace(/ /g, '_')}.png`; a.click(); }} className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl text-xs">
+                                            <Download className="w-4 h-4" /> Download PNG
+                                         </button>
+                                      </div>
+                                   </div>
                                 ) : (
                                    <div className="w-full aspect-square bg-slate-800/50 border border-slate-700 rounded-xl flex items-center justify-center">
                                       {isToolProcessing ? (
@@ -1866,25 +1873,95 @@ export default function App() {
                           {/* Prompt input for Image to Image */}
                           {activeTool.name === 'Image to Image' && (
                             <div className="w-full">
-                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Describe what you want to change</label>
-                               <input value={toolPrompt} onChange={e => setToolPrompt(e.target.value)} placeholder="e.g. Add sunglasses, make it cartoon style, remove person..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 placeholder:text-slate-600" />
+                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">What do you want to do with this image?</label>
+                               <input value={toolPrompt} onChange={e => setToolPrompt(e.target.value)} placeholder="remove bg, blur, grayscale, vintage, flip, rotate, cartoon, enhance, add border, write 'text', bright, dark, invert..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 placeholder:text-slate-600" />
+                               <p className="text-[9px] text-slate-600 mt-1.5 leading-relaxed">🎨 blur, grayscale, vintage, cartoon, warm, cool, invert, enhance, bright, dark &nbsp;|&nbsp; ✂️ flip, rotate, resize, add border &nbsp;|&nbsp; ✏️ remove bg, write 'your text'</p>
                             </div>
                           )}
                           
-                          {!processedToolImage ? (
+                          {!processedToolImage && (
                             <button onClick={async () => {
                                setIsToolProcessing(true);
                                try {
                                  if (activeTool.name === 'Image to Image') {
-                                    // Use AI proxy to generate new image based on prompt
-                                    const seed = Math.floor(Math.random() * 999999);
-                                    const fullP = `${toolPrompt}, based on uploaded reference image, Masterpiece, highest quality, hyper detailed, 8k`;
-                                    const url = `/api/image?prompt=${encodeURIComponent(fullP)}&width=768&height=768&seed=${seed}&model=flux&nologo=true&negative_prompt=${encodeURIComponent('lowres, blurry, bad quality')}`;
-                                    const tryLoad = (u: string) => new Promise<boolean>((resolve) => { const i = new window.Image(); i.onload = () => resolve(true); i.onerror = () => resolve(false); i.src = u; });
-                                    const ok = await tryLoad(`${url}&t=${Date.now()}`);
-                                    if (ok) { setProcessedToolImage(`${url}&t=${Date.now()}`); } else { alert('Generation failed. Try again.'); }
-                                    setIsToolProcessing(false);
-                                    setCredits(prev => prev - 5);
+                                    // Canvas-based processing for filters/edits on the ACTUAL uploaded image
+                                    setTimeout(async () => {
+                                      try {
+                                        const canvas = document.createElement('canvas');
+                                        const ctx = canvas.getContext('2d')!;
+                                        const img = new window.Image();
+                                        img.src = toolImage;
+                                        await new Promise(res => { img.onload = res; });
+                                        canvas.width = img.width; canvas.height = img.height;
+                                        const p = toolPrompt.toLowerCase();
+                                        
+                                        // Check if user is trying unsupported operation
+                                        const unsupported = (p.includes('add ') && !p.includes('border') && !p.includes('text') && !p.includes('write')) || (p.includes('remove ') && !p.includes('background') && !p.includes('bg'));
+                                        if (unsupported) {
+                                           alert('⚠️ This operation needs AI Inpainting API.\n\nSupported commands:\n• remove bg / remove background\n• blur, grayscale, vintage, cartoon\n• flip, rotate, enhance, bright, dark\n• add border, write "your text"\n• warm, cool, invert, sharpen');
+                                           setIsToolProcessing(false);
+                                           return;
+                                        }
+                                        
+                                        // Apply filters based on prompt keywords
+                                        let filters: string[] = [];
+                                        if (p.includes('blur')) filters.push('blur(5px)');
+                                        if (p.includes('bright')) filters.push('brightness(1.4)');
+                                        if (p.includes('dark')) filters.push('brightness(0.6)');
+                                        if (p.includes('contrast')) filters.push('contrast(1.5)');
+                                        if (p.includes('saturate') || p.includes('vibrant') || p.includes('colorful')) filters.push('saturate(2)');
+                                        if (p.includes('grayscale') || p.includes('black and white') || p.includes('b&w') || p.includes('grey')) filters.push('grayscale(1)');
+                                        if (p.includes('sepia') || p.includes('vintage') || p.includes('old') || p.includes('retro')) filters.push('sepia(0.9)');
+                                        if (p.includes('invert') || p.includes('negative')) filters.push('invert(1)');
+                                        if (p.includes('cartoon') || p.includes('poster')) filters.push('contrast(1.8) saturate(1.5)');
+                                        if (p.includes('warm')) filters.push('sepia(0.3) saturate(1.3)');
+                                        if (p.includes('cool') || p.includes('cold')) filters.push('hue-rotate(180deg) saturate(0.8)');
+                                        if (p.includes('sharpen') || p.includes('sharp') || p.includes('clear')) filters.push('contrast(1.3) brightness(1.05)');
+                                        if (p.includes('enhance') || p.includes('improve') || p.includes('hd')) filters.push('contrast(1.2) saturate(1.2) brightness(1.1)');
+                                        if (filters.length > 0) ctx.filter = filters.join(' ');
+                                        
+                                        // Handle flip/rotate
+                                        if (p.includes('flip') || p.includes('mirror')) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+                                        if (p.includes('rotate')) { canvas.width = img.height; canvas.height = img.width; ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(90 * Math.PI/180); ctx.drawImage(img, -img.width/2, -img.height/2); } else { ctx.drawImage(img, 0, 0); }
+                                        ctx.filter = 'none';
+                                        
+                                        // Handle remove background
+                                        if (p.includes('remove') && (p.includes('background') || p.includes('bg'))) {
+                                           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                           const d = imgData.data; const bgR = d[0], bgG = d[1], bgB = d[2];
+                                           for (let i = 0; i < d.length; i += 4) { const dist = Math.sqrt((d[i]-bgR)**2 + (d[i+1]-bgG)**2 + (d[i+2]-bgB)**2); if (dist < 55) d[i+3] = 0; }
+                                           ctx.putImageData(imgData, 0, 0);
+                                        }
+                                        
+                                        // Handle add text
+                                        if (p.includes('add text') || p.includes('write') || p.includes('watermark')) {
+                                           const textMatch = toolPrompt.match(/["'](.+?)["']/);
+                                           const text = textMatch ? textMatch[1] : 'SMART AI';
+                                           ctx.font = `bold ${canvas.width*0.08}px Arial`; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'black'; ctx.lineWidth = canvas.width*0.01; ctx.textAlign = 'center';
+                                           ctx.strokeText(text, canvas.width/2, canvas.height - 40); ctx.fillText(text, canvas.width/2, canvas.height - 40);
+                                        }
+                                        
+                                        // Handle border
+                                        if (p.includes('border') || p.includes('frame')) {
+                                           const bw = canvas.width * 0.03;
+                                           ctx.strokeStyle = p.includes('white') ? 'white' : p.includes('gold') ? '#FFD700' : '#4f46e5';
+                                           ctx.lineWidth = bw; ctx.strokeRect(bw/2, bw/2, canvas.width - bw, canvas.height - bw);
+                                        }
+                                        
+                                        // Handle resize
+                                        if (p.includes('resize') || p.includes('small') || p.includes('thumbnail')) {
+                                           const newCanvas = document.createElement('canvas');
+                                           newCanvas.width = canvas.width / 2; newCanvas.height = canvas.height / 2;
+                                           newCanvas.getContext('2d')!.drawImage(canvas, 0, 0, newCanvas.width, newCanvas.height);
+                                           setProcessedToolImage(newCanvas.toDataURL('image/png'));
+                                           setIsToolProcessing(false); setCredits(prev => prev - 1); return;
+                                        }
+                                        
+                                        setProcessedToolImage(canvas.toDataURL('image/png'));
+                                        setIsToolProcessing(false);
+                                        setCredits(prev => prev - 1);
+                                      } catch (err) { alert('❌ Processing failed. Token not deducted.'); setIsToolProcessing(false); }
+                                    }, 1200);
                                  } else {
                                     setTimeout(async () => {
                                       const canvas = document.createElement('canvas');
@@ -1948,18 +2025,12 @@ export default function App() {
                                       }
                                       setProcessedToolImage(canvas.toDataURL(outFormat, outQuality));
                                       setIsToolProcessing(false);
-                                      setCredits(prev => prev - 2);
+                                      setCredits(prev => prev - 1);
                                     }, 1000);
                                  }
-                               } catch (err) { alert('Processing failed.'); setIsToolProcessing(false); }
+                               } catch (err) { alert('❌ Processing failed. Token not deducted.'); setIsToolProcessing(false); }
                             }} disabled={isToolProcessing || (activeTool.name === 'Image to Image' && !toolPrompt.trim())} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 disabled:opacity-50">
-                               <Sparkles className="w-5 h-5" /> {activeTool.name === 'Image to Image' ? 'Generate (-5 Credits)' : 'Execute Tool (-2 Credits)'}
-                            </button>
-                          ) : (
-                            <button onClick={() => {
-                               const a = document.createElement('a'); a.href = processedToolImage!; a.download = `smartai_${activeTool.name.toLowerCase().replace(/ /g, '_')}.png`; a.click();
-                            }} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-600/20 active:scale-95">
-                               <Download className="w-5 h-5" /> Download Result
+                               <Sparkles className="w-5 h-5" /> {activeTool.name === 'Image to Image' ? 'Generate (-1 Token)' : 'Execute Tool (-1 Token)'}
                             </button>
                           )}
                        </div>
