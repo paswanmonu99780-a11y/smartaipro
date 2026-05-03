@@ -2136,64 +2136,66 @@ export default function App() {
 
           {activeTab === 'image' && (
              <div className="max-w-5xl mx-auto w-full pb-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 relative shadow-2xl overflow-hidden">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-8 mb-6 md:mb-8 relative shadow-2xl overflow-hidden">
                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
                    
-                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 relative z-10">
+                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3 md:gap-4 relative z-10">
                      <div>
-                       <h2 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                         <ImageIcon className="w-8 h-8 text-indigo-400" />
+                       <h2 className="text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2 md:gap-3">
+                         <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-indigo-400" />
                          Image Synthesis
                        </h2>
-                       <p className="text-slate-400 text-sm mt-1">Generate high-quality visuals instantly.</p>
+                       <p className="text-slate-400 text-xs md:text-sm mt-1">Generate high-quality visuals instantly.</p>
                      </div>
-                     <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl shadow-inner">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cost Per Image</span>
-                        <div className="flex items-center gap-1.5 text-indigo-400 font-black">
-                          <Zap className="w-4 h-4" /> 5 Tokens
+                     <div className="flex items-center gap-2 md:gap-3 bg-slate-950 border border-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-inner w-full md:w-auto justify-between md:justify-start">
+                        <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cost</span>
+                        <div className="flex items-center gap-1.5 text-indigo-400 font-black text-sm md:text-base">
+                          <Zap className="w-3 h-3 md:w-4 md:h-4" /> 5 Tokens
                         </div>
                      </div>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10 mb-6">
-                      <div className="md:col-span-8 space-y-4">
+                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 relative z-10 mb-6">
+                      <div className="md:col-span-8 space-y-3 md:space-y-4">
                          <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex justify-between">
+                           <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 flex justify-between">
                              <span>Prompt</span>
                              <button onClick={handleEnhancePrompt} disabled={isEnhancing} className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
-                                <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Enhance Prompt'}
+                                <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Enhance'}
                              </button>
                            </label>
-                           <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate in detail..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                           <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate in detail..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 md:p-4 text-xs md:text-sm h-20 md:h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
                          </div>
                          <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Negative Prompt (Optional)</label>
-                           <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What should NOT be in the image (e.g. blurry, bad anatomy, text)..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm h-16 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                           <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Negative Prompt (Optional)</label>
+                           <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What should NOT be in the image..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 md:p-3 text-xs md:text-sm h-12 md:h-16 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
                          </div>
                       </div>
 
-                      <div className="md:col-span-4 space-y-4 bg-slate-950/50 border border-slate-800/50 rounded-2xl p-4">
-                         <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Style</label>
-                           <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500/50">
-                             {STYLES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-                           </select>
-                         </div>
-                         <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Quality</label>
-                           <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-500/50">
-                             <option value="Standard">Standard (Fast)</option>
-                             <option value="HD">HD Quality</option>
-                             <option value="4K">4K Ultra</option>
-                             <option value="8K">8K Masterpiece</option>
-                           </select>
-                         </div>
-                         <div>
-                           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Aspect Ratio</label>
-                           <div className="grid grid-cols-4 gap-2">
-                              {ASPECTS.map(a => (
-                                <button key={a} onClick={() => setImgAspect(a as any)} className={`py-2 rounded-lg text-[10px] font-bold transition-all border ${imgAspect === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}>{a}</button>
-                              ))}
+                      <div className="md:col-span-4 bg-slate-950/50 border border-slate-800/50 rounded-2xl p-3 md:p-4">
+                         <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
+                           <div>
+                             <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Style</label>
+                             <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                               {STYLES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                             </select>
+                           </div>
+                           <div>
+                             <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Quality</label>
+                             <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                               <option value="Standard">Standard</option>
+                               <option value="HD">HD Quality</option>
+                               <option value="4K">4K Ultra</option>
+                               <option value="8K">8K</option>
+                             </select>
+                           </div>
+                           <div className="col-span-2 md:col-span-1">
+                             <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Aspect Ratio</label>
+                             <div className="grid grid-cols-4 gap-1 md:gap-2">
+                                {ASPECTS.map(a => (
+                                  <button key={a} onClick={() => setImgAspect(a as any)} className={`py-1.5 md:py-2 rounded-lg text-[9px] md:text-[10px] font-bold transition-all border ${imgAspect === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}>{a}</button>
+                                ))}
+                             </div>
                            </div>
                          </div>
                       </div>
