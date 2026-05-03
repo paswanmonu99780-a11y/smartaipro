@@ -194,41 +194,41 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-indigo-400" />
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Total Users</span>
+        <div className="flex overflow-x-auto md:grid md:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8 pb-2 md:pb-0 no-scrollbar snap-x">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-36 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
+              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Total Users</span>
             </div>
-            <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
+            <div className="text-xl md:text-3xl font-bold text-white">{stats.totalUsers}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="w-4 h-4 text-emerald-400" />
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Total Credits</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-36 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <CreditCard className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
+              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Credits</span>
             </div>
-            <div className="text-3xl font-bold text-white">{stats.totalCredits.toLocaleString()}</div>
+            <div className="text-xl md:text-3xl font-bold text-white">{stats.totalCredits.toLocaleString()}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="w-4 h-4 text-slate-400" />
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Basic</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-28 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-400" />
+              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Basic</span>
             </div>
-            <div className="text-3xl font-bold text-slate-400">{stats.basicUsers}</div>
+            <div className="text-xl md:text-3xl font-bold text-slate-400">{stats.basicUsers}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="w-4 h-4 text-indigo-400" />
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Pro</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-28 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
+              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Pro</span>
             </div>
-            <div className="text-3xl font-bold text-indigo-400">{stats.proUsers}</div>
+            <div className="text-xl md:text-3xl font-bold text-indigo-400">{stats.proUsers}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="w-4 h-4 text-emerald-400" />
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Ultra</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-28 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
+              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Ultra</span>
             </div>
-            <div className="text-3xl font-bold text-emerald-400">{stats.ultraUsers}</div>
+            <div className="text-xl md:text-3xl font-bold text-emerald-400">{stats.ultraUsers}</div>
           </div>
         </div>
 
@@ -264,12 +264,13 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Users Table */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mb-10">
-          <div className="overflow-x-auto">
+        {/* Users Table / Cards */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mb-10 shadow-2xl">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-800">
+                <tr className="border-b border-slate-800 bg-slate-950/50">
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">#</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">User</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">Contact Info</th>
@@ -287,42 +288,42 @@ export default function AdminPanel() {
                 ) : (
                   filteredUsers.map((user, index) => (
                     <tr key={index} className="border-b border-slate-800/50 hover:bg-white/5 transition-colors">
-                      <td className="px-4 py-3 text-xs text-slate-400">{index + 1}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                      <td className="px-4 py-4 text-xs text-slate-400">{index + 1}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg">
                             {user.avatar ? <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover" /> : user.displayName?.charAt(0).toUpperCase() || 'U'}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm text-white font-medium">{user.displayName || 'N/A'}</span>
+                            <span className="text-sm text-white font-bold">{user.displayName || 'N/A'}</span>
                             <span className="text-[9px] text-slate-500 uppercase tracking-widest">{user.deviceId?.slice(0, 8)}...</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-300 font-mono">{user.email || '-'}</span>
                           <span className="text-xs text-slate-500 font-mono">{user.mobile || '-'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold ${
-                          user.plan === 'Pro' ? 'bg-indigo-600/20 text-indigo-400' :
-                          user.plan === 'Ultra' ? 'bg-emerald-600/20 text-emerald-400' :
-                          'bg-slate-700/50 text-slate-400'
+                      <td className="px-4 py-4">
+                        <span className={`text-[10px] px-3 py-1 rounded-full uppercase tracking-wider font-black shadow-sm ${
+                          user.plan === 'Pro' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/20' :
+                          user.plan === 'Ultra' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/20' :
+                          'bg-slate-700/50 text-slate-400 border border-slate-600/30'
                         }`}>
                           {user.plan || 'Basic'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-white font-bold">{(user.credits || 0).toLocaleString()}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4 text-sm text-indigo-300 font-black">{(user.credits || 0).toLocaleString()}</td>
+                      <td className="px-4 py-4">
                         <div className="flex flex-col gap-1">
                           <span className="text-[10px] text-indigo-400 font-bold tracking-widest">{user.referralCode || '-'}</span>
                           {user.referredBy && <span className="text-[9px] text-slate-500">Ref By: {user.referredBy}</span>}
                           {user.referralEarnings > 0 && <span className="text-[9px] text-emerald-500 font-bold">Earned: {user.referralEarnings}</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <button 
                             onClick={() => {
@@ -330,17 +331,17 @@ export default function AdminPanel() {
                               setNewCredits(user.credits || 0);
                               setNewPlan(user.plan || 'Basic');
                             }}
-                            className="p-1.5 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all"
+                            className="p-2 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all"
                             title="Edit User"
                           >
-                            <User className="w-3.5 h-3.5" />
+                            <User className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => deleteUser(user)}
-                            className="p-1.5 bg-rose-600/10 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-all"
+                            className="p-2 bg-rose-600/10 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-all"
                             title="Delete User"
                           >
-                            <Plus className="w-3.5 h-3.5 rotate-45" />
+                            <Plus className="w-4 h-4 rotate-45" />
                           </button>
                         </div>
                       </td>
@@ -349,6 +350,66 @@ export default function AdminPanel() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden flex flex-col divide-y divide-slate-800/50">
+             {filteredUsers.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 text-sm">No users found</div>
+             ) : (
+                filteredUsers.map((user, index) => (
+                  <div key={index} className="p-4 flex flex-col gap-4">
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                           {user.avatar ? <img src={user.avatar} className="w-full h-full rounded-full object-cover" /> : user.displayName?.charAt(0).toUpperCase() || 'U'}
+                         </div>
+                         <div className="flex flex-col">
+                            <span className="text-sm font-bold text-white">{user.displayName || 'N/A'}</span>
+                            <span className="text-[10px] text-slate-400">{user.email || user.mobile || 'No Contact'}</span>
+                         </div>
+                       </div>
+                       <span className={`text-[9px] px-2.5 py-1 rounded-full uppercase tracking-widest font-black border ${
+                          user.plan === 'Pro' ? 'bg-indigo-600/20 text-indigo-400 border-indigo-600/30' :
+                          user.plan === 'Ultra' ? 'bg-emerald-600/20 text-emerald-400 border-emerald-600/30' :
+                          'bg-slate-800/80 text-slate-400 border-slate-700'
+                        }`}>
+                          {user.plan || 'Basic'}
+                        </span>
+                     </div>
+
+                     <div className="flex items-center justify-between bg-slate-950/50 rounded-xl p-3 border border-slate-800/50">
+                       <div className="flex items-center gap-4">
+                         <div>
+                           <div className="text-[8px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Credits</div>
+                           <div className="text-sm font-black text-white">{(user.credits || 0).toLocaleString()}</div>
+                         </div>
+                         {user.referralCode && (
+                           <div>
+                             <div className="text-[8px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Ref Code</div>
+                             <div className="text-[10px] font-bold text-indigo-400 tracking-widest">{user.referralCode}</div>
+                           </div>
+                         )}
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingUser(user);
+                              setNewCredits(user.credits || 0);
+                              setNewPlan(user.plan || 'Basic');
+                            }}
+                            className="p-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors"
+                          >
+                            <User className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => deleteUser(user)} className="p-2 bg-rose-600/10 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg transition-colors">
+                            <Plus className="w-4 h-4 rotate-45" />
+                          </button>
+                       </div>
+                     </div>
+                  </div>
+                ))
+             )}
           </div>
           <div className="px-4 py-3 border-t border-slate-800 text-[10px] text-slate-600 uppercase tracking-widest">
             Showing {filteredUsers.length} of {users.length} users
