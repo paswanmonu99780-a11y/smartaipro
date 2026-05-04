@@ -3031,9 +3031,9 @@ export default function App() {
             <Sparkles className="w-4 h-4" /> Upgrade Plan
           </button>
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{displayName.charAt(0)}</div>
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{(displayName || email || 'U').charAt(0)}</div>
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-bold text-white truncate">{displayName}</div>
+              <div className="text-[10px] font-bold text-white truncate">{displayName || email?.split('@')[0] || 'User'}</div>
               <div className="text-[9px] text-slate-500 truncate">{email}</div>
             </div>
             <button onClick={() => setActiveTab('profile')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
@@ -3127,6 +3127,29 @@ export default function App() {
                   </>
                 )}
               </nav>
+
+              <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
+                <button
+                  onClick={() => { setIsPricingOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+                >
+                  <Sparkles className="w-4 h-4" /> Upgrade Plan
+                </button>
+                <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{(displayName || email || 'U').charAt(0)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-bold text-white truncate">{displayName || email?.split('@')[0] || 'User'}</div>
+                    <div className="text-[9px] text-slate-500 truncate">{email}</div>
+                  </div>
+                  <button onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
+                </div>
+
+                {!isAdmin && (
+                  <button onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }} className="w-full mt-2 flex items-center justify-center gap-1 opacity-30 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
+                    <Shield className="w-2 h-2" /> Admin Access
+                  </button>
+                )}
+              </div>
             </motion.div>
           </>
         )}
