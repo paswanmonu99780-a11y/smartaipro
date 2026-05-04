@@ -520,7 +520,31 @@ export default function App() {
 
     setIsAuthenticating(true);
     try {
+      console.log('Checking name uniqueness:', signupName);
+      
+      // 1. Check local users for immediate feedback
+      const localUsers = getUsers();
+      if (localUsers.some(u => u.displayName?.toLowerCase() === signupName.toLowerCase() || u.name?.toLowerCase() === signupName.toLowerCase())) {
+        setAuthError('This name is already taken. Please choose another name.');
+        setIsAuthenticating(false);
+        return;
+      }
+
+      // 2. Check Supabase users table for global uniqueness
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('displayName')
+        .ilike('displayName', signupName)
+        .maybeSingle();
+
+      if (existingUser) {
+        setAuthError('This name is already taken. Please choose another name.');
+        setIsAuthenticating(false);
+        return;
+      }
+
       console.log('Initiating signup for:', email);
+
 
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
@@ -916,14 +940,35 @@ export default function App() {
     recognition.start();
   };
 
-  const handleUpdateProfile = () => {
+  const handleUpdateProfile = async () => {
     if (!tempDisplayName.trim()) return alert('Name cannot be empty');
+    
+    if (tempDisplayName !== displayName) {
+      // 1. Check local users
+      const localUsers = getUsers();
+      if (localUsers.some(u => (u.displayName?.toLowerCase() === tempDisplayName.toLowerCase() || u.name?.toLowerCase() === tempDisplayName.toLowerCase()) && u.email !== email)) {
+        return alert('This name is already taken. Please choose another name.');
+      }
+
+      // 2. Check Supabase users table
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('displayName')
+        .ilike('displayName', tempDisplayName)
+        .maybeSingle();
+
+      if (existingUser) {
+        return alert('This name is already taken. Please choose another name.');
+      }
+    }
+
     setDisplayName(tempDisplayName);
     setAvatar(tempAvatar);
     setIsEditingProfile(false);
     syncUserData({ displayName: tempDisplayName, avatar: tempAvatar });
     alert('Profile updated successfully!');
   };
+
 
   const copyReferralCode = () => {
     const code = getCurrentUserReferralData()?.referralCode;
