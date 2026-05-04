@@ -125,17 +125,27 @@ export default function App() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Forgot Password State
+  const [resetEmail, setResetEmail] = useState('');
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<'email' | 'otp' | 'reset'>('email');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [resetOtp, setResetOtp] = useState(['', '', '', '', '', '']);
 
-  useEffect(() => {
-    setAuthError(null);
-  }, [authMode]);
+  // OTP State
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpType, setOtpType] = useState<'login' | 'signup'>('login');
   const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Signup Specific State
   const [signupName, setSignupName] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [signupReferCode, setSignupReferCode] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -2227,12 +2237,12 @@ export default function App() {
                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest">Experimental Lab</div>
                  <h2 className="text-4xl font-black text-white italic">AI Creative Studio <span className="text-slate-500 not-italic">v2.0</span></h2>
                  <p className="text-slate-400 leading-relaxed max-w-md">Access our most advanced creative models including High-Resolution Image Synthesis, Procedural Storytelling, and Multi-Modal brainstorm engines.</p>
-                 <div className="flex gap-4">
-                   <button className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">Enter Studio</button>
-                   <button className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-700 transition-all">Documentation</button>
+                 <div className="flex flex-col sm:flex-row gap-4 w-full">
+                   <button className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 w-full sm:w-auto">Enter Studio</button>
+                   <button className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-700 transition-all w-full sm:w-auto">Documentation</button>
                  </div>
                </div>
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  {[
                    { name: "Image Studio", icon: ImageIcon, desc: "Ultra-HD Visuals" },
                    { name: "Video Lab", icon: Video, desc: "Motion Generation" },
@@ -2861,13 +2871,13 @@ export default function App() {
                 <div className="flex-1 text-center md:text-left space-y-4">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Display Name</label>
-                    <div className="flex gap-2 max-w-sm mx-auto md:mx-0">
+                    <div className="flex flex-col sm:flex-row gap-2 max-w-sm mx-auto md:mx-0 w-full">
                       <input
                         value={tempDisplayName}
                         onChange={e => setTempDisplayName(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white font-bold focus:outline-none focus:border-indigo-500/50"
+                        className="flex-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 sm:py-2 text-white font-bold focus:outline-none focus:border-indigo-500/50"
                       />
-                      <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all">Save Changes</button>
+                      <button onClick={handleUpdateProfile} className="bg-indigo-600 px-4 py-3 sm:py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-all w-full sm:w-auto mt-2 sm:mt-0">Save Changes</button>
                     </div>
                   </div>
                   <div className="flex gap-2 justify-center md:justify-start">
