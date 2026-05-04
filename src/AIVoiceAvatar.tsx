@@ -245,6 +245,12 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
       console.warn("TTS: No specific voice found for", language, "- using browser default");
     }
 
+    // If no voice found for selected language, fallback to any available voice
+    if (!voice && voices.length > 0) {
+      voice = voices[0];
+      console.warn("TTS: Using fallback voice:", voice.name);
+    }
+
     // Speak chunks one by one
     let chunkIndex = 0;
 
@@ -258,21 +264,20 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
       const chunkText = chunks[chunkIndex];
       chunkIndex++;
 
+      // CRITICAL: Create a new utterance for each chunk
       const utterance = new SpeechSynthesisUtterance(chunkText);
-      utterance.lang = language;
-      utterance.rate = language === 'hi-IN' ? 0.9 : 1.0;  // Slightly slower for Hindi clarity
+      utterance.lang = language; // always set the language tag
+      utterance.rate = language === 'hi-IN' ? 0.85 : 1.0;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       if (voice) utterance.voice = voice;
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => {
-        // Small pause between sentences for natural flow
         setTimeout(speakNextChunk, 200);
       };
       utterance.onerror = (e) => {
         console.error("TTS chunk error:", e);
-        // Try next chunk on error
         setTimeout(speakNextChunk, 100);
       };
 
