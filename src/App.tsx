@@ -524,6 +524,12 @@ export default function App() {
       
       // 1. Check local users for immediate feedback
       const localUsers = getUsers();
+      if (localUsers.some(u => u.email?.toLowerCase() === email.toLowerCase())) {
+        setAuthError('Email is already registered. Please login instead.');
+        setIsAuthenticating(false);
+        return;
+      }
+      
       if (localUsers.some(u => u.displayName?.toLowerCase() === signupName.toLowerCase() || u.name?.toLowerCase() === signupName.toLowerCase())) {
         setAuthError('This name is already taken. Please choose another name.');
         setIsAuthenticating(false);
@@ -531,6 +537,18 @@ export default function App() {
       }
 
       // 2. Check Supabase users table for global uniqueness
+      const { data: existingEmailUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingEmailUser) {
+        setAuthError('Email is already registered. Please login instead.');
+        setIsAuthenticating(false);
+        return;
+      }
+
       const { data: existingUser, error: checkError } = await supabase
         .from('users')
         .select('displayName')
