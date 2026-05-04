@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
+import AIVoiceAvatar from './AIVoiceAvatar';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
 import { supabase } from './lib/supabase';
 
@@ -200,6 +201,8 @@ export default function App() {
   const [isExpertToolThinking, setIsExpertToolThinking] = useState(false);
   const [tone, setTone] = useState<'Professional' | 'Funny' | 'Casual'>('Professional');
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
+  const [isVoiceAvatarOpen, setIsVoiceAvatarOpen] = useState(false);
+  const [lastAIVoiceMessage, setLastAIVoiceMessage] = useState('');
   const isExpertLocked = plan === 'Basic' && !isAdmin;
 
   useEffect(() => {
@@ -2682,6 +2685,14 @@ export default function App() {
               {/* Chat Input Area (Fixed at bottom of container) */}
               <div className="p-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
                 <div className="flex gap-2 items-center bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
+                  {/* Globe / Voice Avatar Button */}
+                  <button
+                    onClick={() => setIsVoiceAvatarOpen(true)}
+                    title="Open AI Voice Assistant"
+                    className="p-2 rounded-lg bg-slate-800 text-indigo-400 hover:text-white hover:bg-indigo-600 transition-all shrink-0"
+                  >
+                    <Globe className="w-4 h-4" />
+                  </button>
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
@@ -3171,6 +3182,32 @@ export default function App() {
           </>
         )}
       </AnimatePresence>
+
+      {/* AI Voice Avatar */}
+      <AIVoiceAvatar
+        isOpen={isVoiceAvatarOpen}
+        onClose={() => setIsVoiceAvatarOpen(false)}
+        lastAIMessage={lastAIVoiceMessage}
+        onSendMessage={async (userText: string) => {
+          const systemPrompt = `You are a helpful AI voice assistant called SmartAI. Give concise, clear, and friendly answers in 2-3 sentences max. Maintain a ${tone} tone.`;
+          const seed = Math.floor(Math.random() * 0xFFFFFFFF);
+          const url = `/api/chat?prompt=${encodeURIComponent(userText)}&seed=${seed}&system=${encodeURIComponent(systemPrompt)}&json=false`;
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const text = await res.text();
+              const reply = text.trim();
+              setLastAIVoiceMessage(reply);
+              // Also add to chat history
+              const userMsg = { id: Date.now().toString(), role: 'user' as const, content: userText };
+              const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant' as const, content: reply };
+              setMessages(prev => [...prev, userMsg, aiMsg]);
+              return reply;
+            }
+          } catch (e) { console.error(e); }
+          return 'Sorry, I could not get a response. Please try again.';
+        }}
+      />
 
       {/* Overlays */}
       <AnimatePresence>
