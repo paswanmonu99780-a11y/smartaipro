@@ -1,478 +1,407 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Volume2, X, Languages } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface AIVoiceAvatarProps {
-  isOpen: boolean;
+  isActive: boolean;
   onClose: () => void;
-  onSendMessage: (message: string) => Promise<string>;
-  lastAIMessage?: string;
+  onTranscript: (text: string, lang: string) => void;
+  isThinking: boolean;
+  lastAiMessage: string;
 }
 
-export default function AIVoiceAvatar({ isOpen, onClose, onSendMessage, lastAIMessage }: AIVoiceAvatarProps) {
-  const [isSpeaking, setIsSpeaking] = useState(false);
+const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({ 
+  isActive, 
+  onClose, 
+  onTranscript, 
+  isThinking, 
+  lastAiMessage 
+}) => {
   const [isListening, setIsListening] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [status, setStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
-  const [blinkLeft, setBlinkLeft] = useState(false);
-  const [blinkRight, setBlinkRight] = useState(false);
-  const [mouthOpen, setMouthOpen] = useState(0);
-  const [lookX, setLookX] = useState(0);
-  const [lookY, setLookY] = useState(0);
-  const [emotion, setEmotion] = useState<'neutral' | 'happy' | 'thinking' | 'surprised'>('neutral');
-  const [displayText, setDisplayText] = useState('');
-  const [eyebrowOffset, setEyebrowOffset] = useState(0);
-
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [language, setLanguage] = useState<'en-US' | 'hi-IN'>('hi-IN');
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const recognitionRef = useRef<any>(null);
-  const animFrameRef = useRef<number>(0);
-  const mouthAnimRef = useRef<number>(0);
+  const lastSpokenRef = useRef<string>('');
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Random blink effect
+  // Initialize Speech Recognition and Synth
   useEffect(() => {
-    if (!isOpen) return;
-    const blinkInterval = setInterval(() => {
-      const side = Math.random() > 0.7 ? 'both' : Math.random() > 0.5 ? 'left' : 'right';
-      if (side === 'both' || side === 'left') setBlinkLeft(true);
-      if (side === 'both' || side === 'right') setBlinkRight(true);
-      setTimeout(() => { setBlinkLeft(false); setBlinkRight(false); }, 150);
-    }, 2800 + Math.random() * 2000);
-    return () => clearInterval(blinkInterval);
-  }, [isOpen]);
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        // Set continuous to true to prevent early cut-offs
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = language;
 
-  // Eye tracking - follow mouse
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      const dx = (e.clientX - cx) / cx;
-      const dy = (e.clientY - cy) / cy;
-      setLookX(dx * 4);
-      setLookY(dy * 3);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [isOpen]);
+        recognitionRef.current.onresult = (event: any) => {
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
 
-  // Animate mouth when speaking
-  const animateMouth = (speaking: boolean) => {
-    if (!speaking) { setMouthOpen(0); return; }
-    let t = 0;
-    const anim = () => {
-      t += 0.3;
-      setMouthOpen(Math.abs(Math.sin(t)) * 12 + Math.abs(Math.sin(t * 0.7)) * 6);
-      mouthAnimRef.current = requestAnimationFrame(anim);
-    };
-    mouthAnimRef.current = requestAnimationFrame(anim);
-  };
+          if (finalTranscript) {
+            console.log("STT: Final transcript chunk:", finalTranscript);
+            
+            // Clear previous timer and wait for silence before submitting
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+            
+            silenceTimerRef.current = setTimeout(() => {
+              console.log("STT: Submitting after stability delay:", finalTranscript);
+              onTranscript(finalTranscript, language);
+              recognitionRef.current?.stop();
+              setIsListening(false);
+            }, 1500); // 1.5s silence before assuming user is done
+          }
+        };
 
-  // Speak text with Web Speech API
-  const speak = (text: string) => {
-    if (isMuted || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utteranceRef.current = utterance;
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("STT: Recognition error:", event.error);
+          if (event.error !== 'no-speech') setIsListening(false);
+        };
 
-    // Pick a good voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v =>
-      v.name.includes('Google') && v.lang.startsWith('en')
-    ) || voices.find(v => v.lang.startsWith('en-US')) || voices[0];
-    if (preferred) utterance.voice = preferred;
-
-    utterance.rate = 1.05;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setStatus('speaking');
-      setEmotion('happy');
-      setEyebrowOffset(-2);
-      animateMouth(true);
-    };
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setStatus('idle');
-      setEmotion('neutral');
-      setEyebrowOffset(0);
-      cancelAnimationFrame(mouthAnimRef.current);
-      setMouthOpen(0);
-    };
-
-    // Stream text display
-    let charIdx = 0;
-    const charInterval = setInterval(() => {
-      if (charIdx < text.length) {
-        setDisplayText(text.substring(0, charIdx + 1));
-        charIdx++;
-      } else {
-        clearInterval(charInterval);
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
       }
-    }, 30);
+      
+      const synth = window.speechSynthesis;
+      synthRef.current = synth;
+// ... rest of useEffect logic
 
-    window.speechSynthesis.speak(utterance);
-  };
-
-  // Speak last AI message when it changes
-  useEffect(() => {
-    if (isOpen && lastAIMessage) {
-      setDisplayText('');
-      speak(lastAIMessage);
-    }
-  }, [lastAIMessage, isOpen]);
-
-  // Start voice recognition
-  const startListening = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Voice input is not supported in your browser. Please use Chrome.');
-      return;
-    }
-    window.speechSynthesis.cancel();
-    cancelAnimationFrame(mouthAnimRef.current);
-    setMouthOpen(0);
-    setIsSpeaking(false);
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setStatus('listening');
-      setEmotion('neutral');
-      setEyebrowOffset(2);
-      setTranscript('');
-      setDisplayText('Listening...');
-    };
-
-    recognition.onresult = (event: any) => {
-      const interim = Array.from(event.results)
-        .map((r: any) => r[0].transcript)
-        .join('');
-      setTranscript(interim);
-      setDisplayText(interim);
-    };
-
-    recognition.onend = async () => {
-      setIsListening(false);
-      setEyebrowOffset(0);
-      if (transcript.trim()) {
-        setStatus('thinking');
-        setEmotion('thinking');
-        setDisplayText('Thinking...');
-        try {
-          const reply = await onSendMessage(transcript.trim());
-          speak(reply);
-        } catch {
-          speak("Sorry, I couldn't process that. Please try again.");
-          setStatus('idle');
-          setEmotion('neutral');
+      const loadVoices = () => {
+        const voices = synth.getVoices();
+        if (voices.length > 0) {
+          console.log(`TTS: ${voices.length} voices loaded`);
+          setVoicesLoaded(true);
         }
-      } else {
-        setStatus('idle');
-        setDisplayText('');
+      };
+
+      loadVoices();
+      if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = loadVoices;
       }
+      
+      // Some browsers need a periodic check
+      const voiceInterval = setInterval(() => {
+        if (synth.getVoices().length > 0) {
+          setVoicesLoaded(true);
+          clearInterval(voiceInterval);
+        }
+      }, 500);
+
+      return () => clearInterval(voiceInterval);
+    }
+  }, [onTranscript, language]);
+
+  // Handle listening loop
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isActive && !isThinking && !isSpeaking && !isListening) {
+      timeoutId = setTimeout(startListening, 1000);
+    }
+    return () => {
+      clearTimeout(timeoutId);
     };
+  }, [isActive, isThinking, isSpeaking, isListening]);
 
-    recognition.onerror = () => {
-      setIsListening(false);
-      setStatus('idle');
-      setEmotion('neutral');
-      setDisplayText('Could not hear you. Try again.');
-    };
+  // Handle speaking AI messages
+  useEffect(() => {
+    if (isActive && lastAiMessage && lastAiMessage !== lastSpokenRef.current && !isThinking) {
+      console.log("TTS: New message, starting speak cycle");
+      speak(lastAiMessage);
+      lastSpokenRef.current = lastAiMessage;
+    }
+  }, [lastAiMessage, isThinking, isActive]);
 
-    recognition.start();
-  };
+  // Update lastSpokenRef when opening
+  useEffect(() => {
+    if (isActive) {
+      console.log("TTS: Voice Avatar opened");
+      // If there's already a message when opening, speak it if it hasn't been spoken yet
+      if (lastAiMessage && lastAiMessage !== lastSpokenRef.current) {
+        console.log("TTS: Speaking existing message on open");
+        speak(lastAiMessage);
+        lastSpokenRef.current = lastAiMessage;
+      }
+      
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+      }
+    } else {
+      stopSpeaking();
+    }
+  }, [isActive]); // Only react to isActive changes
 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-    setStatus('idle');
+  const startListening = () => {
+    if (recognitionRef.current && !isListening && !isSpeaking && !isThinking && isActive) {
+      try {
+        recognitionRef.current.lang = language;
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        // Already started
+      }
+    }
   };
 
   const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
-    cancelAnimationFrame(mouthAnimRef.current);
-    setMouthOpen(0);
-    setIsSpeaking(false);
-    setStatus('idle');
+    if (synthRef.current) {
+      synthRef.current.cancel();
+      setIsSpeaking(false);
+    }
   };
 
-  // Emotion-based face colors
-  const skinGrad = emotion === 'thinking'
-    ? ['#6366f1', '#8b5cf6']
-    : emotion === 'happy'
-    ? ['#4f46e5', '#7c3aed']
-    : ['#3730a3', '#5b21b6'];
+  const speak = (text: string) => {
+    if (!synthRef.current || !text) return;
 
-  const glowColor = emotion === 'happy' ? 'rgba(99,102,241,0.5)' : emotion === 'thinking' ? 'rgba(139,92,246,0.4)' : 'rgba(79,70,229,0.3)';
+    // Clean text
+    const cleanText = text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/```[\s\S]*?```/g, 'code')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/[#*_~`]/g, '')
+      .substring(0, 1000);
 
-  const eyeColor = status === 'listening' ? '#34d399' : status === 'speaking' ? '#a78bfa' : '#818cf8';
+    stopSpeaking();
+    
+    // Explicitly cancel and resume to clear any stuck state
+    synthRef.current.cancel();
+    synthRef.current.resume();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = language;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    
+    // Select voice
+    const voices = synthRef.current.getVoices();
+    console.log("TTS: Available voices:", voices.length);
+    
+    // Improved voice selection for Hindi
+    let voice = null;
+    if (language === 'hi-IN') {
+      // 1. Try to find a high-quality Hindi voice
+      voice = voices.find(v => v.lang === 'hi-IN' && (v.name.includes('Google') || v.name.includes('Premium')));
+      // 2. Fallback to any Hindi voice
+      if (!voice) voice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi'));
+      // 3. Fallback to Microsoft Kalpana or similar if on Windows
+      if (!voice) voice = voices.find(v => v.name.includes('Hindi') || v.name.includes('Kalpana'));
+    } else {
+      // English selection
+      voice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google'));
+      if (!voice) voice = voices.find(v => v.lang.startsWith('en'));
+    }
+    
+    if (voice) {
+      console.log("TTS: Selected voice:", voice.name, voice.lang);
+      utterance.voice = voice;
+    } else {
+      console.warn("TTS: No specific voice found for", language, "- using browser default");
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      if (isActive) setTimeout(startListening, 800);
+    };
+    utterance.onerror = (e) => {
+      console.error("TTS error:", e);
+      setIsSpeaking(false);
+      if (isActive) setTimeout(startListening, 800);
+    };
+    
+    utteranceRef.current = utterance;
+    
+    // Small delay to ensure cancel() has finished processing
+    setTimeout(() => {
+      synthRef.current?.speak(utterance);
+      
+      // Fallback: Check if it's actually speaking after a second
+      // Some browsers (like Chrome on mobile) need an extra push
+      setTimeout(() => {
+        if (isActive && !synthRef.current?.speaking && !isThinking) {
+           console.log("TTS: Detected silent state, retrying...");
+           synthRef.current?.resume();
+           // Try speaking again if still silent
+           if (!synthRef.current?.speaking) {
+             synthRef.current?.speak(utterance);
+           }
+        }
+      }, 1000);
+    }, 100);
+  };
+
+  // Pre-load voices
+  useEffect(() => {
+    const loadVoices = () => {
+      if (synthRef.current) {
+        synthRef.current.getVoices();
+      }
+    };
+    loadVoices();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
+  const toggleLanguage = () => {
+    const newLang = language === 'en-US' ? 'hi-IN' : 'en-US';
+    setLanguage(newLang);
+    stopSpeaking();
+    if (isListening) {
+      recognitionRef.current?.stop();
+    }
+  };
+
+  if (!isActive) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 20 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className="fixed inset-0 z-[200] flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(16px)' }}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-2xl"
+    >
+      {/* Top Controls */}
+      <div className="absolute top-8 left-8 flex items-center gap-4">
+        <button 
+          onClick={() => speak(language === 'hi-IN' ? 'Namaste, main theek se kaam kar raha hoon' : 'Hello, my voice system is active')}
+          className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-slate-500 hover:text-white transition-all border border-white/10"
         >
-          <div className="relative flex flex-col items-center gap-6 w-full max-w-lg px-4">
-            {/* Close Button */}
-            <button
-              onClick={() => { stopSpeaking(); stopListening(); onClose(); }}
-              className="absolute top-0 right-4 p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full z-10"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          Test Audio
+        </button>
+      </div>
 
-            {/* Title */}
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">AI Voice Assistant</p>
+      <div className="absolute top-8 right-8 flex items-center gap-4">
+        <button 
+          onClick={toggleLanguage}
+          className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-white transition-all border border-white/10 group"
+        >
+          <Languages className="w-5 h-5 text-indigo-400 group-hover:rotate-12 transition-transform" />
+          <span className="text-sm font-black uppercase tracking-widest">
+            {language === 'en-US' ? 'English' : 'Hindi'}
+          </span>
+        </button>
+        <button 
+          onClick={() => { stopSpeaking(); onClose(); }}
+          className="p-4 bg-white/10 hover:bg-red-500/20 rounded-2xl text-white transition-all border border-white/10 hover:border-red-500/50"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
 
-            {/* 3D Face SVG */}
-            <motion.div
-              animate={{
-                rotateY: lookX * 2,
-                rotateX: -lookY * 2,
+      <div className="flex flex-col items-center gap-16">
+        {/* 3D AI Assistant Face */}
+        <div className="relative w-80 h-80">
+          {/* Reactive Outer Glows */}
+          <div className={`absolute inset-0 bg-indigo-500/20 blur-[120px] rounded-full transition-all duration-700 ${isSpeaking ? 'scale-150 opacity-100' : (isListening ? 'scale-110 opacity-70' : 'scale-100 opacity-30')}`} />
+          <div className={`absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full transition-all duration-1000 ${isSpeaking ? 'animate-pulse' : ''}`} />
+          
+          {/* Main Sphere */}
+          <div className={`relative w-full h-full rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 shadow-[0_0_80px_rgba(79,70,229,0.4)] border border-white/20 overflow-hidden flex items-center justify-center transition-transform duration-500 ${isSpeaking ? 'scale-105' : 'scale-100'}`}>
+            {/* Animated Grid Lines */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none" 
+                 style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+            
+            {/* Eyes */}
+            <div className="flex gap-16 z-10">
+              <motion.div 
+                animate={{ 
+                  scaleY: isSpeaking ? [1, 0.2, 1] : 1,
+                  height: isListening ? [24, 40, 24] : 24,
+                  opacity: isThinking ? [0.4, 1, 0.4] : 1
+                }}
+                transition={{ repeat: Infinity, duration: isThinking ? 1.5 : 0.6 }}
+                className="w-5 h-6 bg-white rounded-full shadow-[0_0_20px_#fff]" 
+              />
+              <motion.div 
+                animate={{ 
+                  scaleY: isSpeaking ? [1, 0.2, 1] : 1,
+                  height: isListening ? [24, 40, 24] : 24,
+                  opacity: isThinking ? [0.4, 1, 0.4] : 1
+                }}
+                transition={{ repeat: Infinity, duration: isThinking ? 1.5 : 0.6 }}
+                className="w-5 h-6 bg-white rounded-full shadow-[0_0_20px_#fff]" 
+              />
+            </div>
+
+            {/* Mouth/Sound Waves */}
+            <div className="absolute bottom-20 flex items-center gap-1.5 h-12">
+              {[...Array(7)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ 
+                    height: isSpeaking ? [8, 48, 8] : (isListening ? [4, 20, 4] : 6),
+                    opacity: isSpeaking ? 1 : 0.5
+                  }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 0.3, 
+                    delay: i * 0.05 
+                  }}
+                  className="w-1.5 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                />
+              ))}
+            </div>
+
+            {/* Pulsing Core */}
+            <motion.div 
+              animate={{ 
+                opacity: [0.1, 0.3, 0.1],
+                scale: [0.9, 1.1, 0.9]
               }}
-              style={{ perspective: 600, transformStyle: 'preserve-3d' }}
-              className="relative"
-            >
-              {/* Glow Ring */}
-              <div
-                className="absolute inset-0 rounded-full blur-2xl"
-                style={{ background: glowColor, transform: 'scale(1.3)', zIndex: -1 }}
-              />
+              transition={{ repeat: Infinity, duration: 4 }}
+              className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none" 
+            />
+          </div>
+        </div>
 
-              <svg width="220" height="220" viewBox="0 0 220 220" style={{ filter: `drop-shadow(0 0 30px ${glowColor})` }}>
-                <defs>
-                  <radialGradient id="faceGrad" cx="40%" cy="35%">
-                    <stop offset="0%" stopColor={skinGrad[0]} />
-                    <stop offset="100%" stopColor={skinGrad[1]} />
-                  </radialGradient>
-                  <radialGradient id="eyeGrad" cx="40%" cy="35%">
-                    <stop offset="0%" stopColor="#c7d2fe" />
-                    <stop offset="100%" stopColor={eyeColor} />
-                  </radialGradient>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                  </filter>
-                  <linearGradient id="neckGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={skinGrad[1]} />
-                    <stop offset="100%" stopColor="transparent" />
-                  </linearGradient>
-                </defs>
-
-                {/* Neck */}
-                <rect x="85" y="175" width="50" height="30" rx="10" fill="url(#neckGrad)" opacity="0.7" />
-
-                {/* Head */}
-                <motion.ellipse
-                  cx="110" cy="105" rx="88" ry="95"
-                  fill="url(#faceGrad)"
-                  animate={{ ry: [95, 97, 95] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                />
-
-                {/* Cheek highlights */}
-                <ellipse cx="62" cy="125" rx="18" ry="12" fill="rgba(255,255,255,0.07)" />
-                <ellipse cx="158" cy="125" rx="18" ry="12" fill="rgba(255,255,255,0.07)" />
-
-                {/* Forehead shine */}
-                <ellipse cx="95" cy="65" rx="28" ry="16" fill="rgba(255,255,255,0.12)" />
-
-                {/* LEFT Eyebrow */}
-                <motion.path
-                  d={`M 60 ${74 + eyebrowOffset} Q 78 ${68 + eyebrowOffset} 96 ${72 + eyebrowOffset}`}
-                  stroke="rgba(255,255,255,0.85)" strokeWidth="3.5" fill="none" strokeLinecap="round"
-                  animate={{ d: emotion === 'surprised'
-                    ? `M 60 ${66 + eyebrowOffset} Q 78 ${60 + eyebrowOffset} 96 ${64 + eyebrowOffset}`
-                    : emotion === 'thinking'
-                    ? `M 60 ${76 + eyebrowOffset} Q 78 ${70 + eyebrowOffset} 96 ${68 + eyebrowOffset}`
-                    : `M 60 ${74 + eyebrowOffset} Q 78 ${68 + eyebrowOffset} 96 ${72 + eyebrowOffset}`
-                  }}
-                  transition={{ duration: 0.4 }}
-                />
-
-                {/* RIGHT Eyebrow */}
-                <motion.path
-                  d={`M 124 ${72 + eyebrowOffset} Q 142 ${68 + eyebrowOffset} 160 ${74 + eyebrowOffset}`}
-                  stroke="rgba(255,255,255,0.85)" strokeWidth="3.5" fill="none" strokeLinecap="round"
-                  animate={{ d: emotion === 'surprised'
-                    ? `M 124 ${64 + eyebrowOffset} Q 142 ${60 + eyebrowOffset} 160 ${66 + eyebrowOffset}`
-                    : emotion === 'thinking'
-                    ? `M 124 ${68 + eyebrowOffset} Q 142 ${70 + eyebrowOffset} 160 ${76 + eyebrowOffset}`
-                    : `M 124 ${72 + eyebrowOffset} Q 142 ${68 + eyebrowOffset} 160 ${74 + eyebrowOffset}`
-                  }}
-                  transition={{ duration: 0.4 }}
-                />
-
-                {/* LEFT Eye socket */}
-                <ellipse cx={78 + lookX} cy={100 + lookY} rx="22" ry={blinkLeft ? 1.5 : 17} fill="rgba(0,0,20,0.7)"
-                  style={{ transition: 'ry 0.08s' }} />
-
-                {/* LEFT Eye iris */}
-                {!blinkLeft && <>
-                  <circle cx={78 + lookX} cy={100 + lookY} r="12" fill="url(#eyeGrad)" filter="url(#glow)" />
-                  <circle cx={78 + lookX} cy={100 + lookY} r="7" fill={eyeColor} opacity="0.9" />
-                  <circle cx={78 + lookX} cy={100 + lookY} r="4" fill="rgba(0,0,0,0.9)" />
-                  <circle cx={82 + lookX} cy={96 + lookY} r="2.5" fill="white" opacity="0.95" />
-                  <circle cx={75 + lookX} cy={103 + lookY} r="1" fill="white" opacity="0.5" />
-                </>}
-
-                {/* RIGHT Eye socket */}
-                <ellipse cx={142 + lookX} cy={100 + lookY} rx="22" ry={blinkRight ? 1.5 : 17} fill="rgba(0,0,20,0.7)"
-                  style={{ transition: 'ry 0.08s' }} />
-
-                {/* RIGHT Eye iris */}
-                {!blinkRight && <>
-                  <circle cx={142 + lookX} cy={100 + lookY} r="12" fill="url(#eyeGrad)" filter="url(#glow)" />
-                  <circle cx={142 + lookX} cy={100 + lookY} r="7" fill={eyeColor} opacity="0.9" />
-                  <circle cx={142 + lookX} cy={100 + lookY} r="4" fill="rgba(0,0,0,0.9)" />
-                  <circle cx={146 + lookX} cy={96 + lookY} r="2.5" fill="white" opacity="0.95" />
-                  <circle cx={139 + lookX} cy={103 + lookY} r="1" fill="white" opacity="0.5" />
-                </>}
-
-                {/* Nose */}
-                <path d="M 105 115 Q 100 128 90 133 Q 110 138 130 133 Q 120 128 115 115"
-                  fill="rgba(0,0,0,0.15)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
-
-                {/* MOUTH */}
-                <motion.path
-                  d={emotion === 'happy' || status === 'speaking'
-                    ? `M 78 152 Q 110 ${162 + mouthOpen} 142 152`
-                    : emotion === 'thinking'
-                    ? `M 82 154 Q 110 150 138 154`
-                    : `M 82 152 Q 110 ${158 + mouthOpen * 0.5} 138 152`
-                  }
-                  stroke="rgba(255,255,255,0.8)" strokeWidth="3" fill="none" strokeLinecap="round"
-                  animate={{ d: emotion === 'happy' || status === 'speaking'
-                    ? `M 78 152 Q 110 ${162 + mouthOpen} 142 152`
-                    : `M 82 152 Q 110 ${158 + mouthOpen * 0.5} 138 152`
-                  }}
-                  transition={{ duration: 0.08 }}
-                />
-                {/* Upper lip when open */}
-                {mouthOpen > 4 && (
-                  <motion.path
-                    d={`M 82 152 Q 110 ${145} 138 152`}
-                    stroke="rgba(255,255,255,0.6)" strokeWidth="2" fill="none" strokeLinecap="round"
-                  />
-                )}
-                {/* Inner mouth (teeth/dark) */}
-                {mouthOpen > 5 && (
-                  <ellipse cx="110" cy={157 + mouthOpen * 0.3} rx={mouthOpen * 1.5} ry={mouthOpen * 0.6}
-                    fill="rgba(0,0,30,0.8)" />
-                )}
-
-                {/* Thinking pulse dots */}
-                {status === 'thinking' && [0, 1, 2].map(i => (
-                  <motion.circle
-                    key={i}
-                    cx={95 + i * 15} cy="168" r="4"
-                    fill={eyeColor}
-                    animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8] }}
-                    transition={{ duration: 0.8, delay: i * 0.2, repeat: Infinity }}
-                  />
-                ))}
-
-                {/* Listening wave rings */}
-                {status === 'listening' && [1, 2, 3].map(i => (
-                  <motion.circle
-                    key={i}
-                    cx="110" cy="105" rx="0" ry="0" r={80 + i * 20}
-                    stroke="#34d399" strokeWidth="1.5" fill="none"
-                    animate={{ r: [80 + i * 15, 100 + i * 15], opacity: [0.6, 0] }}
-                    transition={{ duration: 1.5, delay: i * 0.4, repeat: Infinity }}
-                  />
-                ))}
-
-                {/* Circuit pattern overlay */}
-                <g opacity="0.08" stroke="white" strokeWidth="0.8">
-                  <line x1="30" y1="80" x2="50" y2="80" /><line x1="50" y1="80" x2="50" y2="60" />
-                  <line x1="170" y1="80" x2="190" y2="80" /><line x1="190" y1="80" x2="190" y2="60" />
-                  <line x1="30" y1="140" x2="45" y2="140" /><line x1="170" y1="140" x2="185" y2="140" />
-                  <circle cx="30" cy="80" r="3" fill="white" /><circle cx="190" cy="80" r="3" fill="white" />
-                </g>
-              </svg>
-
-              {/* Status ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 pointer-events-none"
-                style={{ borderColor: status === 'listening' ? '#34d399' : status === 'speaking' ? '#a78bfa' : 'transparent' }}
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-              />
-            </motion.div>
-
-            {/* Status Badge */}
-            <div className="flex items-center gap-2">
-              <motion.div
-                className="w-2 h-2 rounded-full"
-                style={{ background: status === 'listening' ? '#34d399' : status === 'speaking' ? '#a78bfa' : status === 'thinking' ? '#fbbf24' : '#4f46e5' }}
-                animate={{ scale: [1, 1.4, 1] }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-              />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                {status === 'idle' ? 'SmartAI Ready' : status === 'listening' ? 'Listening...' : status === 'thinking' ? 'Processing...' : 'Speaking...'}
-              </span>
-            </div>
-
-            {/* Text Display */}
-            <div className="w-full min-h-[72px] bg-slate-900/60 border border-slate-700 rounded-2xl px-5 py-4 text-sm text-slate-300 leading-relaxed font-medium text-center">
-              {displayText || <span className="text-slate-600 text-[11px] uppercase tracking-widest">Press the mic to talk to me</span>}
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-4">
-              {/* Mute toggle */}
-              <button
-                onClick={() => { setIsMuted(!isMuted); if (!isMuted) stopSpeaking(); }}
-                className={`p-3 rounded-full border transition-all ${isMuted ? 'border-red-500/50 bg-red-600/10 text-red-400' : 'border-slate-700 bg-slate-800 text-slate-400 hover:text-white'}`}
-              >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </button>
-
-              {/* Main Mic Button */}
-              <motion.button
-                onClick={isListening ? stopListening : startListening}
-                whileTap={{ scale: 0.92 }}
-                className={`w-20 h-20 rounded-full flex items-center justify-center shadow-2xl transition-all ${
-                  isListening
-                    ? 'bg-red-600 shadow-red-600/40 animate-pulse'
-                    : 'bg-indigo-600 shadow-indigo-600/40 hover:bg-indigo-500'
-                }`}
-              >
-                {isListening ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
-              </motion.button>
-
-              {/* Stop speaking */}
-              <button
-                onClick={stopSpeaking}
-                disabled={!isSpeaking}
-                className="p-3 rounded-full border border-slate-700 bg-slate-800 text-slate-400 hover:text-white transition-all disabled:opacity-30"
-              >
-                <VolumeX className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-[9px] text-slate-600 uppercase tracking-widest">
-              Tap mic to speak • Voice powered by Web Speech API
+        {/* Status Section */}
+        <div className="text-center space-y-8">
+          <div className="space-y-2">
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter">
+              {isSpeaking ? (language === 'hi-IN' ? 'AI bol raha hai...' : 'AI is speaking...') : 
+               (isListening ? (language === 'hi-IN' ? 'Main sun raha hoon...' : 'Listening to you...') : 
+               (isThinking ? (language === 'hi-IN' ? 'Soch raha hoon...' : 'Thinking...') : 
+               (language === 'hi-IN' ? 'Taiyaar' : 'Ready')))}
+            </h2>
+            <p className="text-indigo-400 font-black uppercase tracking-[0.3em] text-xs">
+              {isListening ? 'Speak now' : (isThinking ? 'Processing neural link' : 'Neural Link Active')}
             </p>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+
+          <div className="flex items-center justify-center gap-6">
+            <div className={`p-6 rounded-[2rem] transition-all duration-500 border ${isListening ? 'bg-red-500 border-red-400 text-white shadow-[0_0_40px_rgba(239,68,68,0.4)] scale-110' : 'bg-white/5 border-white/10 text-slate-500'}`}>
+              <Mic className={`w-8 h-8 ${isListening ? 'animate-pulse' : ''}`} />
+            </div>
+            
+            <button 
+              onClick={() => lastAiMessage && speak(lastAiMessage)}
+              disabled={!lastAiMessage || isThinking}
+              className={`p-6 rounded-[2rem] transition-all duration-500 border ${isSpeaking ? 'bg-indigo-500 border-indigo-400 text-white shadow-[0_0_40px_rgba(79,70,229,0.4)] scale-110' : 'bg-white/5 border-white/10 text-indigo-400/50 hover:bg-white/10'}`}
+              title="Repeat last response"
+            >
+              <Volume2 className={`w-8 h-8 ${isSpeaking ? 'animate-pulse' : ''}`} />
+            </button>
+          </div>
+
+          <p className="text-slate-500 text-sm font-bold uppercase tracking-[0.2em] max-w-md">
+            {language === 'hi-IN' ? 'Bina kisi dar ke bolein, main aapki madad ke liye taiyaar hoon' : 'Speak naturally, I am here to assist your creative process'}
+          </p>
+        </div>
+      </div>
+    </motion.div>
   );
-}
+};
+
+export default AIVoiceAvatar;

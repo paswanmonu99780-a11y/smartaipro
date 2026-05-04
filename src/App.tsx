@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
-import AIVoiceAvatar from './AIVoiceAvatar';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
 import { supabase } from './lib/supabase';
+import AIVoiceAvatar from './AIVoiceAvatar';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
-interface Message { id: string; role: 'user' | 'assistant'; content: string; }
+interface Message { id: string; role: 'user' | 'assistant'; content: string; isVoice?: boolean; }
 
 
 const SIDEBAR_ITEMS = [
@@ -202,7 +202,7 @@ export default function App() {
   const [tone, setTone] = useState<'Professional' | 'Funny' | 'Casual'>('Professional');
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
   const [isVoiceAvatarOpen, setIsVoiceAvatarOpen] = useState(false);
-  const [lastAIVoiceMessage, setLastAIVoiceMessage] = useState('');
+  const [lastAiMessage, setLastAiMessage] = useState('');
   const isExpertLocked = plan === 'Basic' && !isAdmin;
 
   useEffect(() => {
@@ -1333,17 +1333,21 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {messages.map((msg, i) => i > 0 && (
-                        <motion.div key={msg.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className={`p-6 rounded-3xl ${msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20' : 'bg-[#0a0a0c] border border-white/5'}`}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-800'}`}>
-                              {msg.role === 'user' ? <User className="w-3 h-3 text-white" /> : <Cpu className="w-3 h-3 text-indigo-400" />}
-                            </div>
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{msg.role === 'user' ? 'Mission Commander' : 'Neural Core'}</span>
-                          </div>
-                          <p className="text-sm text-slate-300 leading-relaxed">{msg.content}</p>
-                        </motion.div>
-                      ))}
+                      {messages.map((msg, i) => {
+                       if (i === 0) return null;
+                       return (
+                         <motion.div key={msg.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className={`p-6 rounded-3xl ${msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20' : 'bg-[#0a0a0c] border border-white/5'} ${msg.isVoice ? 'border-dashed border-indigo-500/40' : ''}`}>
+                           <div className="flex items-center gap-3 mb-3">
+                             <div className={`w-6 h-6 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+                               {msg.role === 'user' ? <User className="w-3 h-3 text-white" /> : <Cpu className="w-3 h-3 text-indigo-400" />}
+                             </div>
+                             <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{msg.role === 'user' ? 'Mission Commander' : 'Neural Core'} {msg.isVoice && '(Voice)'}</span>
+                           </div>
+                           <p className="text-sm text-slate-300 leading-relaxed">{msg.content}</p>
+                         </motion.div>
+                       );
+                      })}
+
                     </div>
                   )}
                 </div>
@@ -1466,7 +1470,7 @@ export default function App() {
   };
 
   // Streaming chat response (ChatGPT-style token-by-token UI)
-  const handleSendMessage = async (overridePrompt?: string | any) => {
+  const handleSendMessage = async (overridePrompt?: string | any, isVoiceMode: boolean = false, voiceLang?: string) => {
     const promptText = typeof overridePrompt === 'string' ? overridePrompt : chatInput;
     const prompt = normalizePrompt(promptText);
     if (!prompt || isAiThinking) return;
@@ -1476,19 +1480,31 @@ export default function App() {
     // Check and process referral reward on first message
     processReferralReward();
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt };
+    const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt, isVoice: isVoiceMode };
     const assistantId = (Date.now() + 1).toString();
-    const assistantMsg: Message = { id: assistantId, role: 'assistant' as const, content: '' };
+    const assistantMsg: Message = { id: assistantId, role: 'assistant' as const, content: '', isVoice: isVoiceMode };
     const optimisticMessages = [...messages, userMsg, assistantMsg];
     const title = prompt.length > 25 ? `${prompt.substring(0, 25)}...` : prompt;
 
     setMessages(optimisticMessages);
-    setChatInput('');
+    if (!isVoiceMode) setChatInput('');
     setIsAiThinking(true);
     updateCurrentChatHistory(currentChatId, title, optimisticMessages);
     if (smartMode === 'normal' || smartMode === 'creative') updateUsage('messages');
 
-    const systemPrompt = `You are a helpful AI assistant. Provide accurate and useful answers. Maintain a ${tone} tone in your responses. If you are unsure, say clearly that you are unsure.`;
+    let systemPrompt = `You are a helpful AI assistant. Provide accurate and useful answers. Maintain a ${tone} tone in your responses. If you are unsure, say clearly that you are unsure.`;
+    
+    // Explicitly handle language for voice mode
+    if (isVoiceMode && voiceLang) {
+      if (voiceLang === 'hi-IN') {
+        systemPrompt += " CRITICAL: The user is speaking HINDI. You MUST respond ONLY in HINDI using Devanagari script. Do not use English in your response.";
+      } else {
+        systemPrompt += " The user is speaking English. Respond in English.";
+      }
+    } else {
+      systemPrompt += " Respond in the language used by the user.";
+    }
+
     const contextualPrompt = buildContextualPrompt(messages, prompt);
 
     let renderedText = '';
@@ -1497,7 +1513,8 @@ export default function App() {
       for (let i = 0; i < text.length; i += step) {
         renderedText += text.slice(i, i + step);
         const partialText = renderedText;
-        setIsAiThinking(false);
+        // Optimization: only update UI state if NOT in voice mode to save cycles
+        // But we need to update it anyway if we want lastAiMessage to work correctly at the end
         setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: partialText } : msg));
         await new Promise(resolve => setTimeout(resolve, 10));
       }
@@ -1571,12 +1588,14 @@ export default function App() {
       const finalMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: finalText } : msg);
 
       setMessages(finalMessages);
+      setLastAiMessage(finalText);
       updateCurrentChatHistory(currentChatId, title, finalMessages);
     } catch (error: any) {
       console.error('Chat stream error:', error);
       const fallbackText = `Maaf kijiye, abhi response generate nahi ho paaya. Aapka prompt: "${prompt}". Kripya dubara try karein.`;
       const fallbackMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: fallbackText } : msg);
       setMessages(fallbackMessages);
+      setLastAiMessage(fallbackText);
       updateCurrentChatHistory(currentChatId, title, fallbackMessages);
     } finally {
       setIsAiThinking(false);
@@ -2651,25 +2670,27 @@ export default function App() {
 
               {/* Chat Messages Area (Scrollable) */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar scroll-smooth">
-                {messages.map((msg, idx) => (
-                  <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[85%] p-3 md:p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'}`}>
-                      <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
-                      {msg.role === 'assistant' && (
-                        <div className="absolute -bottom-7 left-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 border border-slate-700 px-2 py-1 rounded-md shadow-lg">
-                          <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                          {idx === messages.length - 1 && (
-                            <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-400 hover:text-white transition-colors">
-                              <RefreshCcw className="w-3.5 h-3.5" />
+                {messages.map((msg, idx) => {
+                  return (
+                    <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className={`max-w-[85%] p-3 md:p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'} ${msg.isVoice ? 'border-dashed border-indigo-500/40' : ''}`}>
+                        <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                        {msg.role === 'assistant' && (
+                          <div className="absolute -bottom-7 left-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 border border-slate-700 px-2 py-1 rounded-md shadow-lg">
+                            <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
+                              <Copy className="w-3.5 h-3.5" />
                             </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                            {idx === messages.length - 1 && (
+                              <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-400 hover:text-white transition-colors">
+                                <RefreshCcw className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
                 {isAiThinking && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                     <div className="bg-slate-800/80 border border-slate-700/50 p-4 rounded-2xl rounded-tl-sm flex gap-1.5 shadow-lg">
@@ -2685,14 +2706,6 @@ export default function App() {
               {/* Chat Input Area (Fixed at bottom of container) */}
               <div className="p-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
                 <div className="flex gap-2 items-center bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
-                  {/* Globe / Voice Avatar Button */}
-                  <button
-                    onClick={() => setIsVoiceAvatarOpen(true)}
-                    title="Open AI Voice Assistant"
-                    className="p-2 rounded-lg bg-slate-800 text-indigo-400 hover:text-white hover:bg-indigo-600 transition-all shrink-0"
-                  >
-                    <Globe className="w-4 h-4" />
-                  </button>
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
@@ -2706,6 +2719,13 @@ export default function App() {
                     className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
                   />
                   <div className="flex items-center gap-1 shrink-0">
+                    <button 
+                      onClick={() => setIsVoiceAvatarOpen(true)} 
+                      title="AI Voice Assistant"
+                      className="p-2 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all border border-indigo-500/20"
+                    >
+                      <Globe className="w-4 h-4" />
+                    </button>
                     <button onClick={startListening} className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
                       <Mic className="w-4 h-4" />
                     </button>
@@ -3183,32 +3203,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* AI Voice Avatar */}
-      <AIVoiceAvatar
-        isOpen={isVoiceAvatarOpen}
-        onClose={() => setIsVoiceAvatarOpen(false)}
-        lastAIMessage={lastAIVoiceMessage}
-        onSendMessage={async (userText: string) => {
-          const systemPrompt = `You are a helpful AI voice assistant called SmartAI. Give concise, clear, and friendly answers in 2-3 sentences max. Maintain a ${tone} tone.`;
-          const seed = Math.floor(Math.random() * 0xFFFFFFFF);
-          const url = `/api/chat?prompt=${encodeURIComponent(userText)}&seed=${seed}&system=${encodeURIComponent(systemPrompt)}&json=false`;
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const text = await res.text();
-              const reply = text.trim();
-              setLastAIVoiceMessage(reply);
-              // Also add to chat history
-              const userMsg = { id: Date.now().toString(), role: 'user' as const, content: userText };
-              const aiMsg = { id: (Date.now() + 1).toString(), role: 'assistant' as const, content: reply };
-              setMessages(prev => [...prev, userMsg, aiMsg]);
-              return reply;
-            }
-          } catch (e) { console.error(e); }
-          return 'Sorry, I could not get a response. Please try again.';
-        }}
-      />
-
       {/* Overlays */}
       <AnimatePresence>
         {isPricingOpen && (
@@ -3245,6 +3239,18 @@ export default function App() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isVoiceAvatarOpen && (
+          <AIVoiceAvatar 
+            isActive={isVoiceAvatarOpen}
+            onClose={() => setIsVoiceAvatarOpen(false)}
+            onTranscript={(text) => handleSendMessage(text, true)}
+            isThinking={isAiThinking}
+            lastAiMessage={lastAiMessage}
+          />
         )}
       </AnimatePresence>
     </div>
