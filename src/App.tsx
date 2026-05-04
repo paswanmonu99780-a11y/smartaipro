@@ -543,7 +543,7 @@ export default function App() {
       const { data: existingEmailUser } = await supabase
         .from('users')
         .select('email')
-        .eq('email', email)
+        .ilike('email', email.trim())
         .maybeSingle();
 
       if (existingEmailUser) {
