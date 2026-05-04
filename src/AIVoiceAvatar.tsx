@@ -162,82 +162,128 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
   const speak = (text: string) => {
     if (!synthRef.current || !text) return;
 
-    // Clean text
-    const cleanText = text
+    // Clean text: remove markdown, code blocks, emojis, and noisy punctuation
+    let cleanText = text
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove markdown formatting
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*(.*?)\*/g, '$1')
-      .replace(/```[\s\S]*?```/g, 'code')
-      .replace(/`([^`]+)`/g, '$1')
       .replace(/[#*_~`]/g, '')
-      .substring(0, 1000);
+      // Remove emojis (all Unicode emoji ranges)
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+      .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')
+      .replace(/[\u{2600}-\u{26FF}]/gu, '')
+      .replace(/[\u{2700}-\u{27BF}]/gu, '')
+      .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
+      .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')
+      .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')
+      .replace(/[\u{200D}]/gu, '')
+      .replace(/[\u{20E3}]/gu, '')
+      // Remove bullet points and list markers
+      .replace(/^[\s]*[-•▪▸►→]\s*/gm, '')
+      // Remove noisy standalone punctuation (.,;:/\|) but keep them as natural pauses
+      .replace(/[;:\/\\|@#$%^&*(){}[\]<>~`]+/g, ' ')
+      // Remove repeated dots/commas that TTS reads out
+      .replace(/\.{2,}/g, '.')
+      .replace(/,{2,}/g, ',')
+      .replace(/_{2,}/g, ' ')
+      .replace(/-{2,}/g, ' ')
+      // Remove URLs
+      .replace(/https?:\/\/\S+/g, '')
+      // Clean extra whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleanText) return;
+
+    // Limit total length
+    cleanText = cleanText.substring(0, 1500);
 
     stopSpeaking();
-    
-    // Explicitly cancel and resume to clear any stuck state
     synthRef.current.cancel();
     synthRef.current.resume();
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = language;
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    
-    // Select voice
-    const voices = synthRef.current.getVoices();
-    console.log("TTS: Available voices:", voices.length);
-    
-    // Improved voice selection for Hindi
-    let voice = null;
-    if (language === 'hi-IN') {
-      // 1. Try to find a high-quality Hindi voice
-      voice = voices.find(v => v.lang === 'hi-IN' && (v.name.includes('Google') || v.name.includes('Premium')));
-      // 2. Fallback to any Hindi voice
-      if (!voice) voice = voices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi'));
-      // 3. Fallback to Microsoft Kalpana or similar if on Windows
-      if (!voice) voice = voices.find(v => v.name.includes('Hindi') || v.name.includes('Kalpana'));
-    } else {
-      // English selection
-      voice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google'));
-      if (!voice) voice = voices.find(v => v.lang.startsWith('en'));
+    // Break text into sentences for natural speech flow
+    const sentences = cleanText
+      .split(/(?<=[.!?\u0964\u0965])\s+/)  // Split on sentence-ending punctuation (including Hindi purna viram ।)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    // If no sentence breaks found, split on commas for smaller chunks
+    let chunks = sentences;
+    if (chunks.length <= 1 && cleanText.length > 150) {
+      chunks = cleanText
+        .split(/(?<=,)\s+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
     }
-    
+
+    // Select voice once for all chunks
+    const voices = synthRef.current.getVoices();
+    let voice: SpeechSynthesisVoice | null = null;
+
+    if (language === 'hi-IN') {
+      // Priority order for Hindi voices
+      voice = voices.find(v => v.lang === 'hi-IN' && (v.name.includes('Google') || v.name.includes('Premium'))) || null;
+      if (!voice) voice = voices.find(v => v.lang === 'hi-IN') || null;
+      if (!voice) voice = voices.find(v => v.lang.startsWith('hi')) || null;
+      if (!voice) voice = voices.find(v => v.name.toLowerCase().includes('hindi') || v.name.includes('Kalpana') || v.name.includes('Hemant')) || null;
+    } else {
+      voice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) || null;
+      if (!voice) voice = voices.find(v => v.lang === 'en-US') || null;
+      if (!voice) voice = voices.find(v => v.lang.startsWith('en')) || null;
+    }
+
     if (voice) {
       console.log("TTS: Selected voice:", voice.name, voice.lang);
-      utterance.voice = voice;
     } else {
       console.warn("TTS: No specific voice found for", language, "- using browser default");
     }
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      if (isActive) setTimeout(startListening, 800);
-    };
-    utterance.onerror = (e) => {
-      console.error("TTS error:", e);
-      setIsSpeaking(false);
-      if (isActive) setTimeout(startListening, 800);
-    };
-    
-    utteranceRef.current = utterance;
-    
-    // Small delay to ensure cancel() has finished processing
-    setTimeout(() => {
+    // Speak chunks one by one
+    let chunkIndex = 0;
+
+    const speakNextChunk = () => {
+      if (chunkIndex >= chunks.length || !synthRef.current) {
+        setIsSpeaking(false);
+        if (isActive) setTimeout(startListening, 800);
+        return;
+      }
+
+      const chunkText = chunks[chunkIndex];
+      chunkIndex++;
+
+      const utterance = new SpeechSynthesisUtterance(chunkText);
+      utterance.lang = language;
+      utterance.rate = language === 'hi-IN' ? 0.9 : 1.0;  // Slightly slower for Hindi clarity
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      if (voice) utterance.voice = voice;
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => {
+        // Small pause between sentences for natural flow
+        setTimeout(speakNextChunk, 200);
+      };
+      utterance.onerror = (e) => {
+        console.error("TTS chunk error:", e);
+        // Try next chunk on error
+        setTimeout(speakNextChunk, 100);
+      };
+
+      utteranceRef.current = utterance;
       synthRef.current?.speak(utterance);
-      
-      // Fallback: Check if it's actually speaking after a second
-      // Some browsers (like Chrome on mobile) need an extra push
-      setTimeout(() => {
-        if (isActive && !synthRef.current?.speaking && !isThinking) {
-           console.log("TTS: Detected silent state, retrying...");
-           synthRef.current?.resume();
-           // Try speaking again if still silent
-           if (!synthRef.current?.speaking) {
-             synthRef.current?.speak(utterance);
-           }
-        }
-      }, 1000);
+    };
+
+    // Start speaking first chunk with small delay
+    setTimeout(() => {
+      setIsSpeaking(true);
+      speakNextChunk();
     }, 100);
   };
 
