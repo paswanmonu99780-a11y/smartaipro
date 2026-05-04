@@ -418,7 +418,7 @@ export default function App() {
   };
   const saveUsers = (users: Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }>) => {
     localStorage.setItem('smartai_users', JSON.stringify(users));
-    // Note: syncUsersToSupabase removed from here to prevent blocking
+    syncUsersToSupabase(users).catch(e => console.error("Sync error:", e));
   };
 
   const sendOtp = async (type: 'login' | 'signup') => {

@@ -79,9 +79,8 @@ export default function AdminPanel() {
   };
 
   const refreshData = async () => {
-    // Fetch directly from the users table as it's the source of truth
-    const { data: dbUsers, error } = await supabase.from('users').select('*');
-    if (!error && dbUsers && dbUsers.length > 0) {
+    const dbUsers = await fetchUsersFromSupabase();
+    if (dbUsers && dbUsers.length > 0) {
       localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
       setUsers(dbUsers);
     } else {
@@ -121,7 +120,7 @@ export default function AdminPanel() {
     
     // Update Supabase
     if (editingUser.email) {
-      await supabase.from('users').update({ credits: newCredits, plan: newPlan }).eq('email', editingUser.email);
+      await supabase.from('users').update({ credits: newCredits, plan: newPlan }).eq('email', editingUser.email).catch(e => console.error(e));
     }
     
     saveAllUsers(updatedUsers);
@@ -135,7 +134,7 @@ export default function AdminPanel() {
       
       // Delete from Supabase
       if (user.email) {
-        await supabase.from('users').delete().eq('email', user.email);
+        await supabase.from('users').delete().eq('email', user.email).catch(e => console.error(e));
       }
       
       saveAllUsers(updatedUsers);
