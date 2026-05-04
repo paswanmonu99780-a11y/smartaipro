@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, Users, CreditCard, BarChart3, Lock, LogOut, Search, Download, User, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fetchUsersFromSupabase, syncUsersToSupabase, setAdminSession, checkAdminSession } from './lib/db';
+import { supabase } from './lib/supabase';
 
 const ADMIN_PASSWORD = 'SmartAI@Admin2024';
 
@@ -78,8 +79,9 @@ export default function AdminPanel() {
   };
 
   const refreshData = async () => {
-    const dbUsers = await fetchUsersFromSupabase();
-    if (dbUsers && dbUsers.length > 0) {
+    // Fetch directly from the users table as it's the source of truth
+    const { data: dbUsers, error } = await supabase.from('users').select('*');
+    if (!error && dbUsers && dbUsers.length > 0) {
       localStorage.setItem('smartai_users', JSON.stringify(dbUsers));
       setUsers(dbUsers);
     } else {
@@ -88,7 +90,7 @@ export default function AdminPanel() {
     }
   };
 
-  const saveAllUsers = (updatedUsers: UserData[]) => {
+  const saveAllUsers = async (updatedUsers: UserData[]) => {
     localStorage.setItem('smartai_users', JSON.stringify(updatedUsers));
     setUsers(updatedUsers);
     syncUsersToSupabase(updatedUsers);
@@ -105,8 +107,10 @@ export default function AdminPanel() {
     }
   };
 
-  const updateUser = () => {
+  const updateUser = async () => {
     if (!editingUser) return;
+    
+    // Update local state
     const updatedUsers = users.map(u => {
       const isMatch = (u.email && u.email === editingUser.email) || (u.mobile && u.mobile === editingUser.mobile);
       if (isMatch) {
@@ -114,14 +118,26 @@ export default function AdminPanel() {
       }
       return u;
     });
+    
+    // Update Supabase
+    if (editingUser.email) {
+      await supabase.from('users').update({ credits: newCredits, plan: newPlan }).eq('email', editingUser.email);
+    }
+    
     saveAllUsers(updatedUsers);
     setEditingUser(null);
     alert('User updated successfully!');
   };
 
-  const deleteUser = (user: UserData) => {
+  const deleteUser = async (user: UserData) => {
     if (window.confirm(`Are you sure you want to delete ${user.displayName || user.email}?`)) {
       const updatedUsers = users.filter(u => !((u.email && u.email === user.email) || (u.mobile && u.mobile === user.mobile)));
+      
+      // Delete from Supabase
+      if (user.email) {
+        await supabase.from('users').delete().eq('email', user.email);
+      }
+      
       saveAllUsers(updatedUsers);
       alert('User deleted.');
     }
