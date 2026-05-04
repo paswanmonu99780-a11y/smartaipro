@@ -223,6 +223,9 @@ export default function App() {
         setIsLoggedIn(true);
         setIsAuthenticating(false);
         setIsVerifyingOtp(false);
+        
+        // Always set the email from the session
+        setEmail(session.user.email || '');
 
         try {
           // Fetch user metadata from public.users in background
@@ -234,9 +237,10 @@ export default function App() {
 
           if (userData) {
             localStorage.setItem('smartai_session', JSON.stringify(userData));
-            setDisplayName(userData.displayName);
-            setCredits(userData.credits);
-            setPlan(userData.plan);
+            setDisplayName(userData.displayName || userData.email?.split('@')[0] || 'User');
+            setAvatar(userData.avatar || '');
+            setCredits(typeof userData.credits === 'number' ? userData.credits : 100);
+            setPlan(userData.plan || 'Basic');
           } else {
             console.log('User profile not found, creating one...');
             const pendingName = sessionStorage.getItem('pendingSignupName');
@@ -245,6 +249,7 @@ export default function App() {
             const newUser = {
               email: session.user.email,
               displayName: pendingName || session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User',
+              avatar: '',
               credits: 100,
               plan: 'Basic',
               referralCode: generateReferralCode(session.user.email || 'user')
@@ -252,11 +257,14 @@ export default function App() {
             await supabase.from('users').insert([newUser]);
             localStorage.setItem('smartai_session', JSON.stringify(newUser));
             setDisplayName(newUser.displayName);
+            setAvatar('');
             sessionStorage.removeItem('pendingSignupName');
           }
         } catch (dbErr) {
           console.error('Database sync error (non-blocking):', dbErr);
-          // Still logged in even if DB sync fails
+          // Still logged in even if DB sync fails - use fallback values
+          const fallbackName = session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User';
+          if (!displayName) setDisplayName(fallbackName);
         }
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
@@ -316,10 +324,10 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === 'profile') {
-      setTempDisplayName(displayName);
+      setTempDisplayName(displayName || email?.split('@')[0] || 'User');
       setTempAvatar(avatar);
     }
-  }, [activeTab, displayName, avatar]);
+  }, [activeTab, displayName, avatar, email]);
 
   const SUGGESTED_PROMPTS = [
     "Write a catchy slogan for a bakery",
@@ -487,6 +495,9 @@ export default function App() {
         const meta = data.user.user_metadata;
         const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
 
+        // Always set email
+        setEmail(data.user.email || '');
+
         const users = getUsers();
         const userIdx = users.findIndex(u => u.email === data.user?.email);
 
@@ -497,9 +508,13 @@ export default function App() {
             saveUsers(users);
           }
           localStorage.setItem('smartai_session', JSON.stringify(users[userIdx]));
-          setDisplayName(users[userIdx].displayName);
+          setDisplayName(users[userIdx].displayName || userName);
+          setAvatar(users[userIdx].avatar || '');
+          setCredits(typeof users[userIdx].credits === 'number' ? users[userIdx].credits : 100);
+          setPlan(users[userIdx].plan || 'Basic');
         } else {
           setDisplayName(userName);
+          setAvatar('');
         }
         setIsLoggedIn(true);
       }
@@ -684,6 +699,8 @@ export default function App() {
         
         // IMMEDIATE UI UPDATE
         setDisplayName(userName);
+        setEmail(data.user.email || '');
+        setAvatar('');
         setIsVerifyingOtp(false);
         setIsLoggedIn(true);
         setIsAuthenticating(false);
@@ -2852,7 +2869,7 @@ export default function App() {
               <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
                 <div className="relative">
                   <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform overflow-hidden">
-                    {tempAvatar ? <img src={tempAvatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{tempDisplayName.charAt(0).toUpperCase()}</span>}
+                    {tempAvatar ? <img src={tempAvatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{(tempDisplayName || email || 'U').charAt(0).toUpperCase()}</span>}
                   </div>
                   <input
                     type="file"
