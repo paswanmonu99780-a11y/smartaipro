@@ -229,10 +229,12 @@ export default function App() {
             setPlan(userData.plan);
           } else {
             console.log('User profile not found, creating one...');
+            const pendingName = sessionStorage.getItem('pendingSignupName');
+            
             // If public profile doesn't exist, create it
             const newUser = {
               email: session.user.email,
-              displayName: session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User',
+              displayName: pendingName || session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User',
               credits: 100,
               plan: 'Basic',
               referralCode: generateReferralCode(session.user.email || 'user')
@@ -240,6 +242,7 @@ export default function App() {
             await supabase.from('users').insert([newUser]);
             localStorage.setItem('smartai_session', JSON.stringify(newUser));
             setDisplayName(newUser.displayName);
+            sessionStorage.removeItem('pendingSignupName');
           }
         } catch (dbErr) {
           console.error('Database sync error (non-blocking):', dbErr);
@@ -562,7 +565,7 @@ export default function App() {
       }
 
       console.log('Initiating signup for:', email);
-
+      sessionStorage.setItem('pendingSignupName', signupName);
 
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
@@ -650,7 +653,8 @@ export default function App() {
       } else if (data?.user) {
         console.log('Verification successful!');
         const meta = data.user.user_metadata;
-        const userName = meta?.displayName || meta?.full_name || data.user.email?.split('@')[0] || 'User';
+        const pendingName = sessionStorage.getItem('pendingSignupName');
+        const userName = meta?.displayName || meta?.full_name || pendingName || data.user.email?.split('@')[0] || 'User';
         
         // IMMEDIATE UI UPDATE
         setDisplayName(userName);
