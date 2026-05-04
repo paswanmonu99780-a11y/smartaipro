@@ -388,9 +388,6 @@ export default function App() {
       setAuthMode('signup');
     }
 
-    const hist = localStorage.getItem('smartai_image_history');
-    if (hist) { setImageHistory(JSON.parse(hist)); }
-
     // Ensure auth fields are empty on fresh load if not logged in
     const session = localStorage.getItem('smartai_session');
     if (!session) {
@@ -398,18 +395,29 @@ export default function App() {
       setPassword('');
       setSignupName('');
     }
+  }, []);
 
-    // Load chat history
-    const savedChats = localStorage.getItem('smartai_chat_history');
-    if (savedChats) {
-      const chats = JSON.parse(savedChats);
-      setChatHistory(chats);
-      if (chats.length > 0) {
-        setCurrentChatId(chats[0].id);
-        setMessages(chats[0].messages);
+  useEffect(() => {
+    if (email) {
+      const hist = localStorage.getItem(`smartai_image_history_${email}`);
+      if (hist) { setImageHistory(JSON.parse(hist)); } else { setImageHistory([]); }
+
+      const savedChats = localStorage.getItem(`smartai_chat_history_${email}`);
+      if (savedChats) {
+        const chats = JSON.parse(savedChats);
+        setChatHistory(chats);
+        if (chats.length > 0) {
+          setCurrentChatId(chats[0].id);
+          setMessages(chats[0].messages);
+        } else {
+          setMessages([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
+        }
+      } else {
+        setChatHistory([]);
+        setMessages([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
       }
     }
-  }, []);
+  }, [email]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isAiThinking]);
 
   const getUsers = (): Array<{ email: string; password: string; credits: number; plan: string; displayName: string; avatar: string; name: string; referCode: string; referralCode: string; referredBy: string; referralRewarded: boolean; deviceId: string; referralEarnings: number }> => {
@@ -910,7 +918,7 @@ export default function App() {
     setChatHistory(updatedHistory);
     setCurrentChatId(newChat.id);
     setMessages(newChat.messages);
-    localStorage.setItem('smartai_chat_history', JSON.stringify(updatedHistory));
+    localStorage.setItem(`smartai_chat_history_${email}`, JSON.stringify(updatedHistory));
   };
 
   const handleDownloadChat = () => {
@@ -1015,7 +1023,7 @@ export default function App() {
         ? prev.map(chat => chat.id === chatId ? { ...chat, title, messages: chatMessages } : chat)
         : [{ id: chatId, title, messages: chatMessages }, ...prev];
 
-      localStorage.setItem('smartai_chat_history', JSON.stringify(updated));
+      localStorage.setItem(`smartai_chat_history_${email}`, JSON.stringify(updated));
       return updated;
     });
   };
@@ -1652,7 +1660,7 @@ export default function App() {
     setIsGenerating(false);
     const historyItem = { url: proxyUrl, prompt: cleanedPrompt, style: imgStyle, quality: imgQuality, aspect: imgAspect, date: new Date().toLocaleString() };
     setImageHistory(prev => [historyItem, ...prev]);
-    localStorage.setItem('smartai_image_history', JSON.stringify([historyItem, ...imageHistory.slice(0, 99)]));
+    localStorage.setItem(`smartai_image_history_${email}`, JSON.stringify([historyItem, ...imageHistory.slice(0, 99)]));
 
     setCredits(newCredits);
     syncUserData({ credits: newCredits });
