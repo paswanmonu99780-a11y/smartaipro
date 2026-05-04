@@ -575,10 +575,10 @@ export default function App() {
       console.log('Initiating signup for:', email);
       sessionStorage.setItem('pendingSignupName', signupName);
 
-      const { error } = await supabase.auth.signInWithOtp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: email,
+        password: password,
         options: {
-          shouldCreateUser: true,
           data: {
             displayName: signupName,
             referralCode: generateReferralCode(email),
@@ -586,6 +586,14 @@ export default function App() {
           }
         }
       });
+      
+      // If user already exists, Supabase signUp might return an empty identity if email confirm is on
+      // Or it might throw an error depending on Supabase settings.
+      if (signUpData?.user && signUpData?.user?.identities && signUpData.user.identities.length === 0) {
+        setAuthError('Email is already registered. Please login instead.');
+        setIsAuthenticating(false);
+        return;
+      }
 
       if (error) {
         console.error('Signup OTP error:', error);
