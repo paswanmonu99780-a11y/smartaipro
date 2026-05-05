@@ -203,7 +203,8 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('smartai_admin_session') === 'active');
   const [isVoiceAvatarOpen, setIsVoiceAvatarOpen] = useState(false);
   const [lastAiMessage, setLastAiMessage] = useState('');
-  const isExpertLocked = plan === 'Basic' && !isAdmin;
+  const [expertSubTab, setExpertSubTab] = useState<string>('dashboard');
+  const isExpertLocked = false;
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -514,7 +515,7 @@ export default function App() {
           setDisplayName(users[userIdx].displayName || userName);
           setAvatar(users[userIdx].avatar || '');
           setCredits(typeof users[userIdx].credits === 'number' ? users[userIdx].credits : 100);
-          setPlan(users[userIdx].plan || 'Basic');
+          setPlan((users[userIdx].plan as 'Basic' | 'Pro' | 'Ultra') || 'Basic');
         } else {
           setDisplayName(userName);
           setAvatar('');
@@ -1087,387 +1088,171 @@ export default function App() {
   };
 
   const renderExpertPro = () => {
-    const selectedTool = EXPERT_TOOLS.find(t => t.id === activeExpertTool) || EXPERT_TOOLS[0];
-    const tool = selectedTool;
-    const categories = ['All', 'AI Tools', 'Image Tools', 'Business Tools'];
-    const filteredTools = EXPERT_TOOLS;
+    const tabs = [
+      { id: 'dashboard', label: 'Main Dashboard', icon: Crown },
+      { id: 'ailab', label: 'AI Lab', icon: Mic2 },
+      { id: 'workflows', label: 'Workflows', icon: Workflow },
+      { id: 'integrations', label: 'Integrations', icon: Plug },
+      { id: 'devtools', label: 'Dev Tools', icon: Code },
+      { id: 'datastudio', label: 'Data Studio', icon: BarChart3 },
+      { id: 'media', label: 'Media Pro', icon: Video },
+      { id: 'control', label: 'Control Center', icon: Settings },
+    ];
 
-    if (isExpertLocked) {
-      return (
-        <div className="h-full flex items-center justify-center p-8 bg-[#0a0a0c] relative overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full bg-[#16161d] border border-slate-800/50 p-12 rounded-[3.5rem] text-center relative z-10 shadow-2xl">
-            <div className="w-24 h-24 bg-indigo-600/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-indigo-600/30">
-              <Shield className="w-10 h-10 text-indigo-400" />
+    const dashboardTools = [
+      { name: 'AI Agent Mode', desc: 'AI handles complete tasks automatically', icon: Zap, color: '#a855f7' },
+      { name: 'Memory + Personal AI', desc: 'AI remembers your preferences', icon: Database, color: '#3b82f6' },
+      { name: 'Voice Clone AI', desc: 'Clone any voice and generate audio', icon: Mic2, color: '#d946ef' },
+      { name: 'Full Website Builder', desc: 'Generate complete websites', icon: Code, color: '#f59e0b' },
+      { name: 'Business Growth Tools', desc: 'Marketing, ads, startup ideas', icon: TrendingUp, color: '#22c55e' },
+      { name: 'Advanced File Intelligence', desc: 'Upload PDFs/DOCs for analysis', icon: FileText, color: '#6366f1' },
+      { name: 'Real-Time Internet Data', desc: 'Live web search and data', icon: Globe, color: '#ef4444', badge: 'HOT' },
+      { name: 'API Integration System', desc: 'Connect external APIs', icon: CloudSun, color: '#f59e0b', badge: 'HOT' },
+    ];
+
+    const ailabTools = [
+      { name: 'Prompt Builder', desc: 'Create optimized prompts for any AI task', icon: PenTool, color: '#3b82f6' },
+      { name: 'Memory System', desc: 'AI remembers your chats and preferences', icon: Database, color: '#8b5cf6' },
+      { name: 'Custom Models', desc: 'Fine-tune and customize AI models', icon: Cpu, color: '#10b981' },
+      { name: 'Knowledge Base', desc: 'Upload documents for context', icon: Book, color: '#f59e0b' },
+      { name: 'Persona Builder', desc: 'Create AI personas with specific traits', icon: User, color: '#ec4899' },
+      { name: 'Context Engine', desc: 'Advanced context management', icon: Layers, color: '#06b6d4' },
+    ];
+
+    const workflowTools = [
+      { name: 'Create Workflow', desc: 'Build automated workflows from scratch', icon: Plus, color: '#3b82f6' },
+      { name: 'If/Else Logic', desc: 'Conditional automation with branches', icon: GitBranch, color: '#8b5cf6' },
+      { name: 'Automation Triggers', desc: 'Set up trigger events and actions', icon: Clock3, color: '#10b981' },
+      { name: 'Workflow Templates', desc: 'Pre-built automation templates', icon: Layout, color: '#f59e0b' },
+      { name: 'Sequences', desc: 'Create multi-step automation', icon: Play, color: '#ef4444' },
+      { name: 'Scheduler', desc: 'Time-based automation triggers', icon: Clock, color: '#06b6d4' },
+    ];
+
+    const integrationTools = [
+      { name: 'API Keys', desc: 'Manage your API keys', icon: Key, color: '#3b82f6' },
+      { name: 'Webhooks', desc: 'Configure webhooks', icon: WebhookIcon, color: '#8b5cf6' },
+      { name: 'Zapier', desc: 'Connect to 5000+ apps', icon: Zap, color: '#f59e0b' },
+      { name: 'Connect Apps', desc: 'External integrations', icon: Link, color: '#10b981' },
+      { name: 'Slack', desc: 'Slack integration', icon: MessageSquare, color: '#ef4444' },
+      { name: 'Discord', desc: 'Discord bot integration', icon: MessageSquare, color: '#5865f2' },
+      { name: 'Notion', desc: 'Notion sync', icon: FileText, color: '#000000' },
+      { name: 'Google Sheets', desc: 'Sheet automation', icon: FileSpreadsheet, color: '#22c55e' },
+    ];
+
+    const devtoolTools = [
+      { name: 'Code Generator', desc: 'Generate code snippets in any language', icon: Terminal, color: '#3b82f6' },
+      { name: 'Debugger', desc: 'AI-powered code debugging', icon: Bug, color: '#ef4444' },
+      { name: 'API Tester', desc: 'Test API endpoints', icon: Server, color: '#10b981' },
+      { name: 'Code Review', desc: 'Automated code review', icon: FileJson, color: '#8b5cf6' },
+      { name: 'Database Query', desc: 'SQL query generator', icon: Database, color: '#f59e0b' },
+      { name: 'Git Assistant', desc: 'Git commands and workflows', icon: GitBranch, color: '#ec4899' },
+    ];
+
+    const dataTools = [
+      { name: 'Upload CSV', desc: 'Import data files', icon: FileSpreadsheet, color: '#3b82f6' },
+      { name: 'Charts', desc: 'Visualize data', icon: BarChart, color: '#8b5cf6' },
+      { name: 'AI Insights', desc: 'AI data analysis', icon: Lightbulb, color: '#10b981' },
+      { name: 'Data Cleaning', desc: 'Clean and prepare data', icon: Wrench, color: '#f59e0b' },
+      { name: 'Predictive Analysis', desc: 'Future predictions', icon: TrendingUp, color: '#ef4444' },
+      { name: 'Export Data', desc: 'Export processed data', icon: Download, color: '#06b6d4' },
+    ];
+
+    const mediaTools = [
+      { name: 'Video AI', desc: 'Generate videos from text', icon: Play, color: '#3b82f6' },
+      { name: 'Voice Studio', desc: 'AI voice generation', icon: Mic2, color: '#8b5cf6' },
+      { name: 'Image to Video', desc: 'Convert images to video', icon: ImageIcon, color: '#10b981' },
+      { name: 'Video Editor', desc: 'AI-powered video editing', icon: PenTool, color: '#f59e0b' },
+      { name: 'Subtitle Generator', desc: 'Auto-generate subtitles', icon: FileText, color: '#ef4444' },
+      { name: 'Music Generator', desc: 'AI music composition', icon: Zap, color: '#ec4899' },
+    ];
+
+    const controlTools = [
+      { name: 'Team Access', desc: 'Manage team members', icon: Users, color: '#3b82f6' },
+      { name: 'Activity Logs', desc: 'View activity logs', icon: FileText, color: '#8b5cf6' },
+      { name: 'Privacy Mode', desc: 'Enhanced privacy controls', icon: PrivacyIcon, color: '#10b981' },
+      { name: 'Security Settings', desc: 'Account security', icon: Shield, color: '#f59e0b' },
+      { name: 'Billing', desc: 'Manage subscriptions', icon: CreditCard, color: '#ef4444' },
+      { name: 'Notifications', desc: 'Notification preferences', icon: Bell, color: '#06b6d4' },
+    ];
+
+    const renderTools = (tools: typeof dashboardTools) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {tools.map((t, idx) => (
+          <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }} className="bg-[#111116] border border-slate-800/50 rounded-2xl p-6 hover:border-slate-700 cursor-pointer transition-all">
+            <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-[#0a0a0c] border border-slate-800/50 mb-4">
+              <t.icon className="w-7 h-7" style={{ color: t.color }} />
             </div>
-            <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Neural Lock Active</h2>
-            <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">Expert Suite is restricted to verified Pro accounts. Admins can bypass this lock via the Neural Command Panel.</p>
-            <div className="space-y-4">
-              <button onClick={() => setIsPricingOpen(true)} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/30 hover:scale-105 transition-all">Upgrade to Pro</button>
-              <button onClick={() => setActiveTab('admin')} className="w-full py-5 bg-slate-800 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:text-white transition-all">Admin Bypass</button>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-bold text-white">{t.name}</h3>
+              {t.badge && <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold uppercase">{t.badge}</span>}
             </div>
+            <p className="text-sm text-slate-500">{t.desc}</p>
           </motion.div>
-        </div>
-      );
-    }
+        ))}
+      </div>
+    );
 
-    if (!activeExpertTool) {
-      return (
-        <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0c]">
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-            <div className="flex flex-col xl:flex-row gap-8 max-w-[1600px] mx-auto">
+    const getTitleIcon = () => {
+      const iconMap: Record<string, any> = {
+        dashboard: Crown, ailab: Mic2, workflows: Workflow, integrations: Plug,
+        devtools: Code, datastudio: BarChart3, media: Video, control: Settings
+      };
+      const colorMap: Record<string, string> = {
+        dashboard: 'text-yellow-500', ailab: 'text-indigo-400', workflows: 'text-emerald-400',
+        integrations: 'text-purple-400', devtools: 'text-yellow-400', datastudio: 'text-cyan-400',
+        media: 'text-rose-400', control: 'text-slate-400'
+      };
+      return { Icon: iconMap[expertSubTab] || Crown, color: colorMap[expertSubTab] || 'text-white' };
+    };
 
-              {/* Left Main Section */}
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <Crown className="w-8 h-8 text-yellow-500" />
-                    <h2 className="text-3xl font-bold text-white tracking-tight">Expert Tools</h2>
-                    <span className="bg-indigo-600/20 text-indigo-400 text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-widest border border-indigo-500/20">PRO</span>
-                  </div>
-                  <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input type="text" placeholder="Search expert tools..." className="w-full bg-[#16161d] border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50" />
-                  </div>
-                </div>
-                <p className="text-slate-400 text-sm mb-8">Next-level AI features for professionals and creators.</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                  {EXPERT_TOOLS.map((t, idx) => (
-                    <motion.button key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} onClick={() => setActiveExpertTool(t.id)} className="group relative bg-[#111116] border border-slate-800/50 rounded-2xl p-5 text-left transition-all hover:bg-[#16161d] hover:border-slate-700 h-full flex flex-col">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#0a0a0c] border border-slate-800/50 mb-4 group-hover:scale-110 transition-transform">
-                        <t.icon className="w-6 h-6" style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.color}40)` }} />
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">{t.name}</span>
-                        {t.badge && (
-                          <span className={`flex-shrink-0 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest ${t.badge === 'HOT' ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'}`}>{t.badge}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-500 leading-relaxed flex-1">{t.desc}</p>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Sidebar Section */}
-              <div className="w-full xl:w-80 flex flex-col gap-6 flex-shrink-0">
-                {/* Recent Creations */}
-                <div className="bg-[#111116] border border-slate-800/50 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-white">Recent Creations</h3>
-                    <button className="text-xs text-indigo-400 hover:text-indigo-300">View All</button>
-                  </div>
-                  <div className="space-y-4">
-                    {[
-                      { title: 'AI Generated Website', time: 'Just now', img: 'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&q=80&w=200' },
-                      { title: 'Motivation Video', time: '5 mins ago', img: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=200', isVideo: true },
-                      { title: 'Voice Clone Audio', time: '15 mins ago', icon: Mic2, color: 'text-indigo-400', bg: 'bg-indigo-600/10' },
-                      { title: 'Business Plan PDF', time: '25 mins ago', icon: FileText, color: 'text-red-400', bg: 'bg-red-500/10', label: 'PDF' },
-                      { title: 'AI Image (4K)', time: '1 hour ago', img: 'https://images.unsplash.com/photo-1506744626753-1fa28f6f5122?auto=format&fit=crop&q=80&w=200' },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 cursor-pointer group">
-                        {item.img ? (
-                          <div className="relative w-12 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                            <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                            {item.isVideo && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><div className="w-4 h-4 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-sm" /></div></div>}
-                          </div>
-                        ) : (
-                          <div className={`w-12 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${item.bg}`}>
-                            {item.label ? <span className={`text-[10px] font-bold ${item.color}`}>{item.label}</span> : <item.icon className={`w-4 h-4 ${item.color}`} />}
-                          </div>
-                        )}
-                        <div>
-                          <div className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{item.title}</div>
-                          <div className="text-[10px] text-slate-500">{item.time}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Live Data */}
-                <div className="bg-[#111116] border border-slate-800/50 rounded-2xl p-5 flex-1">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-white">Live Data (Real-Time)</h3>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      <span className="text-[10px] text-emerald-500 font-bold">Live</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    {[
-                      { title: 'Gold Price (24K)', sub: 'â‚¹72,185 / 10g', icon: TrendingUp, color: 'text-yellow-500', trend: '+1.28%', trendColor: 'text-emerald-500' },
-                      { title: 'Cricket Score (Live)', sub: 'IND 256/4 (45.2)', icon: Crown, color: 'text-blue-400', badge: 'LIVE', badgeColor: 'text-yellow-500' },
-                      { title: 'Weather (Delhi)', sub: '32Â°C', icon: CloudSun, color: 'text-orange-400', subRight: 'Clear Sky' },
-                      { title: 'Top News', sub: 'AI chips demand hits record high in 2024', icon: FileText, color: 'text-yellow-500', badge: 'LIVE', badgeColor: 'text-red-500' },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-start justify-between group cursor-pointer border-b border-slate-800/50 pb-3 last:border-0 last:pb-0">
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded bg-[#16161d] border border-slate-800 flex items-center justify-center mt-0.5">
-                            <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold text-slate-300">{item.title}</div>
-                            <div className="text-[10px] text-slate-500 mt-0.5 w-32 truncate leading-tight">{item.sub}</div>
-                          </div>
-                        </div>
-                        <div className="text-right flex flex-col items-end">
-                          {item.trend && <span className={`text-[10px] font-bold ${item.trendColor}`}>{item.trend}</span>}
-                          {item.badge && <span className={`text-[8px] font-bold ${item.badgeColor} uppercase tracking-widest`}>{item.badge}</span>}
-                          {item.subRight && <span className="text-[10px] text-slate-400 mt-1">{item.subRight}</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Footer Panel */}
-          <div className="border-t border-slate-800/50 bg-[#111116] p-4 flex flex-col shrink-0">
-            <div className="max-w-[1600px] w-full mx-auto flex flex-col lg:flex-row items-center justify-between mb-4 px-4 gap-4">
-              <div className="flex flex-wrap items-center justify-center gap-8 lg:gap-12">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center"><Crown className="w-4 h-4 text-rose-500" /></div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Unlimited Access</div>
-                    <div className="text-[10px] text-slate-500">No limits, all features</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center"><Monitor className="w-4 h-4 text-emerald-500" /></div>
-                  <div>
-                    <div className="text-xs font-bold text-white">4K / 8K Quality</div>
-                    <div className="text-[10px] text-slate-500">Ultra HD results</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center"><FastForward className="w-4 h-4 text-yellow-500" /></div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Priority Speed</div>
-                    <div className="text-[10px] text-slate-500">100x faster</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center"><Shield className="w-4 h-4 text-green-500" /></div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Secure & Private</div>
-                    <div className="text-[10px] text-slate-500">Your data is 100% safe</div>
-                  </div>
-                </div>
-              </div>
-              <button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 whitespace-nowrap">
-                <Crown className="w-5 h-5 text-yellow-400" />
-                <div className="text-left leading-tight">
-                  <div className="text-sm">Upgrade to Expert</div>
-                  <div className="text-[9px] text-indigo-200 font-medium">Unlock All Premium Features</div>
-                </div>
-              </button>
-            </div>
-            <div className="max-w-[1600px] w-full mx-auto relative px-4">
-              <input type="text" placeholder="Enter your prompt..." className="w-full bg-[#0a0a0c] border border-slate-800 rounded-2xl pl-6 pr-32 py-4 text-sm text-white focus:outline-none focus:border-indigo-500/50" />
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <button className="p-2 text-slate-500 hover:text-white transition-colors"><Layers className="w-4 h-4" /></button>
-                <button className="p-2 text-slate-500 hover:text-white transition-colors"><Mic className="w-4 h-4" /></button>
-                <button className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"><Send className="w-4 h-4" /></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeExpertTool === 'agent') {
-      return (
-        <div className="flex flex-col h-full overflow-hidden bg-[#050507]">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 bg-[#0a0a0c] border-b border-white/5 backdrop-blur-2xl z-30">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setActiveExpertTool(null)} className="p-2 text-slate-500 hover:text-white transition-all"><ArrowLeft className="w-5 h-5" /></button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-                  <Cpu className="w-5 h-5 text-indigo-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-tighter">Autonomous AI Agent</h3>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em]">Neural Link Established</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col items-end">
-                <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">System Load</span>
-                <div className="w-32 h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-indigo-500 shadow-[0_0_10px_#6366f1]" />
-                </div>
-              </div>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">Terminate Mission</button>
-            </div>
-          </div>
-
-          <div className="flex-1 flex overflow-hidden">
-            {/* Left Panel: Intelligence Feed */}
-            <div className="flex-1 border-r border-white/5 overflow-y-auto custom-scrollbar bg-[#050507] p-8">
-              <div className="max-w-3xl mx-auto space-y-8">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                    <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Intelligence Feed</h4>
-                  </div>
-                  {messages.length <= 1 ? (
-                    <div className="space-y-6">
-                      <div className="p-8 bg-[#0a0a0c] border border-white/5 rounded-3xl">
-                        <h2 className="text-2xl font-black text-white mb-4 leading-tight uppercase tracking-tighter">Awaiting Mission Parameters...</h2>
-                        <p className="text-slate-500 text-sm leading-relaxed mb-8">Deploy your autonomous agent to handle complex tasks, research markets, or automate workflows with high-level reasoning.</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {['Analyze current tech market trends', 'Research sustainable energy startups', 'Write a technical whitepaper on AI', 'Build a business growth strategy'].map((p, i) => (
-                            <button key={i} onClick={() => setChatInput(p)} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left text-[10px] font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all uppercase tracking-widest">{p}</button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {messages.map((msg, i) => {
-                       if (i === 0) return null;
-                       return (
-                         <motion.div key={msg.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className={`p-6 rounded-3xl ${msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20' : 'bg-[#0a0a0c] border border-white/5'} ${msg.isVoice ? 'border-dashed border-indigo-500/40' : ''}`}>
-                           <div className="flex items-center gap-3 mb-3">
-                             <div className={`w-6 h-6 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-800'}`}>
-                               {msg.role === 'user' ? <User className="w-3 h-3 text-white" /> : <Cpu className="w-3 h-3 text-indigo-400" />}
-                             </div>
-                             <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{msg.role === 'user' ? 'Mission Commander' : 'Neural Core'} {msg.isVoice && '(Voice)'}</span>
-                           </div>
-                           <p className="text-sm text-slate-300 leading-relaxed">{msg.content}</p>
-                         </motion.div>
-                       );
-                      })}
-
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Panel: Terminal / Browser */}
-            <div className="w-[450px] bg-[#08080a] flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500/50" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
-                  </div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Agent Terminal</span>
-                </div>
-                <Terminal className="w-4 h-4 text-slate-600" />
-              </div>
-              <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto custom-scrollbar">
-                <div className="space-y-3">
-                  <div className="text-emerald-500 flex gap-2"><span>[SYSTEM]</span> <span>Initializing autonomous environment...</span></div>
-                  <div className="text-slate-500 flex gap-2"><span>[LINK]</span> <span>Connected to global neural grid</span></div>
-                  <div className="text-slate-500 flex gap-2"><span>[AUTH]</span> <span>Verified session: smartai_pro_admin</span></div>
-                  <div className="text-indigo-400 mt-6 flex gap-2"><span>$</span> <span className="animate-pulse">_</span></div>
-                </div>
-                {isAiThinking && (
-                  <div className="mt-8 space-y-4">
-                    <div className="flex items-center gap-3 text-indigo-400">
-                      <Zap className="w-3 h-3 animate-bounce" />
-                      <span className="font-bold uppercase tracking-widest text-[9px]">Analyzing Mission Data...</span>
-                    </div>
-                    <div className="space-y-2 opacity-50">
-                      <div className="h-2 bg-slate-800 rounded-full w-full" />
-                      <div className="h-2 bg-slate-800 rounded-full w-[80%]" />
-                      <div className="h-2 bg-slate-800 rounded-full w-[90%]" />
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="p-6 bg-[#0a0a0c] border-t border-white/5">
-                <div className="relative">
-                  <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Command the agent..." className="w-full bg-[#050507] border border-white/10 rounded-2xl px-5 py-4 text-xs text-white focus:border-indigo-500/50 outline-none transition-all" />
-                  <button onClick={handleSendMessage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all"><Send className="w-4 h-4" /></button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
+    const { Icon: TitleIcon, color: titleColor } = getTitleIcon();
+    const tabTitles: Record<string, string> = {
+      dashboard: 'Expert Dashboard', ailab: 'AI Lab', workflows: 'Workflows',
+      integrations: 'Integrations', devtools: 'Dev Tools', datastudio: 'Data Studio',
+      media: 'Media Pro', control: 'Control Center'
+    };
 
     return (
-      <div className="flex flex-col h-full overflow-hidden bg-[#0a0a0c]">
-        <div className="flex items-center justify-between px-8 py-5 bg-[#16161d] border-b border-slate-800/50 backdrop-blur-xl sticky top-0 z-20">
-          <div className="flex items-center gap-5">
-            <button onClick={() => setActiveExpertTool(null)} className="p-2.5 text-slate-400 hover:text-white transition-all bg-slate-800/50 rounded-2xl hover:scale-110 active:scale-95">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+      <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0c]">
+        <div className="border-b border-slate-800/50 bg-[#111116] px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl" style={{ backgroundColor: `${tool.color}20`, border: `1px solid ${tool.color}40` }}>
-                <tool.icon className="w-6 h-6" style={{ color: tool.color }} />
-              </div>
+              <Crown className="w-8 h-8 text-yellow-500" />
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-black text-white uppercase tracking-tighter">{tool.name}</h3>
-                  <span className="bg-indigo-600 text-[8px] px-2 py-0.5 rounded-full text-white font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20">Pro Engine v4.0</span>
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]" />
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Mission</span>
-                </div>
+                <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Expert Mode</h2>
+                <p className="text-xs text-slate-500 font-medium">Next-generation AI workspace for professionals</p>
               </div>
             </div>
+            <button onClick={() => setSmartMode('normal')} className="px-4 py-2 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold hover:text-white transition-all">Exit Expert Mode</button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 relative custom-scrollbar">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
-          <div className="relative z-10 h-full flex flex-col">
-            <div className="max-w-3xl mx-auto w-full flex flex-col h-full overflow-hidden">
-              <div className="flex-1 overflow-y-auto space-y-6 mb-6 custom-scrollbar pr-2">
-                {messages.length <= 1 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
-                    <div className="w-24 h-24 bg-indigo-600/10 rounded-[2.5rem] flex items-center justify-center border border-indigo-500/20"><tool.icon className="w-10 h-10" style={{ color: tool.color }} /></div>
-                    <div>
-                      <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{tool.name} Ready</h1>
-                      <p className="text-slate-500 font-medium tracking-wide">{tool.desc}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
-                      {SUGGESTED_PROMPTS.slice(0, 4).map((p, i) => (
-                        <button key={i} onClick={() => setChatInput(p)} className="p-6 bg-[#16161d] border border-slate-800/50 rounded-[2rem] text-left text-xs font-bold text-slate-400 hover:text-white hover:border-indigo-500/30 transition-all">{p}</button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  messages.map((msg, idx) => {
-                    if (idx === 0) return null; // hide initial system message
-                    return (
-                      <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                        <div className={`max-w-[85%] p-5 rounded-[2rem] ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-[#16161d] border border-slate-800/50 text-slate-300'}`}>
-                          <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                        </div>
-                      </motion.div>
-                    )
-                  })
-                )}
-                {isAiThinking && <div className="w-10 h-10 bg-indigo-600/10 rounded-full flex items-center justify-center animate-pulse"><Zap className="w-5 h-5 text-indigo-500" /></div>}
-                <div ref={chatEndRef} />
-              </div>
-              <div className="bg-[#16161d] border border-slate-800/50 rounded-[2.5rem] p-2 flex items-center gap-2 mb-4">
-                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder={`Ask ${tool.name} a question...`} className="flex-1 bg-transparent px-6 py-4 text-sm text-white outline-none" />
-                <button onClick={handleSendMessage} className="bg-indigo-600 text-white p-4 rounded-[2rem]"><Send className="w-5 h-5" /></button>
-              </div>
+        <div className="border-b border-slate-800/50 bg-[#111116] px-6 flex gap-1 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button key={tab.id} onClick={() => setExpertSubTab(tab.id)} className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${expertSubTab === tab.id ? 'text-indigo-400 border-indigo-500' : 'text-slate-500 border-transparent hover:text-white'}`}>
+              <tab.icon className="w-4 h-4" /> {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center gap-3 mb-8">
+              <TitleIcon className={`w-10 h-10 ${titleColor}`} />
+              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">{tabTitles[expertSubTab]}</h2>
             </div>
+            {expertSubTab === 'dashboard' && renderTools(dashboardTools)}
+            {expertSubTab === 'ailab' && renderTools(ailabTools)}
+            {expertSubTab === 'workflows' && renderTools(workflowTools)}
+            {expertSubTab === 'integrations' && renderTools(integrationTools)}
+            {expertSubTab === 'devtools' && renderTools(devtoolTools)}
+            {expertSubTab === 'datastudio' && renderTools(dataTools)}
+            {expertSubTab === 'media' && renderTools(mediaTools)}
+            {expertSubTab === 'control' && renderTools(controlTools)}
           </div>
         </div>
       </div>
     );
-  };
 
   // Streaming chat response (ChatGPT-style token-by-token UI)
   const handleSendMessage = async (overridePrompt?: string | any, isVoiceMode: boolean = false, voiceLang?: string) => {
@@ -2015,7 +1800,11 @@ export default function App() {
                   </div>
 
                   <button type="submit" disabled={isAuthenticating} className="w-full bg-indigo-600 text-white py-4 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs mt-4">
-                    {isAuthenticating ? 'Logging in...' : 'Login'}
+                    {isAuthenticating ? 'Logging in...' : 'Login with Password'}
+                  </button>
+
+                  <button type="button" onClick={() => { setOtpType('login'); sendOtp('login').catch(() => {}); }} disabled={isAuthenticating} className="w-full bg-slate-800 text-white py-3 rounded-xl hover:bg-slate-700 transition-all active:scale-95 mt-3 font-bold uppercase tracking-[0.2em] text-xs disabled:opacity-50">
+                    {isAuthenticating ? 'Sending OTP...' : 'Login with OTP'}
                   </button>
 
                   <div className="flex justify-between text-[9px] text-slate-500 mt-3">
@@ -2641,6 +2430,7 @@ export default function App() {
   }
 
   function renderHome() {
+    if (smartMode === 'expert') return renderExpertPro();
     if (smartMode === 'creative') return renderCreativeDashboard();
     return renderNormalDashboard();
   }
