@@ -163,6 +163,16 @@ export default function App() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Clear forms when switching modes
+  useEffect(() => {
+    setAuthError(null);
+    if (authMode !== 'forgot') {
+      // Keep email if it's a valid email, otherwise clear
+      if (!email.includes('@')) setEmail('');
+      setPassword('');
+    }
+  }, [authMode]);
   
   // Forgot Password State
   const [resetEmail, setResetEmail] = useState('');
@@ -263,10 +273,12 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event);
       if (event === 'SIGNED_IN' && session?.user) {
-        // SET LOGGED IN IMMEDIATELY TO STOP LOADING SPINNER
+        // Force immediate state updates
+        setEmail(session.user.email || '');
         setIsLoggedIn(true);
         setIsAuthenticating(false);
         setIsVerifyingOtp(false);
+        setAuthMode('login');
         
         // Always set the email from the session
         setEmail(session.user.email || '');
@@ -314,8 +326,9 @@ export default function App() {
         }
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
+        setIsAuthenticating(false);
+        setAuthMode('login');
         localStorage.removeItem('smartai_session');
-        // Also clear admin session on logout
         localStorage.removeItem('smartai_admin_session');
         localStorage.removeItem('smartai_admin_session_id');
         setIsAdmin(false);
@@ -528,13 +541,17 @@ export default function App() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin,
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline'
+          }
         }
       });
       if (error) throw error;
+      // No need to set isAuthenticating false here as onAuthStateChange will handle it
     } catch (err: any) {
-      setAuthError(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login failed. Please try again.`);
-    } finally {
+      setAuthError(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login failed. Please ensure the provider is enabled in your dashboard.`);
       setIsAuthenticating(false);
     }
   };
@@ -553,6 +570,15 @@ export default function App() {
     setIsAuthenticating(true);
 
     try {
+      const isMobile = /^\d{10}$/.test(email);
+      
+      if (isMobile) {
+        // Handle mobile login via OTP
+        await sendOtp('login');
+        setIsAuthenticating(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password
@@ -560,7 +586,15 @@ export default function App() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setAuthError('User not found or incorrect password. If you just signed up, please check your email for a verification link.');
+          // Check local users as fallback for "old accounts" migration
+          const localUsers = getUsers();
+          const localUser = localUsers.find(u => (u.email === email || u.name === email) && u.password === password);
+          
+          if (localUser) {
+            setAuthError('Migrating your old account... Please try signing up with the same email and password to sync with our new secure system, or use "Forgot Password" to reset.');
+          } else {
+            setAuthError('User not found or incorrect password. If you just signed up, please check your email for a verification link.');
+          }
         } else if (error.message.includes('Email not confirmed')) {
           setAuthError('Your email is not confirmed yet. Please check your inbox for the verification link or signup again.');
         } else {
@@ -592,10 +626,10 @@ export default function App() {
           setAvatar('');
         }
         setIsLoggedIn(true);
+        setIsAuthenticating(false);
       }
     } catch (err: any) {
       setAuthError(err.message);
-    } finally {
       setIsAuthenticating(false);
     }
   };
@@ -707,9 +741,13 @@ export default function App() {
           setDisplayName(userName);
           setIsLoggedIn(true);
           setAuthError(null);
-        } catch (loginErr) {
+        } catch (loginErr: any) {
           console.error('Auto login after signup failed:', loginErr);
-          setAuthError('Signup succeeded but auto‑login failed. Please try logging in manually.');
+          if (loginErr.message?.includes('Email not confirmed')) {
+            setAuthError('Signup successful! Please check your email inbox to verify your account before logging in.');
+          } else {
+            setAuthError('Signup succeeded but auto‑login failed. Please try logging in manually or check your email for a verification link.');
+          }
         }
       }
     } catch (err: any) {
@@ -726,7 +764,7 @@ export default function App() {
       setAuthError('Please enter the complete 6-digit code');
       return;
     }
-    const target = email;
+    const target = authMode === 'forgot' ? resetEmail : email;
     setIsAuthenticating(true);
     setAuthError(null);
     console.log('Starting OTP verification for:', target);
@@ -742,29 +780,53 @@ export default function App() {
     }, 30000);
     
     try {
-      // Step 1: Try 'email' type (Primary for signInWithOtp flow)
-      console.log('Trying email type verification...');
-      let { data, error } = await supabase.auth.verifyOtp({
-        email: target,
-        token: enteredOtp,
-        type: 'email'
-      });
-
-      // Step 2: Fallback to 'signup' type if 'email' fails or returns error
-      if (error || !data?.user) {
-        console.log('Email type verification failed, trying signup type fallback...');
-        const secondAttempt = await supabase.auth.verifyOtp({
+      // Step 0: Handle Recovery OTP
+      if (authMode === 'forgot') {
+        console.log('Trying recovery type verification...');
+        const recoveryRes = await supabase.auth.verifyOtp({
           email: target,
           token: enteredOtp,
-          type: 'signup'
+          type: 'recovery'
         });
-        
-        if (secondAttempt.data?.user) {
-          data = secondAttempt.data;
-          error = secondAttempt.error;
-        } else if (error && secondAttempt.error) {
-           // If both failed, use the error from the second attempt if first was also an error
-           error = secondAttempt.error || error;
+        if (recoveryRes.error) {
+           // Fallback to email/magiclink if recovery fails (sometimes Supabase uses 'email' for everything)
+           const emailRes = await supabase.auth.verifyOtp({
+             email: target,
+             token: enteredOtp,
+             type: 'email'
+           });
+           data = emailRes.data;
+           error = emailRes.error;
+        } else {
+           data = recoveryRes.data;
+           error = recoveryRes.error;
+        }
+      } else {
+        // Step 1: Try 'email' type (Primary for signInWithOtp flow)
+        console.log('Trying email type verification...');
+        const emailRes = await supabase.auth.verifyOtp({
+          email: target,
+          token: enteredOtp,
+          type: 'email'
+        });
+        data = emailRes.data;
+        error = emailRes.error;
+
+        // Step 2: Fallback to 'signup' type if 'email' fails or returns error
+        if (error || !data?.user) {
+          console.log('Email type verification failed, trying signup type fallback...');
+          const secondAttempt = await supabase.auth.verifyOtp({
+            email: target,
+            token: enteredOtp,
+            type: 'signup'
+          });
+          
+          if (secondAttempt.data?.user) {
+            data = secondAttempt.data;
+            error = secondAttempt.error;
+          } else if (error && secondAttempt.error) {
+             error = secondAttempt.error || error;
+          }
         }
       }
 
@@ -782,6 +844,13 @@ export default function App() {
         const userName = meta?.displayName || meta?.full_name || pendingName || data.user.email?.split('@')[0] || 'User';
         
         // IMMEDIATE UI UPDATE
+        if (authMode === 'forgot') {
+          setForgotPasswordStep('reset');
+          setIsVerifyingOtp(false);
+          setIsAuthenticating(false);
+          return;
+        }
+
         setDisplayName(userName);
         setEmail(data.user.email || '');
         setAvatar('');
@@ -839,6 +908,7 @@ export default function App() {
       });
       if (error) setAuthError(error.message);
       else {
+        setIsVerifyingOtp(true);
         setForgotPasswordStep('otp');
       }
     } catch (err: any) { setAuthError(err.message); }
@@ -935,9 +1005,11 @@ export default function App() {
       localStorage.removeItem('smartai_session'); 
       localStorage.removeItem('smartai_admin_session');
       localStorage.removeItem('smartai_admin_session_id');
-      // Clear other auth-related local storage just in case
       localStorage.removeItem('supabase.auth.token');
-      window.location.href = '/'; // Use href instead of reload to ensure clean state
+      // Set states to force immediate re-render before reload
+      setIsLoggedIn(false);
+      setAuthMode('login');
+      window.location.reload(); // Hard reload for clean state
     }
   };
 
@@ -1271,7 +1343,7 @@ export default function App() {
 
         {/* Compact Dashboard Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 relative z-10 no-scrollbar">
-          <div className="max-w-7xl mx-auto space-y-8">
+          <div className="max-w-full mx-auto space-y-8 px-2 md:px-4">
             {categories.map((cat, catIdx) => (
               <motion.div 
                 key={cat.id}
@@ -1290,40 +1362,48 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Dense Tools Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {/* Expansive Tools Grid */}
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
                   {cat.tools.map((tool, toolIdx) => (
                     <motion.div
                       key={tool.name}
-                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.03)' }}
-                      className="group relative bg-slate-900/40 border border-white/5 rounded-2xl p-3.5 flex flex-col gap-3 cursor-pointer transition-all hover:border-indigo-500/30 overflow-hidden"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="p-2 rounded-lg bg-slate-950 border border-white/5 group-hover:border-indigo-500/20 transition-all">
-                          <tool.icon className="w-4 h-4 text-slate-400 group-hover:text-indigo-400" />
-                        </div>
-                        <ChevronRight className="w-3 h-3 text-white/10 group-hover:text-white transition-colors" />
-                      </div>
-
-                      <div className="min-w-0" onClick={() => {
-                        if (plan !== 'Expert Mode') {
-                          alert('This tool requires Expert Mode. Please upgrade to access.');
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      className="group relative bg-slate-900/40 border border-white/5 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer transition-all hover:border-indigo-500/50 overflow-hidden h-full justify-between shadow-lg"
+                      onClick={() => {
+                        if (plan !== 'Expert Mode' && plan !== 'Ultra') {
+                          alert('This tool requires Expert Mode or Ultra. Please upgrade to access.');
                           setIsPricingOpen(true);
                           return;
                         }
                         handleSendMessage(`Initialize Expert Tool: ${tool.name}. Provide a brief overview of how this module functions in the Enterprise Ecosystem.`);
-                      }}>
-                        <h4 className="text-[11px] font-bold text-white group-hover:text-indigo-300 transition-colors truncate">{tool.name}</h4>
-                        <p className="text-[9px] text-slate-500 leading-snug font-medium group-hover:text-slate-400 transition-colors line-clamp-1">{tool.desc}</p>
+                      }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="w-12 h-12 rounded-xl bg-slate-950 border border-white/5 group-hover:border-indigo-500/30 transition-all flex items-center justify-center shadow-inner">
+                          <tool.icon className="w-6 h-6 text-slate-400 group-hover:text-indigo-400" />
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-white transition-colors" />
                       </div>
 
-                      <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: '100%' }}
-                          transition={{ duration: 1, delay: 0.3 + (toolIdx * 0.05) }}
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
-                        />
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-black text-white group-hover:text-indigo-300 transition-colors">{tool.name}</h4>
+                        <p className="text-[11px] text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors line-clamp-2">{tool.desc}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-slate-700 group-hover:text-indigo-500/50 transition-colors">
+                          <span>Module Alpha v8.2</span>
+                          <span>Active</span>
+                        </div>
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            whileInView={{ width: '100%' }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1.5, delay: 0.2 }}
+                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                          />
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -1860,7 +1940,7 @@ export default function App() {
             {resendSuccess ? 'Code Sent Successfully!' : "Didn't receive code? Resend"}
           </button>
           <br />
-          <button onClick={() => setIsVerifyingOtp(false)} className="text-[10px] font-bold text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Back to {otpType === 'login' ? 'Login' : 'Signup'}</button>
+          <button onClick={() => { setIsVerifyingOtp(false); if (authMode === 'forgot') setForgotPasswordStep('email'); }} className="text-[10px] font-bold text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Back to {authMode === 'forgot' ? 'Reset' : otpType === 'login' ? 'Login' : 'Signup'}</button>
         </div>
       </div>
     );
@@ -1911,7 +1991,7 @@ export default function App() {
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-3">
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 font-medium text-sm" />
+                      <input type="text" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email or Mobile Number" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 font-medium text-sm" />
                       <div className="relative">
                         <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 pr-12 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-4 h-4" /></button>
@@ -1935,8 +2015,14 @@ export default function App() {
                       <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} placeholder="Full Name" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
                       <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
                       <div className="grid grid-cols-2 gap-2">
-                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                        <input type="password" value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} placeholder="Confirm" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                        <div className="relative">
+                          <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-3.5 h-3.5" /></button>
+                        </div>
+                        <div className="relative">
+                          <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} placeholder="Confirm" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-3.5 h-3.5" /></button>
+                        </div>
                       </div>
                       <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} placeholder="Referral Code (Optional)" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm uppercase" />
                     </div>
@@ -1957,7 +2043,7 @@ export default function App() {
                     <div className="space-y-3">
                        <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="Recovery email" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
                        <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
-                         {isAuthenticating ? 'Sending...' : 'Send Recovery Link'}
+                         {isAuthenticating ? 'Sending OTP...' : 'Send OTP Code'}
                        </button>
                     </div>
                     <div className="text-center">
@@ -2040,7 +2126,7 @@ export default function App() {
     return (
       <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar">
         {/* Compact Header Section */}
-        <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="max-w-full mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 md:px-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.2)] border border-white/10">
               <Sparkles className="w-6 h-6 text-white" />
@@ -2063,7 +2149,7 @@ export default function App() {
         </div>
 
         {/* Compact Categories and Tools Grid */}
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-full mx-auto space-y-8 px-2 md:px-4">
           {categories.map((cat, idx) => (
             <div key={idx} className="space-y-4">
               <div className="flex items-center gap-3">
@@ -2071,21 +2157,24 @@ export default function App() {
                 <div className="h-[1px] w-full bg-slate-800/30" />
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
                 {cat.tools.map((tool, tIdx) => (
                   <motion.button
                     key={tIdx}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="group bg-slate-900/40 border border-slate-800/60 hover:border-indigo-500/50 p-3 rounded-xl text-left transition-all relative overflow-hidden"
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    className="group bg-slate-900/40 border border-slate-800/60 hover:border-indigo-500/50 p-6 rounded-2xl text-left transition-all relative overflow-hidden h-full flex flex-col justify-between"
                   >
-                    <div className={`w-8 h-8 rounded-lg ${tool.bg} flex items-center justify-center mb-2.5 border border-white/5`}>
-                      <tool.icon className={`w-4 h-4 ${tool.color}`} />
+                    <div>
+                      <div className={`w-12 h-12 rounded-xl ${tool.bg} flex items-center justify-center mb-4 border border-white/5 shadow-lg`}>
+                        <tool.icon className={`w-6 h-6 ${tool.color}`} />
+                      </div>
+                      <h3 className="text-sm font-black text-white mb-1.5 group-hover:text-indigo-300 transition-colors">{tool.name}</h3>
+                      <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{tool.desc}</p>
                     </div>
-                    <h3 className="text-[11px] font-bold text-white mb-0.5 group-hover:text-indigo-300 transition-colors truncate">{tool.name}</h3>
-                    <p className="text-[9px] text-slate-500 leading-snug line-clamp-1">{tool.desc}</p>
                     
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="w-3 h-3 text-indigo-500" />
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Creative Suite</span>
+                      <ChevronRight className="w-4 h-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </motion.button>
                 ))}
@@ -2146,7 +2235,7 @@ export default function App() {
     };
 
     return (
-      <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-3 md:px-6 gap-3 py-3 relative overflow-y-auto no-scrollbar">
+      <div className="w-full h-full flex flex-col max-w-full mx-auto px-3 md:px-6 gap-3 py-3 relative overflow-y-auto no-scrollbar">
         {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -2171,7 +2260,7 @@ export default function App() {
           <div className="flex items-center justify-between mb-2">
              <h2 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Quick Access</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
             {[
               { name: 'Text to Image', desc: 'Gen from text.', icon: ImageIcon, color: 'text-indigo-400' },
               { name: 'Image to Image', desc: 'Restyle images.', icon: Copy, color: 'text-blue-400' },
@@ -2179,15 +2268,17 @@ export default function App() {
               { name: 'Enhance', desc: 'Upscale & fix.', icon: Sparkles, color: 'text-purple-400' },
               { name: 'Compress', desc: 'Optimize size.', icon: Download, color: 'text-emerald-400' }
             ].map((tool, i) => (
-              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/60 hover:bg-slate-800/60 transition-all rounded-xl p-3 text-left group">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-indigo-500/30 transition-colors`}>
-                    <tool.icon className={`w-3.5 h-3.5 ${tool.color}`} />
+              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/60 hover:bg-slate-800/60 transition-all rounded-2xl p-5 text-left group h-full flex flex-col justify-between shadow-lg">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-indigo-500/30 transition-colors shadow-inner`}>
+                      <tool.icon className={`w-6 h-6 ${tool.color}`} />
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-white/5 group-hover:text-white transition-colors" />
                   </div>
-                  <ChevronRight className="w-3 h-3 text-white/5 group-hover:text-white transition-colors ml-auto" />
+                  <h3 className="text-sm font-black text-white mb-1.5">{tool.name}</h3>
+                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{tool.desc}</p>
                 </div>
-                <h3 className="text-[11px] font-bold text-white mb-0.5 truncate">{tool.name}</h3>
-                <p className="text-[9px] text-slate-500 leading-tight line-clamp-1">{tool.desc}</p>
               </button>
             ))}
           </div>
@@ -2196,7 +2287,7 @@ export default function App() {
         {/* More Tools */}
         <div className="pb-4 flex flex-col min-h-0">
           <h2 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">All Utilities</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 pb-20 md:pb-0 overflow-y-auto no-scrollbar">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 pb-20 md:pb-10 overflow-y-auto no-scrollbar">
             {[
               { name: 'Resize', desc: 'Dimensions.', icon: Monitor },
               { name: 'Crop', desc: 'Any size.', icon: Layout },
@@ -2211,13 +2302,13 @@ export default function App() {
               { name: 'Watermark', desc: 'Ownership.', icon: CloudSun },
               { name: 'QR Gen', desc: 'Codes.', icon: Code }
             ].map((tool, i) => (
-              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/40 hover:bg-slate-800/60 transition-all rounded-xl p-2.5 flex items-center gap-2.5 text-left group">
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-950 flex items-center justify-center border border-slate-800">
-                  <tool.icon className="w-3 h-3 text-indigo-400" />
+              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/40 hover:bg-slate-800/60 transition-all rounded-2xl p-4 flex items-center gap-4 text-left group shadow-sm">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-indigo-500/30 transition-colors shadow-inner">
+                  <tool.icon className="w-5 h-5 text-indigo-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[10px] font-bold text-white mb-0 truncate">{tool.name}</h3>
-                  <p className="text-[8px] text-slate-600 truncate">{tool.desc}</p>
+                  <h3 className="text-xs font-black text-white mb-0.5 truncate">{tool.name}</h3>
+                  <p className="text-[10px] text-slate-600 truncate">{tool.desc}</p>
                 </div>
               </button>
             ))}
