@@ -2127,7 +2127,6 @@ export default function App() {
       </div>
     );
   }
-  }
 
   function renderNormalDashboard() {
     const handleToolClick = (tool: any) => {
