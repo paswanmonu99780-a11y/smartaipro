@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
@@ -241,8 +241,10 @@ export default function App() {
   const [toolImage, setToolImage] = useState<string | null>(null);
   const [toolPrompt, setToolPrompt] = useState('');
   const [isToolProcessing, setIsToolProcessing] = useState(false);
-  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null); const [copiedCode, setCopiedCode] = useState(false);
+  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null); 
+  const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedText, setCopiedText] = useState(false);
   const [creativeHistory, setCreativeHistory] = useState<Array<{ tool: string; toolName: string; input: string; result: string; time: string }>>([]);
   const [activeExpertTool, setActiveExpertTool] = useState<string | null>(null);
   const [expertCategory, setExpertCategory] = useState<string>('All');
@@ -1083,11 +1085,12 @@ export default function App() {
     };
   };
 
-  const copyToClipboard = async (text: string, type: 'code' | 'link') => {
+  const copyToClipboard = async (text: string, type: 'code' | 'link' | 'text') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'code') { setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }
-      else { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
+      else if (type === 'link') { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
+      else { setCopiedText(true); setTimeout(() => setCopiedText(false), 2000); }
     } catch {
       const textArea = document.createElement('textarea');
       textArea.value = text;
@@ -1096,7 +1099,8 @@ export default function App() {
       document.execCommand('copy');
       document.body.removeChild(textArea);
       if (type === 'code') { setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }
-      else { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
+      else if (type === 'link') { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
+      else { setCopiedText(true); setTimeout(() => setCopiedText(false), 2000); }
     }
   };
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
