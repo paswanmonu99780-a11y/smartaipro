@@ -2134,37 +2134,46 @@ export default function App() {
         - Output format: JSON { "joke": "...", "caption": "...", "hashtags": ["...", "..."], "viralScore": 89, "templateNote": "..." }`;
 
         try {
-          // Server only has GET /api/chat — use that with query params
-          const fullPrompt = `Generate a ${memeType} about: ${memeTopic}. Language: ${memeLanguage}. Template: ${memeTemplate}. Platform: ${memePlatform}. Humor Level: ${memeHumorLevel}%. ${isViralMode ? 'Make it highly viral and shareable.' : ''} ${addEmojis ? 'Add relevant emojis.' : ''} ${addHashtags ? 'Add relevant hashtags.' : ''}`;
+          const systemPrompt = `You are an elite AI Meme & Comedy expert. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
+          Format: {"joke": "...", "caption": "...", "hashtags": ["#..."], "viralScore": 95, "templateNote": "..."}`;
+          
+          const fullPrompt = `Create a ${memeType} about "${memeTopic}".
+          CRITICAL RULES:
+          1. LANGUAGE: MUST be EXACTLY in ${memeLanguage}. If Hindi, use pure Hindi script (देवनागरी). If Roman Urdu/Hinglish, use English alphabet but desi slang. DO NOT mix English words randomly unless it's Hinglish.
+          2. LENGTH: Keep it short, punchy, and highly readable (max 2-3 lines).
+          3. HUMOR: Level is ${memeHumorLevel}%. Match the vibe of ${memeType}. If it's a Roast, be savage. If Dad Joke, be corny.
+          4. PLATFORM: Optimize for ${memePlatform} audience.
+          ${isViralMode ? 'Make it highly relatable and viral.' : ''} ${addEmojis ? 'Use 2-3 emojis.' : ''}
+          Format the joke visually using HTML tags like <span class="text-pink-400">highlighted words</span> to make key punchlines or important words colorful!`;
 
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=false&seed=${Math.floor(Math.random() * 99999)}`;
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
           const res = await fetch(url);
 
           if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
           const rawText = await res.text();
-
-          // Try to extract JSON from response
           let parsed: any = null;
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          
+          // Clean up potential markdown formatting from the response
+          const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+          const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             try { parsed = JSON.parse(jsonMatch[0]); } catch {}
           }
 
-          // If JSON parsing fails, build object from plain text
           if (!parsed || !parsed.joke) {
             parsed = {
-              joke: rawText.trim() || 'Bhai itna ghanta sochne ke baad bhi kuch nahi mila... story of my life! 😂',
-              caption: `${memeType} about ${memeTopic} • Generated with SmartAI Comedy Engine`,
-              hashtags: ['funny', 'memes', 'viral', memeTopic.toLowerCase().replace(/\s/g, ''), 'trending'],
-              viralScore: Math.floor(Math.random() * 20) + 75,
+              joke: cleanText.trim() || 'Bhai server hang ho gaya... 😂 <span class="text-red-400">Error 404: Humor Not Found</span>',
+              caption: `${memeType} about ${memeTopic}`,
+              hashtags: ['#funny', '#memes'],
+              viralScore: 85,
               templateNote: memeTemplate
             };
           }
 
-          // Ensure hashtags is always an array
           if (!Array.isArray(parsed.hashtags)) {
-            parsed.hashtags = String(parsed.hashtags || '').split(/[,\s#]+/).filter(Boolean);
+            parsed.hashtags = String(parsed.hashtags || '').split(/[,\s#]+/).filter(Boolean).map(h => '#' + h);
           }
 
           setMemeResult(parsed);
@@ -2379,7 +2388,7 @@ export default function App() {
                             </div>
                           </div>
                           
-                          <p className="text-2xl md:text-3xl font-bold leading-tight italic text-white/90">"{memeResult.joke}"</p>
+                          <p className="text-2xl md:text-3xl font-bold leading-tight italic text-white/90" dangerouslySetInnerHTML={{ __html: `"${memeResult.joke}"` }} />
                           
                           {memeResult.caption && (
                             <div className="pt-6 border-t border-white/5 space-y-2">
