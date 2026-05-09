@@ -200,8 +200,8 @@ export default function App() {
   const [imgStyle, setImgStyle] = useState('realistic');
   const [videoPrompt, setVideoPrompt] = useState('');
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [plan, setPlan] = useState<'Basic' | 'Pro' | 'Ultra'>('Basic');
-  const [imgQuality, setImgQuality] = useState('720p');
+  const [plan, setPlan] = useState<'Normal Mode' | 'Creative Mode' | 'Expert Mode'>('Normal Mode');
+  const [imgQuality, setImgQuality] = useState('Standard');
   const [displayName, setDisplayName] = useState('');
   const [avatar, setAvatar] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -281,7 +281,9 @@ export default function App() {
             setDisplayName(userData.displayName || userData.email?.split('@')[0] || 'User');
             setAvatar(userData.avatar || '');
             setCredits(typeof userData.credits === 'number' ? userData.credits : 100);
-            setPlan(userData.plan || 'Basic');
+            if (userData.plan === 'Pro') setPlan('Creative Mode');
+            else if (userData.plan === 'Ultra') setPlan('Expert Mode');
+            else setPlan('Normal Mode');
           } else {
             console.log('User profile not found, creating one...');
             const pendingName = sessionStorage.getItem('pendingSignupName');
@@ -345,14 +347,13 @@ export default function App() {
     }
   }, [isLoggedIn]);
 
-  // Ensure admin panel is closed when showing auth screens
+  // Admin session should be independent of main app session for flexibility
   useEffect(() => {
-    if (!isLoggedIn) {
-      localStorage.removeItem('smartai_admin_session');
-      localStorage.removeItem('smartai_admin_session_id');
-      setIsAdmin(false);
+    const isAdminActive = localStorage.getItem('smartai_admin_session') === 'active';
+    if (isAdminActive !== isAdmin) {
+      setIsAdmin(isAdminActive);
     }
-  }, [isLoggedIn]);
+  }, [isAdmin]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1264,7 +1265,14 @@ export default function App() {
                         <ChevronRight className="w-3 h-3 text-white/10 group-hover:text-white transition-colors" />
                       </div>
 
-                      <div className="min-w-0">
+                      <div className="min-w-0" onClick={() => {
+                        if (plan !== 'Expert Mode') {
+                          alert('This tool requires Expert Mode. Please upgrade to access.');
+                          setIsPricingOpen(true);
+                          return;
+                        }
+                        handleSendMessage(`Initialize Expert Tool: ${tool.name}. Provide a brief overview of how this module functions in the Enterprise Ecosystem.`);
+                      }}>
                         <h4 className="text-[11px] font-bold text-white group-hover:text-indigo-300 transition-colors truncate">{tool.name}</h4>
                         <p className="text-[9px] text-slate-500 leading-snug font-medium group-hover:text-slate-400 transition-colors line-clamp-1">{tool.desc}</p>
                       </div>
@@ -1314,8 +1322,15 @@ export default function App() {
     updateCurrentChatHistory(currentChatId, title, optimisticMessages);
     if (smartMode === 'normal' || smartMode === 'creative') updateUsage('messages');
 
-    let systemPrompt = `You are a helpful AI assistant. Provide accurate and useful answers. Maintain a ${tone} tone in your responses. If you are unsure, say clearly that you are unsure.`;
+    let systemPrompt = `You are a helpful AI assistant. Provide accurate and useful answers. Maintain a ${tone} tone in your responses.`;
     
+    // Plan-based intelligence
+    if (plan === 'Expert Mode') {
+      systemPrompt += " You are in EXPERT MODE. Provide extremely detailed, technical, and high-level professional responses. Use advanced terminology and provide step-by-step logic. You have access to the Neural Link and Enterprise Intelligence Lab.";
+    } else if (plan === 'Creative Mode') {
+      systemPrompt += " You are in CREATIVE MODE. Be highly imaginative, artistic, and expressive. Focus on storytelling, brainstorming, and creative problem solving.";
+    }
+
     // Explicitly handle language for voice mode
     if (isVoiceMode && voiceLang) {
       if (voiceLang === 'hi-IN') {
@@ -1425,7 +1440,17 @@ export default function App() {
   };
 
   const getDimensions = (quality: string, aspect: string): [number, number] => {
-    const longEdge = { 'Standard': 512, 'HD': 1024, '4K': 1280, '8K': 2048 }[quality] || 1024;
+    // Feature enforcement based on plan
+    let effectiveQuality = quality;
+    if (plan === 'Normal Mode' && (quality === '4K' || quality === '8K' || quality === 'HD')) {
+      effectiveQuality = 'Standard';
+      console.log('Downscaling to Standard for Normal Plan');
+    } else if (plan === 'Creative Mode' && (quality === '4K' || quality === '8K')) {
+      effectiveQuality = 'HD';
+      console.log('Downscaling to HD for Creative Plan');
+    }
+
+    const longEdge = { 'Standard': 512, 'HD': 1024, '4K': 1280, '8K': 2048 }[effectiveQuality] || 1024;
     if (aspect === '1:1') return [longEdge, longEdge];
     if (aspect === '16:9') return [longEdge, Math.round(longEdge * 9 / 16)];
     if (aspect === '9:16') return [Math.round(longEdge * 9 / 16), longEdge];
@@ -1500,7 +1525,10 @@ export default function App() {
     const cleanedPrompt = normalizePrompt(imgPrompt);
     if (!cleanedPrompt || isGenerating) return;
 
-    const tokenCost = isRegenerate ? 2 : 5;
+    let tokenCost = isRegenerate ? 2 : 5;
+    if (plan === 'Expert Mode') tokenCost = 0;
+    else if (plan === 'Creative Mode') tokenCost = isRegenerate ? 1 : 3;
+
     if (credits < tokenCost) { alert(`Insufficient credits (${tokenCost} tokens required).`); setIsPricingOpen(true); return; }
 
     // Capture current credits value synchronously
@@ -1673,8 +1701,9 @@ export default function App() {
     }
   };
 
-  const handleSelectPlan = async (plan: (typeof PLANS)[number]) => {
-    if (plan.name === 'Basic') { alert('You are already on the Basic plan.'); setIsPricingOpen(false); return; }
+  const handleSelectPlan = async (selectedPlan: (typeof PLANS)[number]) => {
+    if (selectedPlan.name === 'Normal Mode' && plan === 'Normal Mode') { alert('You are already on the Normal plan.'); setIsPricingOpen(false); return; }
+    if (selectedPlan.name === plan) { alert(`You are already on the ${plan} plan.`); setIsPricingOpen(false); return; }
     // Removed session check for demo - payment will work without login issue
     const saved = localStorage.getItem('smartai_session');
     const user = saved ? JSON.parse(saved) : { email: 'demo@user.com' };
