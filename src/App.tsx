@@ -2194,8 +2194,10 @@ export default function App() {
           const prompt = `A funny meme image about ${memeTopic}. Style: ${memeTemplate}. Content: ${memeResult.joke}. Text should be clear and humor should be visual.`;
           const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
           if (res.ok) {
-            const data = await res.json();
-            setMemeImagePreview(data.url);
+            const blob = await res.blob();
+            setMemeImagePreview(URL.createObjectURL(blob));
+          } else {
+            console.error('Failed to generate meme image');
           }
         } catch (e) { console.error(e); }
         finally { setIsMemeGenerating(false); }
