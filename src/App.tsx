@@ -689,19 +689,28 @@ export default function App() {
       
       // If user already exists, Supabase signUp might return an empty identity if email confirm is on
       // Or it might throw an error depending on Supabase settings.
-      if (signUpData?.user && signUpData?.user?.identities && signUpData.user.identities.length === 0) {
-        setAuthError('Email is already registered. Please login instead.');
-        setIsAuthenticating(false);
-        return;
-      }
-
       if (error) {
-        console.error('Signup OTP error:', error);
+        console.error('Signup error:', error);
         setAuthError(error.message);
       } else {
-        console.log('OTP sent successfully');
-        setIsVerifyingOtp(true);
-        setOtpType('signup');
+        // Directly sign in the user after successful signup (bypass email verification for dev)
+        try {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (signInError) throw signInError;
+          // User is now logged in
+          const meta = signInData.user?.user_metadata;
+          const userName = meta?.displayName || meta?.full_name || email.split('@')[0] || 'User';
+          setEmail(email);
+          setDisplayName(userName);
+          setIsLoggedIn(true);
+          setAuthError(null);
+        } catch (loginErr) {
+          console.error('Auto login after signup failed:', loginErr);
+          setAuthError('Signup succeeded but auto‑login failed. Please try logging in manually.');
+        }
       }
     } catch (err: any) {
       console.error('Signup catch error:', err);
@@ -1894,12 +1903,6 @@ export default function App() {
                     <button onClick={() => handleSocialLogin('google')} className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg border border-transparent">
                       <Globe className="w-4 h-4" /> Continue with Google
                     </button>
-                    <button onClick={() => handleSocialLogin('apple')} className="w-full h-12 bg-black text-white rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all active:scale-[0.98] shadow-lg border border-white/5">
-                      <FastForward className="w-4 h-4" /> Continue with Apple
-                    </button>
-                    <button onClick={() => setAuthMode('phone')} className="w-full h-12 bg-slate-800 text-white rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-700 transition-all active:scale-[0.98] shadow-lg">
-                      <Mic2 className="w-4 h-4" /> Continue with Phone
-                    </button>
 
                     <div className="flex items-center gap-4 py-2">
                       <div className="h-[1px] flex-1 bg-white/10" />
@@ -1946,54 +1949,7 @@ export default function App() {
                   </div>
                 )}
 
-                {authMode === 'phone' && (
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-white text-center">{phoneStep === 'input' ? 'Phone Login' : 'Verify Identity'}</h2>
-                    {phoneStep === 'input' ? (
-                      <div className="space-y-3">
-                        <div className="flex gap-2">
-                          <select className="bg-slate-950/50 border border-white/10 rounded-xl px-3 text-white outline-none text-xs font-bold">
-                            <option value="+91">+91 (IN)</option>
-                            <option value="+1">+1 (US)</option>
-                          </select>
-                          <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="Phone number" className="flex-1 h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                        </div>
-                        <button onClick={() => sendOtp('phone')} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] disabled:opacity-50">
-                          {isAuthenticating ? 'Sending OTP...' : 'Send OTP'}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4 text-center">
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Enter 6-digit code sent to {phoneNumber}</p>
-                        <div className="flex justify-between gap-2">
-                          {otp.map((digit, i) => (
-                            <input key={i} id={`phone-otp-${i}`} type="text" maxLength={1} value={digit} onChange={(e) => {
-                              const val = e.target.value;
-                              if (/^\d*$/.test(val)) {
-                                const newOtp = [...otp];
-                                newOtp[i] = val;
-                                setOtp(newOtp);
-                                if (val && i < 5) document.getElementById(`phone-otp-${i + 1}`)?.focus();
-                              }
-                            }} className="w-10 h-12 bg-slate-950 border border-white/10 rounded-xl text-center text-lg font-bold text-white focus:border-indigo-500 outline-none transition-all shadow-inner" />
-                          ))}
-                        </div>
-                        <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20">
-                          {isAuthenticating ? 'Verifying...' : 'Verify OTP'}
-                        </button>
-                        <div className="flex flex-col gap-2 pt-2">
-                          <button disabled={countdown > 0} onClick={() => sendOtp('phone')} className={`text-[9px] font-bold uppercase tracking-widest ${countdown > 0 ? 'text-slate-700' : 'text-slate-500 hover:text-white'}`}>
-                            {countdown > 0 ? `Resend in ${countdown}s` : 'Resend OTP'}
-                          </button>
-                          <button onClick={() => setPhoneStep('input')} className="text-[9px] text-slate-500 hover:text-white font-bold uppercase tracking-widest">Change Number</button>
-                        </div>
-                      </div>
-                    )}
-                    <div className="text-center pt-2">
-                       <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
-                    </div>
-                  </div>
-                )}
+                
 
                 {authMode === 'forgot' && (
                   <div className="space-y-4">
@@ -2015,7 +1971,6 @@ export default function App() {
         </motion.div>
       </div>
     );
-  }
   }
 
   const handleEnhanceCreativePrompt = async () => {
