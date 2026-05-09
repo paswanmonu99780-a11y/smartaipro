@@ -2139,7 +2139,7 @@ export default function App() {
           
           const fullPrompt = `Create a ${memeType} about "${memeTopic}".
           CRITICAL RULES:
-          1. LANGUAGE: MUST be EXACTLY in ${memeLanguage}. If Hindi, use pure Hindi script (देवनागरी). If Roman Urdu/Hinglish, use English alphabet but desi slang. DO NOT mix English words randomly unless it's Hinglish.
+          1. LANGUAGE: Use ${memeLanguage}. If Hindi or Urdu is selected, YOU MUST USE ROMAN ALPHABETS (English letters like A-Z). DO NOT USE Devanagari or Arabic scripts. Write it exactly how Gen-Z types on WhatsApp (e.g., "Bhai kya kar raha hai").
           2. LENGTH: Keep it short, punchy, and highly readable (max 2-3 lines).
           3. HUMOR: Level is ${memeHumorLevel}%. Match the vibe of ${memeType}. If it's a Roast, be savage. If Dad Joke, be corny.
           4. PLATFORM: Optimize for ${memePlatform} audience.
@@ -2200,8 +2200,7 @@ export default function App() {
         setIsMemeGenerating(true);
         setMemeLoadingText('Visualizing Humor...');
         try {
-          const cleanJoke = memeResult.joke.replace(/<[^>]*>?/gm, '');
-          const prompt = `A highly viral and funny meme image about "${memeTopic}". Visuals must clearly and hilariously represent this joke: "${cleanJoke}". Style: ${memeTemplate}. Make the image perfectly match the comedy without gibberish text.`;
+          const prompt = `A highly viral and funny meme image about "${memeTopic}". Visuals must clearly represent this comedy scenario. Style: ${memeTemplate}. CRITICAL: Do NOT write any text, letters, or words on the image. Zero text. Just the pure visual scene without any gibberish text.`;
           const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
           if (res.ok) {
             const blob = await res.blob();
