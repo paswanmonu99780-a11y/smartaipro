@@ -1828,18 +1828,50 @@ export default function App() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#050505] text-slate-200 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+      <div className="min-h-screen bg-[#050505] text-slate-200 flex items-center justify-center p-4 font-sans relative overflow-hidden perspective-[1000px]">
         {/* Cinematic Background */}
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-violet-600/10 rounded-full blur-[150px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-violet-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
+        
+        {/* Animated Particles */}
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ 
+                opacity: [0, 1, 0], 
+                scale: [0, 1.5, 0],
+                x: [Math.random() * 1000, Math.random() * 1000],
+                y: [Math.random() * 1000, Math.random() * 1000]
+              }}
+              transition={{ 
+                duration: 5 + Math.random() * 10, 
+                repeat: Infinity,
+                delay: Math.random() * 5
+              }}
+              className="absolute w-1 h-1 bg-white rounded-full"
+            />
+          ))}
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[440px] bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 sm:p-10 shadow-2xl backdrop-blur-3xl relative z-10 mx-auto">
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 shadow-2xl overflow-hidden group">
-               <Zap className="text-black w-8 h-8 fill-black group-hover:scale-110 transition-transform" />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Log in or sign up</h1>
-            <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-[280px]">You’ll get smarter responses and can upload files, images, and more.</p>
+        <motion.div 
+          initial={{ opacity: 0, y: 40, rotateX: 10 }} 
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          whileHover={{ scale: 1.01, rotateY: 2, rotateX: -2 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+          className="w-full max-w-[440px] bg-slate-900/40 border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5),0_0_20px_rgba(79,70,229,0.1)] backdrop-blur-3xl relative z-10 mx-auto"
+        >
+          <div className="flex flex-col items-center text-center mb-10">
+            <motion.div 
+              whileHover={{ rotateY: 180 }}
+              transition={{ duration: 0.6 }}
+              className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden group"
+            >
+               <Zap className="text-black w-8 h-8 fill-black" />
+            </motion.div>
+            <h1 className="text-3xl font-black tracking-tight text-white mb-2 uppercase italic italic">Neural <span className="font-light text-slate-500 not-italic">Identity</span></h1>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.4em] leading-relaxed max-w-[280px]">Access High-Level Intelligence</p>
           </div>
 
           {authError && (
@@ -1854,15 +1886,28 @@ export default function App() {
                 <>
                   {/* Social Logins */}
                   <div className="space-y-3">
-                    <button className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-xs hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5">
-                      <Globe className="w-4 h-4" /> Continue with Google
-                    </button>
-                    <button className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-xs hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5">
-                      <FastForward className="w-4 h-4" /> Continue with Apple
-                    </button>
-                    <button className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-xs hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5">
-                      <Mic2 className="w-4 h-4" /> Continue with Phone
-                    </button>
+                    {[
+                      { name: 'Continue with Google', icon: Globe },
+                      { name: 'Continue with Apple', icon: FastForward },
+                      { name: 'Continue with Phone', icon: Mic2 }
+                    ].map((btn, i) => (
+                      <motion.button 
+                        key={btn.name}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        onClick={() => {
+                          setIsAuthenticating(true);
+                          setTimeout(() => {
+                            setIsAuthenticating(false);
+                            setAuthError(`Social ${btn.name.split(' ')[2]} authentication is initializing in secure sandbox...`);
+                          }, 1500);
+                        }}
+                        className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5 border border-transparent hover:border-white/20"
+                      >
+                        <btn.icon className="w-4 h-4" /> {btn.name}
+                      </motion.button>
+                    ))}
                   </div>
 
                   <div className="flex items-center gap-4 py-2">
