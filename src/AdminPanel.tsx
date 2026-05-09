@@ -58,14 +58,20 @@ export default function AdminPanel() {
 
   const handleLogin = async () => {
     if (password.trim() === ADMIN_PASSWORD) {
-      const newSessionId = Math.random().toString(36).substring(2, 15);
-      await setAdminSession(newSessionId);
-      setLocalSessionId(newSessionId);
-      localStorage.setItem('smartai_admin_session_id', newSessionId);
-      localStorage.setItem('smartai_admin_session', 'active');
-      setIsLoggedIn(true);
-      setError('');
-      refreshData();
+      try {
+        const newSessionId = Math.random().toString(36).substring(2, 15);
+        await setAdminSession(newSessionId);
+        setLocalSessionId(newSessionId);
+        localStorage.setItem('smartai_admin_session_id', newSessionId);
+        localStorage.setItem('smartai_admin_session', 'active');
+        setIsLoggedIn(true);
+        setError('');
+        refreshData();
+      } catch (err: any) {
+        console.error('Admin login db error:', err);
+        setError('Database connection error. Please check your Supabase connection and RLS policies.');
+        alert('Database Error: ' + err.message);
+      }
     } else {
       setError('Invalid admin password');
     }

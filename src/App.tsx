@@ -25,9 +25,46 @@ const MOBILE_TABS = [
 ];
 
 const PLANS = [
-  { name: 'Basic', price: 'Free', features: ['100 Credits', 'Standard Response', '720p Energy'], color: 'slate-400' },
-  { name: 'Pro', price: 'â‚¹99', features: ['10,000 Credits', 'Expert Mode Enabled', '2K Intelligence'], color: 'indigo-500', popular: true },
-  { name: 'Ultra', price: 'â‚¹199', features: ['Unlimited Pixels', 'Zero Latency', '4K Imagination'], color: 'emerald-500' },
+  { 
+    name: 'Normal Mode', 
+    price: 'Free', 
+    features: [
+      '100 Daily Credits', 
+      'Standard AI Response', 
+      'Basic Image Generation', 
+      'Community Support',
+      'Normal Processing Speed'
+    ], 
+    color: 'slate-400' 
+  },
+  { 
+    name: 'Creative Mode', 
+    price: '₹99', 
+    features: [
+      '10,000 Monthly Credits', 
+      'Advanced Creative Tools', 
+      'HD Image Generation', 
+      'Priority Support',
+      'Creative AI Persona',
+      '2K Resolution Assets'
+    ], 
+    color: 'indigo-500', 
+    popular: true 
+  },
+  { 
+    name: 'Expert Mode', 
+    price: '₹199', 
+    features: [
+      'Unlimited AI Credits', 
+      'Full Expert Workspace', 
+      '4K/8K Video & Images', 
+      'API Integration Access',
+      'Custom AI Models',
+      'Real-Time Web Intelligence',
+      'Zero Latency Processing'
+    ], 
+    color: 'emerald-500' 
+  },
 ];
 
 const ASPECTS = ['1:1', '16:9', '9:16', '4:3'] as const;
@@ -491,7 +528,9 @@ export default function App() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setAuthError('Incorrect password or user not found');
+          setAuthError('User not found or incorrect password. If you just signed up, please check your email for a verification link.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setAuthError('Your email is not confirmed yet. Please check your inbox for the verification link or signup again.');
         } else {
           setAuthError(error.message);
         }
@@ -1091,137 +1130,170 @@ export default function App() {
     const categories = [
       {
         id: 'ailab',
-        title: 'AI Lab',
+        title: 'AI Intelligence Lab',
         icon: Mic2,
-        color: '#6366f1',
+        color: '#818cf8',
+        gradient: 'from-indigo-500/20 to-purple-500/20',
         tools: [
-          { name: 'Prompt Builder', desc: 'Craft powerful prompts with ease.', icon: MessageSquare },
-          { name: 'Memory', desc: 'Save and manage your conversations.', icon: Database },
-          { name: 'Custom Models', desc: 'Create and fine-tune your own models.', icon: Cpu },
-          { name: 'Knowledge', desc: 'Upload and manage your knowledge base.', icon: Book },
+          { name: 'Neural Prompt Builder', desc: 'Craft high-precision prompts for complex AI tasks.', icon: MessageSquare },
+          { name: 'Cognitive Memory', desc: 'Advanced long-term memory management for AI context.', icon: Database },
+          { name: 'Custom Model Forge', desc: 'Fine-tune and deploy specialized AI models.', icon: Cpu },
+          { name: 'Knowledge Synthesis', desc: 'Integrate deep knowledge bases into your AI workflows.', icon: Book },
         ]
       },
       {
         id: 'workflows',
-        title: 'Workflows',
+        title: 'Automated Workflows',
         icon: Workflow,
-        color: '#8b5cf6',
+        color: '#a78bfa',
+        gradient: 'from-purple-500/20 to-fuchsia-500/20',
         tools: [
-          { name: 'Create Workflow', desc: 'Design custom workflows visually.', icon: Network },
-          { name: 'If/Else Logic', desc: 'Add conditional logic to your workflows.', icon: GitBranch },
-          { name: 'Automation Triggers', desc: 'Set triggers and automate repetitive tasks.', icon: Zap },
+          { name: 'Workflow Architect', desc: 'Design complex multi-step automated processes.', icon: Network },
+          { name: 'Logic Engine', desc: 'Implement advanced conditional branching and triggers.', icon: GitBranch },
+          { name: 'Autonomous Triggers', desc: 'System-wide event monitoring and response.', icon: Zap },
         ]
       },
       {
         id: 'integrations',
-        title: 'Integrations',
+        title: 'Enterprise Integrations',
         icon: Link,
-        color: '#3b82f6',
+        color: '#60a5fa',
+        gradient: 'from-blue-500/20 to-cyan-500/20',
         tools: [
-          { name: 'API Keys', desc: 'Manage and generate your API keys.', icon: Key },
-          { name: 'Webhooks', desc: 'Send and receive real-time data.', icon: Webhook },
-          { name: 'Zapier', desc: 'Connect with 5000+ apps via Zapier.', icon: Zap },
-          { name: 'Connect Apps', desc: 'Integrate with your favorite applications.', icon: Layout },
+          { name: 'API Management', desc: 'Securely manage and rotate enterprise API keys.', icon: Key },
+          { name: 'Global Webhooks', desc: 'Real-time bidirectional data synchronization.', icon: Webhook },
+          { name: 'Connector Hub', desc: 'Seamlessly link 5000+ external applications.', icon: Layout },
+          { name: 'App Ecosystem', desc: 'Centralized control for all connected services.', icon: Link },
         ]
       },
       {
         id: 'devtools',
-        title: 'Dev Tools',
+        title: 'Developer Environment',
         icon: Code,
-        color: '#10b981',
+        color: '#34d399',
+        gradient: 'from-emerald-500/20 to-teal-500/20',
         tools: [
-          { name: 'Code Generator', desc: 'Generate code in multiple languages.', icon: Code },
-          { name: 'Debugger', desc: 'Debug and fix code in real-time.', icon: Bug },
-          { name: 'API Tester', desc: 'Test and validate your APIs easily.', icon: Server },
+          { name: 'Polyglot Generator', desc: 'High-performance code generation in 20+ languages.', icon: Code },
+          { name: 'Deep Debugger', desc: 'AI-driven semantic code analysis and debugging.', icon: Bug },
+          { name: 'API Validator', desc: 'Comprehensive testing suite for REST/GraphQL APIs.', icon: Server },
         ]
       },
       {
         id: 'datastudio',
-        title: 'Data Studio',
+        title: 'Advanced Data Studio',
         icon: BarChart3,
-        color: '#f59e0b',
+        color: '#fbbf24',
+        gradient: 'from-amber-500/20 to-orange-500/20',
         tools: [
-          { name: 'Upload CSV', desc: 'Import and manage your datasets.', icon: FileSpreadsheet },
-          { name: 'Charts', desc: 'Visualize your data beautifully.', icon: BarChart },
-          { name: 'Insights', desc: 'Get AI-powered insights from your data.', icon: Lightbulb },
-        ]
-      },
-      {
-        id: 'media',
-        title: 'Media Pro',
-        icon: Video,
-        color: '#ec4899',
-        tools: [
-          { name: 'Video AI', desc: 'Create and edit videos with AI.', icon: Play },
-          { name: 'Voice Studio', desc: 'Generate, clone and edit voices.', icon: Mic2 },
-        ]
-      },
-      {
-        id: 'control',
-        title: 'Control Center',
-        icon: Shield,
-        color: '#f43f5e',
-        tools: [
-          { name: 'Team Access', desc: 'Manage team members and permissions.', icon: Users },
-          { name: 'Logs', desc: 'View system logs and activity history.', icon: FileText },
-          { name: 'Privacy Mode', desc: 'Enhance privacy and data protection.', icon: LockIcon },
+          { name: 'Data Ingestor', desc: 'Large-scale dataset processing and management.', icon: FileSpreadsheet },
+          { name: 'Visual Intelligence', desc: 'Neural-powered dynamic data visualization.', icon: BarChart },
+          { name: 'Predictive Insights', desc: 'Advanced pattern recognition and forecasting.', icon: Lightbulb },
         ]
       },
     ];
 
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-[#050508]">
+      <div className="h-full flex flex-col overflow-hidden bg-slate-950 relative">
+        {/* Premium Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 blur-[100px] rounded-full" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+        </div>
+
         {/* Expert Header */}
-        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-          <div className="flex-1" />
-          <div className="px-6 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center gap-2 shadow-lg shadow-indigo-500/5">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">Expert Mode</span>
+        <div className="px-8 py-5 flex items-center justify-between bg-slate-900/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/20">
+              <Crown className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-white uppercase tracking-tighter">Expert Console</h2>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Neural Link Active</p>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 flex justify-end">
+          
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsPricingOpen(true)}
-              className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+              className="group relative px-6 py-2.5 bg-white text-black rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 overflow-hidden"
             >
-              <TrendingUp className="w-4 h-4" /> Upgrade
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              Upgrade Plan
+            </button>
+            <button onClick={() => setSmartMode('normal')} className="p-2.5 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all border border-white/5">
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Scrollable Dashboard */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
-          <div className="max-w-7xl mx-auto space-y-12">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 relative z-10">
+          <div className="max-w-7xl mx-auto space-y-16">
             {categories.map((cat, catIdx) => (
               <motion.div 
                 key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: catIdx * 0.1 }}
-                className="space-y-6"
+                className="space-y-8"
               >
-                {/* Category Label */}
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/10" style={{ color: cat.color }}>
-                    <cat.icon className="w-5 h-5" />
+                {/* Category Header */}
+                <div className="flex items-end justify-between border-b border-white/5 pb-4">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${cat.gradient} border border-white/10`} style={{ color: cat.color }}>
+                      <cat.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white tracking-tight">{cat.title}</h3>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Management Suite v2.0</p>
+                    </div>
                   </div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: cat.color }}>{cat.title}</h3>
+                  <div className="hidden md:block text-[9px] font-black text-slate-600 uppercase tracking-widest">
+                    {cat.tools.length} Sub-Modules Available
+                  </div>
                 </div>
 
                 {/* Tools Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {cat.tools.map((tool, toolIdx) => (
                     <motion.div
                       key={tool.name}
-                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.03)' }}
-                      className="group bg-[#0a0a0f] border border-white/5 rounded-2xl p-5 flex items-start gap-4 cursor-pointer transition-all hover:border-white/10"
+                      whileHover={{ y: -5, backgroundColor: 'rgba(255,255,255,0.04)' }}
+                      className="group relative bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 flex flex-col gap-6 cursor-pointer transition-all hover:border-indigo-500/30 overflow-hidden"
                     >
-                      <div className="p-3 rounded-xl bg-white/5 border border-white/5 group-hover:border-white/10 group-hover:bg-white/10 transition-all shrink-0">
-                        <tool.icon className="w-5 h-5 text-white/70 group-hover:text-white transition-colors" />
+                      {/* Card Glow */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-600/10 to-transparent blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
+                      <div className="flex items-start justify-between">
+                        <div className="p-4 rounded-2xl bg-slate-950 border border-white/5 group-hover:border-indigo-500/20 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all">
+                          <tool.icon className="w-6 h-6 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                          <ChevronRight className="w-4 h-4 text-white" />
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-white mb-1">{tool.name}</h4>
-                        <p className="text-[11px] text-slate-500 leading-normal line-clamp-2">{tool.desc}</p>
+
+                      <div className="space-y-2">
+                        <h4 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">{tool.name}</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors">{tool.desc}</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/50 transition-colors self-center shrink-0" />
+
+                      <div className="flex items-center gap-3 pt-2">
+                        <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: '100%' }}
+                            transition={{ duration: 1.5, delay: 0.5 + (toolIdx * 0.1) }}
+                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                          />
+                        </div>
+                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Active</span>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
@@ -1229,7 +1301,7 @@ export default function App() {
             ))}
 
             {/* Bottom Spacing */}
-            <div className="h-20" />
+            <div className="h-24" />
           </div>
         </div>
       </div>
