@@ -2200,7 +2200,8 @@ export default function App() {
         setIsMemeGenerating(true);
         setMemeLoadingText('Visualizing Humor...');
         try {
-          const prompt = `A funny meme image about ${memeTopic}. Style: ${memeTemplate}. Content: ${memeResult.joke}. Text should be clear and humor should be visual.`;
+          const cleanJoke = memeResult.joke.replace(/<[^>]*>?/gm, '');
+          const prompt = `A highly viral and funny meme image about "${memeTopic}". Visuals must clearly and hilariously represent this joke: "${cleanJoke}". Style: ${memeTemplate}. Make the image perfectly match the comedy without gibberish text.`;
           const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
           if (res.ok) {
             const blob = await res.blob();
@@ -2442,17 +2443,35 @@ export default function App() {
                        )}
                     </div>
 
-                    {/* Trending Sidebar */}
-                    <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4">
-                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">🔥 Trending Topics</h4>
-                       <div className="space-y-2">
-                         {['Cricket WC', 'AI Replacement', 'Monday Morning', 'GTA 6 Release', 'Crypto Life'].map(t => (
-                           <button key={t} onClick={() => setMemeTopic(t)} className="w-full p-3 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-xl text-left text-[11px] font-bold text-slate-400 hover:text-white transition-all flex items-center justify-between group">
-                             {t} <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                           </button>
-                         ))}
+                     {/* Trending Sidebar */}
+                     <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">🔥 Trending Topics</h4>
+                        <div className="space-y-2">
+                          {['Cricket WC', 'AI Replacement', 'Monday Morning', 'GTA 6 Release', 'Crypto Life'].map(t => (
+                            <button key={t} onClick={() => setMemeTopic(t)} className="w-full p-3 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-xl text-left text-[11px] font-bold text-slate-400 hover:text-white transition-all flex items-center justify-between group">
+                              {t} <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                            </button>
+                          ))}
+                        </div>
+                     </div>
+
+                     {/* Meme History */}
+                     {creativeHistory.filter(h => h.type === 'meme').length > 0 && (
+                       <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 max-h-[350px] overflow-y-auto no-scrollbar">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 flex items-center gap-2"><Clock className="w-3 h-3" /> History</h4>
+                          <div className="space-y-3">
+                            {creativeHistory.filter(h => h.type === 'meme').map((h, i) => (
+                              <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setMemeTopic(h.topic || ''); setMemeResult(h.result); }}>
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{h.topic}</span>
+                                  <span className="text-[8px] font-bold text-slate-500">{h.date}</span>
+                                </div>
+                                <p className="text-xs text-slate-300 italic line-clamp-2 group-hover:text-white transition-colors" dangerouslySetInnerHTML={{ __html: `"${h.result.joke}"` }} />
+                              </div>
+                            ))}
+                          </div>
                        </div>
-                    </div>
+                     )}
                   </div>
                 </div>
               </motion.div>
