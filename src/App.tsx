@@ -2277,14 +2277,12 @@ export default function App() {
 
           {/* Top Section */}
           <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
-            <div className="ml-8">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.3)]">
-                  <Zap className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 mb-1">
+                <button onClick={() => setCreativeSubTab('')} className="p-2.5 mr-2 bg-slate-900/50 hover:bg-indigo-500/20 border border-white/5 hover:border-indigo-500/50 rounded-xl text-slate-400 hover:text-indigo-400 transition-all group"><ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /></button>
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+                  <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Joke / <span className="text-indigo-400">Meme Ideas</span></h1>
-              </div>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Create viral jokes, funny memes & social media comedy instantly using AI.</p>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
                <button onClick={generateMeme} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-indigo-600/20">Generate</button>
@@ -2670,6 +2668,7 @@ export default function App() {
           <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
             <div className="md:ml-8">
               <div className="flex items-center gap-3 mb-1">
+                <button onClick={() => setCreativeSubTab('')} className="p-2.5 mr-2 bg-slate-900/50 hover:bg-purple-500/20 border border-white/5 hover:border-purple-500/50 rounded-xl text-slate-400 hover:text-purple-400 transition-all group"><ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /></button>
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,97,255,0.3)]">
                   <Lightbulb className="w-5 h-5 text-white" />
                 </div>
@@ -2841,7 +2840,7 @@ export default function App() {
 
                         {expandedIdeaContent && (
                           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-6 border-t border-white/5 space-y-6">
-                            {expandedIdeaContent.roadmap && (
+                            {expandedIdeaContent.roadmap && Array.isArray(expandedIdeaContent.roadmap) && (
                               <div className="bg-emerald-950/20 p-6 rounded-2xl border border-emerald-500/10">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Layout className="w-4 h-4" /> Expansion Roadmap</p>
                                 <ul className="space-y-3">
@@ -2851,7 +2850,7 @@ export default function App() {
                                 </ul>
                               </div>
                             )}
-                            {expandedIdeaContent.marketing && (
+                            {expandedIdeaContent.marketing && Array.isArray(expandedIdeaContent.marketing) && (
                               <div className="bg-purple-950/20 p-6 rounded-2xl border border-purple-500/10">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-4 flex items-center gap-2"><Share2 className="w-4 h-4" /> Marketing Strategy</p>
                                 <ul className="space-y-3">
@@ -3077,6 +3076,7 @@ export default function App() {
           <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-cyan-500/10 bg-[#0B1023]/60 backdrop-blur-2xl sticky top-0 z-40">
             <div className="md:ml-8">
               <div className="flex items-center gap-4 mb-2">
+                <button onClick={() => setCreativeSubTab('')} className="p-3 mr-2 bg-[#0B1023]/80 hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-400/50 rounded-2xl text-cyan-500/60 hover:text-cyan-400 transition-all group"><ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /></button>
                 <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.2)] border border-cyan-500/20">
                   <User className="w-6 h-6 text-white" />
                 </div>
