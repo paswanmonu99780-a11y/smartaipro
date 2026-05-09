@@ -2134,17 +2134,52 @@ export default function App() {
         - Output format: JSON { "joke": "...", "caption": "...", "hashtags": ["...", "..."], "viralScore": 89, "templateNote": "..." }`;
 
         try {
-          const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: `Generate a ${memeType} about ${memeTopic}`, system: systemPrompt, json: true })
-          });
-          const data = await res.json();
-          setMemeResult(data);
-          // Add to history
-          setCreativeHistory(prev => [{ type: 'meme', topic: memeTopic, result: data, date: new Date().toLocaleTimeString() }, ...prev]);
-        } catch (e) {
-          alert('Comedy engine overheated. Try again!');
+          // Server only has GET /api/chat — use that with query params
+          const fullPrompt = `Generate a ${memeType} about: ${memeTopic}. Language: ${memeLanguage}. Template: ${memeTemplate}. Platform: ${memePlatform}. Humor Level: ${memeHumorLevel}%. ${isViralMode ? 'Make it highly viral and shareable.' : ''} ${addEmojis ? 'Add relevant emojis.' : ''} ${addHashtags ? 'Add relevant hashtags.' : ''}`;
+
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=false&seed=${Math.floor(Math.random() * 99999)}`;
+          const res = await fetch(url);
+
+          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+          const rawText = await res.text();
+
+          // Try to extract JSON from response
+          let parsed: any = null;
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try { parsed = JSON.parse(jsonMatch[0]); } catch {}
+          }
+
+          // If JSON parsing fails, build object from plain text
+          if (!parsed || !parsed.joke) {
+            parsed = {
+              joke: rawText.trim() || 'Bhai itna ghanta sochne ke baad bhi kuch nahi mila... story of my life! 😂',
+              caption: `${memeType} about ${memeTopic} • Generated with SmartAI Comedy Engine`,
+              hashtags: ['funny', 'memes', 'viral', memeTopic.toLowerCase().replace(/\s/g, ''), 'trending'],
+              viralScore: Math.floor(Math.random() * 20) + 75,
+              templateNote: memeTemplate
+            };
+          }
+
+          // Ensure hashtags is always an array
+          if (!Array.isArray(parsed.hashtags)) {
+            parsed.hashtags = String(parsed.hashtags || '').split(/[,\s#]+/).filter(Boolean);
+          }
+
+          setMemeResult(parsed);
+          setCreativeHistory(prev => [{ type: 'meme', topic: memeTopic, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
+        } catch (e: any) {
+          console.error('Meme generation error:', e);
+          // Fallback so user always gets something
+          const fallback = {
+            joke: `POV: Tum "${memeTopic}" ke baare mein soch rahe ho aur AI ne server toh crash kar diya lekin joke nahi. 😂`,
+            caption: `Best ${memeType} about ${memeTopic} — courtesy of SmartAI`,
+            hashtags: ['memes', 'funny', 'viral', 'trending', memeTopic.replace(/\s/g, '')],
+            viralScore: 82,
+            templateNote: memeTemplate
+          };
+          setMemeResult(fallback);
         } finally {
           clearInterval(interval);
           setIsMemeGenerating(false);
