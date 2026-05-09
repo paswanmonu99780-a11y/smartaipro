@@ -256,6 +256,23 @@ export default function App() {
   const [expertSubTab, setExpertSubTab] = useState<string>('dashboard');
   const isExpertLocked = false;
 
+  // Meme Generator Specific State
+  const [memeTopic, setMemeTopic] = useState('');
+  const [memeType, setMemeType] = useState('Meme Idea');
+  const [memeHumorLevel, setMemeHumorLevel] = useState(50);
+  const [memePlatform, setMemePlatform] = useState('Instagram');
+  const [memeLanguage, setMemeLanguage] = useState('English');
+  const [memeTemplate, setMemeTemplate] = useState('POV Meme');
+  const [showAdvancedHumor, setShowAdvancedHumor] = useState(false);
+  const [isViralMode, setIsViralMode] = useState(true);
+  const [memeAudienceAge, setMemeAudienceAge] = useState('All');
+  const [addEmojis, setAddEmojis] = useState(true);
+  const [addHashtags, setAddHashtags] = useState(true);
+  const [isMemeGenerating, setIsMemeGenerating] = useState(false);
+  const [memeLoadingText, setMemeLoadingText] = useState('');
+  const [memeResult, setMemeResult] = useState<any>(null);
+  const [memeImagePreview, setMemeImagePreview] = useState<string | null>(null);
+
   useEffect(() => {
     const handleStorageChange = () => {
       setIsAdmin(localStorage.getItem('smartai_admin_session') === 'active');
@@ -2073,7 +2090,334 @@ export default function App() {
     finally { setIsAiThinking(false); }
   };
 
-  function renderCreativeDashboard() {
+    function renderMemeGenerator() {
+      const generateMeme = async () => {
+        if (!memeTopic.trim()) return;
+        setIsMemeGenerating(true);
+        setMemeLoadingText('Preparing Comedy Engine...');
+        
+        const loadingSteps = [
+          'Finding Viral Meme Ideas...',
+          'Cooking Funny Content...',
+          'Optimizing for Trends...',
+          'Injecting Humor...'
+        ];
+
+        let step = 0;
+        const interval = setInterval(() => {
+          if (step < loadingSteps.length) {
+            setMemeLoadingText(loadingSteps[step]);
+            step++;
+          }
+        }, 1200);
+
+        const systemPrompt = `You are a World-Class AI Comedy Writer and Meme Expert. Generate high-end, viral humor content. 
+        Topic: ${memeTopic}
+        Type: ${memeType}
+        Humor Level: ${memeHumorLevel}% (${memeHumorLevel > 75 ? 'Chaotic' : memeHumorLevel > 50 ? 'Crazy' : 'Funny'})
+        Platform: ${memePlatform}
+        Language: ${memeLanguage}
+        Template Style: ${memeTemplate}
+        Viral Mode: ${isViralMode ? 'ON (Maximum shareability, catchy hooks, trending structures)' : 'OFF'}
+        Audience: ${memeAudienceAge}
+        Add Emojis: ${addEmojis}
+        Add Hashtags: ${addHashtags}
+
+        RULES:
+        - Naturally adapt the language (e.g., use Hinglish or Roman Urdu slang correctly).
+        - Structure for the chosen template (Drake, POV, NPC, etc.).
+        - Include a Viral Score (0-100) based on trendiness.
+        - Output format: JSON { "joke": "...", "caption": "...", "hashtags": ["...", "..."], "viralScore": 89, "templateNote": "..." }`;
+
+        try {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: `Generate a ${memeType} about ${memeTopic}`, system: systemPrompt, json: true })
+          });
+          const data = await res.json();
+          setMemeResult(data);
+          // Add to history
+          setCreativeHistory(prev => [{ type: 'meme', topic: memeTopic, result: data, date: new Date().toLocaleTimeString() }, ...prev]);
+        } catch (e) {
+          alert('Comedy engine overheated. Try again!');
+        } finally {
+          clearInterval(interval);
+          setIsMemeGenerating(false);
+        }
+      };
+
+      const handleTurnIntoImage = async () => {
+        if (!memeResult) return;
+        setIsMemeGenerating(true);
+        setMemeLoadingText('Visualizing Humor...');
+        try {
+          const prompt = `A funny meme image about ${memeTopic}. Style: ${memeTemplate}. Content: ${memeResult.joke}. Text should be clear and humor should be visual.`;
+          const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
+          if (res.ok) {
+            const data = await res.json();
+            setMemeImagePreview(data.url);
+          }
+        } catch (e) { console.error(e); }
+        finally { setIsMemeGenerating(false); }
+      };
+
+      return (
+        <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
+          <AnimatePresence>
+            {isMemeGenerating && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+                <div className="relative">
+                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="w-32 h-32 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full" />
+                   <div className="absolute inset-0 flex items-center justify-center text-4xl">😂</div>
+                </div>
+                <motion.p key={memeLoadingText} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-xl font-black italic uppercase tracking-widest text-indigo-400">{memeLoadingText}</motion.p>
+                <div className="mt-4 flex gap-3">
+                  <span className="animate-bounce">🤣</span>
+                  <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>🔥</span>
+                  <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>🙌</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Top Section */}
+          <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
+            <div className="ml-8">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Joke / <span className="text-indigo-400">Meme Ideas</span></h1>
+              </div>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Create viral jokes, funny memes & social media comedy instantly using AI.</p>
+            </div>
+            <div className="flex gap-2 w-full md:w-auto">
+               <button onClick={generateMeme} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-indigo-600/20">Generate</button>
+               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><Save className="w-4 h-4" /></button>
+               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><RefreshCcw className="w-4 h-4" /></button>
+               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><Download className="w-4 h-4" /></button>
+            </div>
+          </div>
+
+          <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-10">
+            {/* Input Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Topic */}
+              <div className="md:col-span-2 lg:col-span-3 space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Comedy Topic</label>
+                <div className="relative group">
+                  <input 
+                    value={memeTopic} 
+                    onChange={e => setMemeTopic(e.target.value)} 
+                    placeholder="Try: School life, Exams, AI Memes, Desi Parents..." 
+                    className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-6 py-5 text-lg font-bold outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+                    {['Exams', 'Office', 'Gaming'].map(t => (
+                      <button key={t} onClick={() => setMemeTopic(t)} className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold text-slate-500 transition-colors border border-white/5">{t}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Selectors */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Content Type</label>
+                <select value={memeType} onChange={e => setMemeType(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                  {['Meme Idea', 'Dark Joke', 'Dad Joke', 'Roast', 'One-Liner', 'Sarcastic Joke', 'Relatable Meme', 'Gen-Z Humor', 'Desi Humor', 'Gaming Meme', 'TikTok Comedy', 'Instagram Meme'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Target Platform</label>
+                <select value={memePlatform} onChange={e => setMemePlatform(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                  {['Instagram', 'TikTok', 'Facebook', 'Twitter/X', 'Reddit', 'YouTube Shorts'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Meme Template</label>
+                <select value={memeTemplate} onChange={e => setMemeTemplate(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                  {['POV Meme', 'Drake Meme', 'NPC Meme', 'Sigma Meme', 'Chat Meme', 'WhatsApp Meme', 'Twitter Post Style'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Language</label>
+                <select value={memeLanguage} onChange={e => setMemeLanguage(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                  {['English', 'Hindi', 'Roman Urdu', 'Hinglish', 'Urdu'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Humor Level</label>
+                  <span className="text-[10px] font-black text-indigo-400">{memeHumorLevel}% - {memeHumorLevel > 75 ? 'Chaotic' : memeHumorLevel > 50 ? 'Crazy' : 'Funny'}</span>
+                </div>
+                <input type="range" min="0" max="100" value={memeHumorLevel} onChange={e => setMemeHumorLevel(parseInt(e.target.value))} className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+              </div>
+
+              <div className="flex items-center justify-center">
+                 <button onClick={() => setShowAdvancedHumor(!showAdvancedHumor)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-white transition-colors border border-indigo-500/20 px-6 py-4 rounded-2xl w-full justify-center bg-indigo-500/5">
+                   <Settings className="w-4 h-4" /> Advanced Humor Controls
+                 </button>
+              </div>
+            </div>
+
+            {/* Advanced Panel */}
+            <AnimatePresence>
+              {showAdvancedHumor && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023]/50 border border-white/5 rounded-3xl p-8 overflow-hidden">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                     <div className="space-y-2">
+                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Viral Optimization</label>
+                       <button onClick={() => setIsViralMode(!isViralMode)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${isViralMode ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                         {isViralMode ? 'ON' : 'OFF'}
+                       </button>
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Add Emojis</label>
+                       <button onClick={() => setAddEmojis(!addEmojis)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${addEmojis ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                         {addEmojis ? 'ON' : 'OFF'}
+                       </button>
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Auto Hashtags</label>
+                       <button onClick={() => setAddHashtags(!addHashtags)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${addHashtags ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                         {addHashtags ? 'ON' : 'OFF'}
+                       </button>
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Audience Age</label>
+                       <select value={memeAudienceAge} onChange={e => setMemeAudienceAge(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-2.5 text-[10px] font-black uppercase outline-none">
+                         {['All', 'Gen-Z', 'Millennial', 'Boomer'].map(o => <option key={o} value={o}>{o}</option>)}
+                       </select>
+                     </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Big Generate Button */}
+            <div className="flex justify-center pt-6">
+              <motion.button 
+                whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(79,70,229,0.4)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={generateMeme}
+                disabled={!memeTopic.trim()}
+                className="group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-700 px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-2xl disabled:opacity-50 transition-all"
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10 flex items-center gap-3">
+                   <Sparkles className="w-5 h-5 animate-pulse" /> GENERATE MEME IDEAS
+                </div>
+              </motion.button>
+            </div>
+
+            {/* Results Section */}
+            {memeResult && (
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
+                <div className="flex items-center gap-3">
+                   <div className="h-[1px] flex-1 bg-white/5" />
+                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">AI COMEDY OUTPUT</h3>
+                   <div className="h-[1px] flex-1 bg-white/5" />
+                </div>
+
+                <div className="grid md:grid-cols-5 gap-8 items-start">
+                  <div className="md:col-span-3 space-y-6">
+                    <div className="bg-[#0B1023] border border-indigo-500/20 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-100 transition-opacity">
+                         <Quote className="w-12 h-12 text-indigo-500" />
+                       </div>
+                       <div className="relative z-10 space-y-6">
+                          <div className="flex justify-between items-center">
+                            <span className="px-4 py-1.5 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">{memeType}</span>
+                            <div className="flex items-center gap-2 text-amber-400 font-black text-xs italic">
+                               🔥 Viral Score: {memeResult.viralScore}/100
+                            </div>
+                          </div>
+                          
+                          <p className="text-2xl md:text-3xl font-bold leading-tight italic text-white/90">"{memeResult.joke}"</p>
+                          
+                          {memeResult.caption && (
+                            <div className="pt-6 border-t border-white/5 space-y-2">
+                              <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Recommended Caption</span>
+                              <p className="text-slate-400 text-sm leading-relaxed">{memeResult.caption}</p>
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap gap-2 pt-4">
+                            {memeResult.hashtags?.map((h: string) => (
+                              <span key={h} className="text-xs font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer">#{h.replace('#', '')}</span>
+                            ))}
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Result Actions */}
+                    <div className="flex flex-wrap gap-3">
+                       <button onClick={() => copyToClipboard(memeResult.joke, 'text')} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
+                         <Copy className="w-4 h-4" /> {copiedText ? 'Copied' : 'Copy Text'}
+                       </button>
+                       <button onClick={generateMeme} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
+                         <RefreshCcw className="w-4 h-4" /> Regenerate
+                       </button>
+                       <button onClick={handleTurnIntoImage} className="flex-[2] min-w-[200px] bg-indigo-600 hover:bg-indigo-500 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20">
+                         <ImageIcon className="w-4 h-4" /> Turn Into Meme Image
+                       </button>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-6">
+                    {/* Meme Image Preview */}
+                    <div className="aspect-square bg-[#0B1023] border border-white/5 rounded-[2rem] overflow-hidden relative shadow-2xl group">
+                       {memeImagePreview ? (
+                         <>
+                           <img src={memeImagePreview} alt="Meme" className="w-full h-full object-cover" />
+                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button onClick={() => window.open(memeImagePreview, '_blank')} className="bg-white text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl">Download HD</button>
+                           </div>
+                         </>
+                       ) : (
+                         <div className="w-full h-full flex flex-col items-center justify-center p-10 text-center space-y-4">
+                            <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-white/5">
+                               <ImageIcon className="w-8 h-8 text-slate-700" />
+                            </div>
+                            <div>
+                               <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">No Image Yet</p>
+                               <p className="text-[9px] text-slate-700">Click 'Turn Into Meme Image' to visualize this joke.</p>
+                            </div>
+                         </div>
+                       )}
+                    </div>
+
+                    {/* Trending Sidebar */}
+                    <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4">
+                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">🔥 Trending Topics</h4>
+                       <div className="space-y-2">
+                         {['Cricket WC', 'AI Replacement', 'Monday Morning', 'GTA 6 Release', 'Crypto Life'].map(t => (
+                           <button key={t} onClick={() => setMemeTopic(t)} className="w-full p-3 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-xl text-left text-[11px] font-bold text-slate-400 hover:text-white transition-all flex items-center justify-between group">
+                             {t} <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                           </button>
+                         ))}
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Footer Branding */}
+          <div className="text-center py-10 opacity-20">
+             <p className="text-[10px] font-black uppercase tracking-[0.6em]">SmartAI Comedy Engine v9.0</p>
+          </div>
+        </div>
+      );
+    }
+
+    function renderCreativeDashboard() {
     const categories = [
       {
         name: "Content Creation Tools",
@@ -2123,6 +2467,15 @@ export default function App() {
       }
     ];
 
+    const handleSelectTool = (toolId: string) => {
+      setCreativeSubTab(toolId);
+      setCreativeToolResult('');
+      setMemeResult(null);
+      setMemeImagePreview(null);
+    };
+
+    if (creativeSubTab === 'joke') return renderMemeGenerator();
+
     return (
       <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar">
         {/* Compact Header Section */}
@@ -2161,6 +2514,7 @@ export default function App() {
                 {cat.tools.map((tool, tIdx) => (
                   <motion.button
                     key={tIdx}
+                    onClick={() => handleSelectTool(tool.id || tool.name.toLowerCase().replace(/ /g, ''))}
                     whileHover={{ scale: 1.02, y: -4 }}
                     className="group bg-slate-900/40 border border-slate-800/60 hover:border-indigo-500/50 p-6 rounded-2xl text-left transition-all relative overflow-hidden h-full flex flex-col justify-between"
                   >
