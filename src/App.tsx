@@ -183,6 +183,9 @@ export default function App() {
   const [signupName, setSignupName] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [signupReferCode, setSignupReferCode] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneStep, setPhoneStep] = useState<'input' | 'otp'>('input');
+  const [countdown, setCountdown] = useState(0);
 
   const [showPassword, setShowPassword] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -489,22 +492,26 @@ export default function App() {
     syncUsersToSupabase(users).catch(e => console.error("Sync error:", e));
   };
 
-  const sendOtp = async (type: 'login' | 'signup') => {
+  const sendOtp = async (type: 'login' | 'signup' | 'phone') => {
     setIsAuthenticating(true);
-    const target = email;
-
+    setAuthError(null);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: target,
-        options: {
-          shouldCreateUser: type === 'signup',
-          data: type === 'signup' ? { displayName: signupName } : undefined
-        }
-      });
-
-      if (error) {
-        setAuthError(error.message);
+      if (type === 'phone') {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: phoneNumber,
+        });
+        if (error) throw error;
+        setPhoneStep('otp');
+        setCountdown(30);
       } else {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            shouldCreateUser: type === 'signup',
+            data: type === 'signup' ? { displayName: signupName } : undefined
+          }
+        });
+        if (error) throw error;
         setIsVerifyingOtp(true);
         setOtpType(type);
       }
@@ -514,6 +521,30 @@ export default function App() {
       setIsAuthenticating(false);
     }
   };
+
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    setIsAuthenticating(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setAuthError(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login failed. Please try again.`);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1833,158 +1864,158 @@ export default function App() {
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-violet-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
         
-        {/* Animated Particles */}
-        <div className="absolute inset-0 pointer-events-none opacity-20">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ 
-                opacity: [0, 1, 0], 
-                scale: [0, 1.5, 0],
-                x: [Math.random() * 1000, Math.random() * 1000],
-                y: [Math.random() * 1000, Math.random() * 1000]
-              }}
-              transition={{ 
-                duration: 5 + Math.random() * 10, 
-                repeat: Infinity,
-                delay: Math.random() * 5
-              }}
-              className="absolute w-1 h-1 bg-white rounded-full"
-            />
-          ))}
-        </div>
-
         <motion.div 
           initial={{ opacity: 0, y: 40, rotateX: 10 }} 
           animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          whileHover={{ scale: 1.01, rotateY: 2, rotateX: -2 }}
-          transition={{ type: "spring", stiffness: 100, damping: 20 }}
-          className="w-full max-w-[440px] bg-slate-900/40 border border-white/10 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5),0_0_20px_rgba(79,70,229,0.1)] backdrop-blur-3xl relative z-10 mx-auto"
+          className="w-full max-w-[420px] bg-slate-900/40 border border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative z-10 mx-auto"
         >
-          <div className="flex flex-col items-center text-center mb-10">
+          <div className="flex flex-col items-center text-center mb-8">
             <motion.div 
               whileHover={{ rotateY: 180 }}
-              transition={{ duration: 0.6 }}
-              className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden group"
+              className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl"
             >
-               <Zap className="text-black w-8 h-8 fill-black" />
+               <Zap className="text-black w-7 h-7 fill-black" />
             </motion.div>
-            <h1 className="text-3xl font-black tracking-tight text-white mb-2 uppercase italic italic">Neural <span className="font-light text-slate-500 not-italic">Identity</span></h1>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.4em] leading-relaxed max-w-[280px]">Access High-Level Intelligence</p>
+            <h1 className="text-2xl font-black text-white mb-1">Welcome Back</h1>
+            <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Login securely to continue.</p>
           </div>
 
           {authError && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-[11px] font-bold text-center">
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[10px] font-bold text-center uppercase tracking-widest leading-relaxed">
               {authError}
             </motion.div>
           )}
 
-          {isVerifyingOtp ? renderOtpScreen() : (
-            <div className="space-y-4">
-              {authMode === 'login' ? (
-                <>
-                  {/* Social Logins */}
-                  <div className="space-y-3">
-                    {[
-                      { name: 'Continue with Google', icon: Globe },
-                      { name: 'Continue with Apple', icon: FastForward },
-                      { name: 'Continue with Phone', icon: Mic2 }
-                    ].map((btn, i) => (
-                      <motion.button 
-                        key={btn.name}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        onClick={() => {
-                          setIsAuthenticating(true);
-                          setTimeout(() => {
-                            setIsAuthenticating(false);
-                            setAuthError(`Social ${btn.name.split(' ')[2]} authentication is initializing in secure sandbox...`);
-                          }, 1500);
-                        }}
-                        className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5 border border-transparent hover:border-white/20"
-                      >
-                        <btn.icon className="w-4 h-4" /> {btn.name}
-                      </motion.button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-4 py-2">
-                    <div className="h-[1px] flex-1 bg-white/10" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">OR</span>
-                    <div className="h-[1px] flex-1 bg-white/10" />
-                  </div>
-
-                  {/* Email Form */}
-                  <div className="space-y-3">
-                    <input 
-                      type="email" 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      placeholder="Email address"
-                      className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 font-medium text-sm"
-                    />
-                    <button 
-                      onClick={() => {
-                        if (!email) { setAuthError('Please enter your email'); return; }
-                        setOtpType('login');
-                        sendOtp('login').catch(() => {});
-                      }}
-                      disabled={isAuthenticating}
-                      className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20 disabled:opacity-50"
-                    >
-                      {isAuthenticating ? 'Sending OTP...' : 'Continue'}
+          <div className="space-y-4">
+            {isVerifyingOtp ? renderOtpScreen() : (
+              <>
+                {authMode === 'login' && (
+                  <div className="space-y-4">
+                    <button onClick={() => handleSocialLogin('google')} className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg border border-transparent">
+                      <Globe className="w-4 h-4" /> Continue with Google
                     </button>
-                  </div>
+                    <button onClick={() => handleSocialLogin('apple')} className="w-full h-12 bg-black text-white rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all active:scale-[0.98] shadow-lg border border-white/5">
+                      <FastForward className="w-4 h-4" /> Continue with Apple
+                    </button>
+                    <button onClick={() => setAuthMode('phone')} className="w-full h-12 bg-slate-800 text-white rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-700 transition-all active:scale-[0.98] shadow-lg">
+                      <Mic2 className="w-4 h-4" /> Continue with Phone
+                    </button>
 
-                  <div className="text-center pt-2">
-                     <p className="text-[10px] text-slate-500 font-medium">Don't have an account? <button onClick={() => setAuthMode('signup')} className="text-indigo-400 hover:underline font-bold">Sign up</button></p>
-                  </div>
-                </>
-              ) : authMode === 'signup' ? (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-white text-center">Create your account</h2>
-                  <div className="space-y-3">
-                    <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} placeholder="Full Name" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                    <div className="grid grid-cols-2 gap-2">
-                       <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                       <input type="password" value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} placeholder="Confirm" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                    <div className="flex items-center gap-4 py-2">
+                      <div className="h-[1px] flex-1 bg-white/10" />
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">OR</span>
+                      <div className="h-[1px] flex-1 bg-white/10" />
                     </div>
-                    <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} placeholder="Referral Code (Optional)" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm uppercase" />
-                  </div>
-                  <button 
-                    onClick={handleSignup}
-                    disabled={isAuthenticating}
-                    className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20 disabled:opacity-50"
-                  >
-                    {isAuthenticating ? 'Creating account...' : 'Continue'}
-                  </button>
-                  <div className="text-center pt-2">
-                     <p className="text-[10px] text-slate-500 font-medium">Already have an account? <button onClick={() => setAuthMode('login')} className="text-indigo-400 hover:underline font-bold">Log in</button></p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-white text-center">Reset Password</h2>
-                  {forgotPasswordStep === 'email' && (
-                    <div className="space-y-3">
-                      <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="Enter your email" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                      <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98]">
-                        {isAuthenticating ? 'Sending...' : 'Send OTP'}
+
+                    <form onSubmit={handleLogin} className="space-y-3">
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 font-medium text-sm" />
+                      <div className="relative">
+                        <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 pr-12 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-4 h-4" /></button>
+                      </div>
+                      <button type="submit" disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20 disabled:opacity-50 mt-2">
+                        {isAuthenticating ? 'Logging in...' : 'Login'}
                       </button>
+                    </form>
+
+                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">
+                      <button onClick={() => setAuthMode('signup')} className="hover:text-white transition-colors">Create Account</button>
+                      <button onClick={() => setAuthMode('forgot')} className="hover:text-white transition-colors">Forgot Password?</button>
                     </div>
-                  )}
-                  {/* (Rest of forgot password logic handled by separate screens if needed, but we keep it simple) */}
-                  <button onClick={() => setAuthMode('login')} className="w-full text-center text-[10px] text-slate-500 hover:text-white uppercase tracking-widest font-bold transition-colors">Back to Login</button>
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+
+                {authMode === 'signup' && (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-white text-center">Join SmartAI Pro</h2>
+                    <div className="space-y-3">
+                      <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} placeholder="Full Name" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                        <input type="password" value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} placeholder="Confirm" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                      </div>
+                      <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} placeholder="Referral Code (Optional)" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm uppercase" />
+                    </div>
+                    <button onClick={handleSignup} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20 disabled:opacity-50">
+                      {isAuthenticating ? 'Initializing...' : 'Continue'}
+                    </button>
+                    <div className="text-center">
+                       <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
+                    </div>
+                  </div>
+                )}
+
+                {authMode === 'phone' && (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-white text-center">{phoneStep === 'input' ? 'Phone Login' : 'Verify Identity'}</h2>
+                    {phoneStep === 'input' ? (
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <select className="bg-slate-950/50 border border-white/10 rounded-xl px-3 text-white outline-none text-xs font-bold">
+                            <option value="+91">+91 (IN)</option>
+                            <option value="+1">+1 (US)</option>
+                          </select>
+                          <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="Phone number" className="flex-1 h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                        </div>
+                        <button onClick={() => sendOtp('phone')} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] disabled:opacity-50">
+                          {isAuthenticating ? 'Sending OTP...' : 'Send OTP'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 text-center">
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Enter 6-digit code sent to {phoneNumber}</p>
+                        <div className="flex justify-between gap-2">
+                          {otp.map((digit, i) => (
+                            <input key={i} id={`phone-otp-${i}`} type="text" maxLength={1} value={digit} onChange={(e) => {
+                              const val = e.target.value;
+                              if (/^\d*$/.test(val)) {
+                                const newOtp = [...otp];
+                                newOtp[i] = val;
+                                setOtp(newOtp);
+                                if (val && i < 5) document.getElementById(`phone-otp-${i + 1}`)?.focus();
+                              }
+                            }} className="w-10 h-12 bg-slate-950 border border-white/10 rounded-xl text-center text-lg font-bold text-white focus:border-indigo-500 outline-none transition-all shadow-inner" />
+                          ))}
+                        </div>
+                        <button onClick={handleOtpVerify} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20">
+                          {isAuthenticating ? 'Verifying...' : 'Verify OTP'}
+                        </button>
+                        <div className="flex flex-col gap-2 pt-2">
+                          <button disabled={countdown > 0} onClick={() => sendOtp('phone')} className={`text-[9px] font-bold uppercase tracking-widest ${countdown > 0 ? 'text-slate-700' : 'text-slate-500 hover:text-white'}`}>
+                            {countdown > 0 ? `Resend in ${countdown}s` : 'Resend OTP'}
+                          </button>
+                          <button onClick={() => setPhoneStep('input')} className="text-[9px] text-slate-500 hover:text-white font-bold uppercase tracking-widest">Change Number</button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="text-center pt-2">
+                       <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
+                    </div>
+                  </div>
+                )}
+
+                {authMode === 'forgot' && (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-white text-center">Reset Access</h2>
+                    <div className="space-y-3">
+                       <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="Recovery email" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                       <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
+                         {isAuthenticating ? 'Sending...' : 'Send Recovery Link'}
+                       </button>
+                    </div>
+                    <div className="text-center">
+                       <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </motion.div>
       </div>
     );
+  }
   }
 
   const handleEnhanceCreativePrompt = async () => {
