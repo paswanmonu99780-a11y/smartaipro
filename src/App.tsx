@@ -295,6 +295,30 @@ export default function App() {
   const [ideaResult, setIdeaResult] = useState<any>(null);
   const [expandedIdeaContent, setExpandedIdeaContent] = useState<any>(null);
 
+  // AI Character Creator Specific State
+  const [charType, setCharType] = useState('Anime Character');
+  const [charName, setCharName] = useState('');
+  const [charGender, setCharGender] = useState('Random');
+  const [charPersonality, setCharPersonality] = useState('Mysterious');
+  const [charStyle, setCharStyle] = useState('Cyberpunk');
+  const [charPowers, setCharPowers] = useState('');
+  const [charBackstory, setCharBackstory] = useState('Hero Journey');
+  const [charShowAdvanced, setCharShowAdvanced] = useState(false);
+  const [charVoice, setCharVoice] = useState(false);
+  const [charWeaknesses, setCharWeaknesses] = useState(true);
+  const [charCatchphrase, setCharCatchphrase] = useState(true);
+  const [charRelationships, setCharRelationships] = useState(false);
+  const [charRival, setCharRival] = useState(false);
+  const [charSecretAbility, setCharSecretAbility] = useState(false);
+  const [charStats, setCharStats] = useState(true);
+  const [charEmotionalDepth, setCharEmotionalDepth] = useState(false);
+  const [isCharGenerating, setIsCharGenerating] = useState(false);
+  const [charLoadingText, setCharLoadingText] = useState('');
+  const [charResult, setCharResult] = useState<any>(null);
+  const [charImagePreview, setCharImagePreview] = useState<string | null>(null);
+  const [charDialogue, setCharDialogue] = useState<string[] | null>(null);
+  const [charStoryExpansion, setCharStoryExpansion] = useState<any>(null);
+
   useEffect(() => {
     const handleStorageChange = () => {
       setIsAdmin(localStorage.getItem('smartai_admin_session') === 'active');
@@ -2891,6 +2915,452 @@ export default function App() {
       );
     }
 
+    function renderCharacterCreator() {
+      const generateCharacter = async () => {
+        setIsCharGenerating(true);
+        setCharLoadingText('Building AI Character...');
+        
+        const loadingSteps = [
+          'Generating Personality Matrix...',
+          'Creating Digital Identity...',
+          'Writing Backstory...',
+          'Finalizing Character Core...'
+        ];
+
+        let step = 0;
+        const interval = setInterval(() => {
+          if (step < loadingSteps.length) {
+            setCharLoadingText(loadingSteps[step]);
+            step++;
+          }
+        }, 1000);
+
+        const systemPrompt = `You are an elite Character Designer and World Builder AI. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
+        Format: {
+          "name": "...",
+          "personality": "...",
+          "appearance": "...",
+          "abilities": ["...", "..."],
+          "backstory": "...",
+          "catchphrase": "...",
+          "stats": {"power": 85, "intelligence": 90, "speed": 75, "charisma": 80, "dangerLevel": 88},
+          "weaknesses": ["...", "..."]
+        }`;
+
+        const fullPrompt = `Create an epic, original ${charType}.
+        Name: ${charName || 'Generate a cool, unique name'}.
+        Gender: ${charGender}. Personality: ${charPersonality}.
+        Visual Style: ${charStyle}. 
+        Powers/Abilities: ${charPowers || 'Generate unique abilities matching the type'}.
+        Backstory Theme: ${charBackstory}.
+        Advanced: ${charWeaknesses ? 'Include specific weaknesses.' : ''} ${charCatchphrase ? 'Include a memorable catchphrase.' : ''}`;
+
+        try {
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+          
+          const rawText = await res.text();
+          let parsed: any = null;
+          const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try { parsed = JSON.parse(jsonMatch[0]); } catch {}
+          }
+
+          if (!parsed || !parsed.name) {
+            parsed = {
+              name: charName || "ShadowX",
+              personality: charPersonality,
+              appearance: "Dark clothing with neon accents.",
+              abilities: ["Stealth", "Agility"],
+              backstory: "Generated from the void.",
+              catchphrase: "I am the shadow.",
+              stats: {power: 80, intelligence: 80, speed: 80, charisma: 80, dangerLevel: 80},
+              weaknesses: ["Light"]
+            };
+          }
+
+          setCharResult(parsed);
+          setCharImagePreview(null);
+          setCharDialogue(null);
+          setCharStoryExpansion(null);
+          setCreativeHistory(prev => [{ type: 'character', topic: parsed.name, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          clearInterval(interval);
+          setIsCharGenerating(false);
+        }
+      };
+
+      const handleCharImage = async () => {
+        if (!charResult) return;
+        setIsCharGenerating(true);
+        setCharLoadingText('Visualizing Character Appearance...');
+        try {
+          const prompt = `A breathtaking, cinematic masterpiece portrait of a ${charType} named ${charResult.name}. Style: ${charStyle}. Gender: ${charGender}. Appearance: ${charResult.appearance}. Extremely detailed, 8k resolution, dramatic lighting. CRITICAL: NO TEXT, NO WATERMARKS.`;
+          const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
+          if (res.ok) {
+            const blob = await res.blob();
+            setCharImagePreview(URL.createObjectURL(blob));
+          }
+        } catch (e) { console.error(e); }
+        finally { setIsCharGenerating(false); }
+      };
+
+      const handleGenerateDialogue = async () => {
+        if (!charResult) return;
+        setIsCharGenerating(true);
+        setCharLoadingText('Simulating Dialogue...');
+        try {
+          const systemPrompt = "Return valid JSON only. Format: { \"dialogues\": [\"...\", \"...\"] }";
+          const fullPrompt = `Generate 4 highly emotional, cinematic, and in-character quotes/dialogues for this character: ${charResult.name}, who is a ${charPersonality} ${charType} with this backstory: ${charResult.backstory}.`;
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const rawText = await res.text();
+            let parsed = null;
+            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
+            if (parsed) setCharDialogue(parsed.dialogues);
+          }
+        } catch (e) { console.error(e); }
+        finally { setIsCharGenerating(false); }
+      };
+
+      const handleExpandStory = async () => {
+        if (!charResult) return;
+        setIsCharGenerating(true);
+        setCharLoadingText('Building Universe & Lore...');
+        try {
+          const systemPrompt = "Return valid JSON only. Format: { \"world\": \"...\", \"enemies\": [\"...\"], \"allies\": [\"...\"], \"currentMission\": \"...\" }";
+          const fullPrompt = `Expand the universe for ${charResult.name}, a ${charType} with backstory: ${charResult.backstory}.`;
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const rawText = await res.text();
+            let parsed = null;
+            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
+            if (parsed) setCharStoryExpansion(parsed);
+          }
+        } catch (e) { console.error(e); }
+        finally { setIsCharGenerating(false); }
+      };
+
+      return (
+        <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
+          <AnimatePresence>
+            {isCharGenerating && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+                <div className="relative">
+                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="w-48 h-48 border-[1px] border-cyan-500/30 border-t-cyan-400 rounded-full" />
+                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="absolute inset-4 border-2 border-purple-500/20 border-b-purple-500 rounded-full" />
+                   <div className="absolute inset-0 flex items-center justify-center">
+                      <User className="w-16 h-16 text-cyan-400 animate-pulse drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]" />
+                   </div>
+                </div>
+                <motion.p key={charLoadingText} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-10 text-xl font-black italic uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">{charLoadingText}</motion.p>
+                <div className="mt-8 flex gap-3">
+                   {[...Array(7)].map((_, i) => (
+                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.15 }} className="w-1.5 h-1.5 bg-cyan-400 shadow-[0_0_10px_#22d3ee] rotate-45" />
+                   ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Top Section */}
+          <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-cyan-500/10 bg-[#0B1023]/60 backdrop-blur-2xl sticky top-0 z-40">
+            <div className="md:ml-8">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.2)] border border-cyan-500/20">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-100">AI Character <span className="text-cyan-400">Creator</span></h1>
+              </div>
+              <p className="text-cyan-500/60 text-xs font-black uppercase tracking-[0.2em] mt-1 ml-16">Create unique AI personalities & digital identities.</p>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
+               <button onClick={generateCharacter} className="flex-1 md:flex-none bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]">Generate</button>
+               <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"><Save className="w-4 h-4" /></button>
+               <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"><Download className="w-4 h-4" /></button>
+            </div>
+          </div>
+
+          <div className="max-w-[1600px] mx-auto p-6 md:p-10 grid xl:grid-cols-3 gap-10">
+            {/* Left Column: Inputs */}
+            <div className="xl:col-span-2 space-y-8">
+              
+              <div className="grid md:grid-cols-2 gap-6 bg-[#0B1023] p-8 rounded-[2rem] border border-cyan-500/10 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
+                
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Character Type</label>
+                  <select value={charType} onChange={e => setCharType(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                    {['Anime Character', 'Game Character', 'Superhero', 'Villain', 'Sci-Fi Character', 'Fantasy Character', 'AI Robot', 'Influencer Persona', 'YouTuber Character', 'Cartoon Character', 'Virtual Partner', 'Story Character', 'Cyberpunk Character', 'Horror Character', 'Warrior', 'Detective'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Character Name (Optional)</label>
+                  <input value={charName} onChange={e => setCharName(e.target.value)} placeholder="e.g. ShadowX, Zara, Nova..." className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-700" />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Gender</label>
+                  <select value={charGender} onChange={e => setCharGender(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                    {['Male', 'Female', 'Non-Binary', 'Random'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Personality Matrix</label>
+                  <select value={charPersonality} onChange={e => setCharPersonality(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                    {['Funny', 'Cold', 'Smart', 'Evil', 'Friendly', 'Romantic', 'Mysterious', 'Aggressive', 'Loyal', 'Chaotic', 'Confident', 'Genius', 'Calm'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Visual Style</label>
+                  <select value={charStyle} onChange={e => setCharStyle(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                    {['Realistic', 'Anime', 'Cartoon', 'Cyberpunk', 'Futuristic', 'Pixar Style', 'Dark Fantasy', 'Neon Style', 'Medieval', 'Sci-Fi'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Backstory Theme</label>
+                  <select value={charBackstory} onChange={e => setCharBackstory(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                    {['Hero Journey', 'Tragic Past', 'Revenge Story', 'Lost Memory', 'AI Experiment', 'Alien Origin', 'Secret Agent', 'Kingdom Warrior', 'Hacker Legend'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2 space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Powers & Abilities (Optional)</label>
+                  <input value={charPowers} onChange={e => setCharPowers(e.target.value)} placeholder="e.g. Time control, Hacking, Super speed..." className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-700" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center">
+                 <button onClick={() => setCharShowAdvanced(!charShowAdvanced)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors border border-cyan-500/20 px-8 py-4 rounded-2xl w-full justify-center bg-cyan-500/5 shadow-[0_0_20px_rgba(34,211,238,0.05)]">
+                   <Settings className="w-4 h-4" /> Advanced Character Controls
+                 </button>
+              </div>
+
+              <AnimatePresence>
+                {charShowAdvanced && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023] border border-cyan-500/10 rounded-[2rem] p-8 overflow-hidden">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      {[
+                        { state: charVoice, setter: setCharVoice, label: 'Voice Style' },
+                        { state: charWeaknesses, setter: setCharWeaknesses, label: 'Weaknesses' },
+                        { state: charCatchphrase, setter: setCharCatchphrase, label: 'Catchphrase' },
+                        { state: charRelationships, setter: setCharRelationships, label: 'Relationships' },
+                        { state: charRival, setter: setCharRival, label: 'Rival Character' },
+                        { state: charSecretAbility, setter: setCharSecretAbility, label: 'Secret Ability' },
+                        { state: charStats, setter: setCharStats, label: 'Character Stats' },
+                        { state: charEmotionalDepth, setter: setCharEmotionalDepth, label: 'Emotional Depth' },
+                      ].map((opt, i) => (
+                         <div key={i} className="space-y-2">
+                           <label className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.2em] block ml-1">{opt.label}</label>
+                           <button onClick={() => opt.setter(!opt.state)} className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${opt.state ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-slate-900 text-slate-500 border border-white/5'}`}>
+                             {opt.state ? 'ACTIVE' : 'OFF'}
+                           </button>
+                         </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex justify-center pt-4">
+                <motion.button 
+                  whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(34,211,238,0.4)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={generateCharacter}
+                  className="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-purple-600 px-16 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all w-full md:w-auto"
+                >
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative z-10 flex items-center justify-center gap-4 text-white">
+                     <User className="w-5 h-5 animate-pulse" /> GENERATE CHARACTER
+                  </div>
+                </motion.button>
+              </div>
+
+              {charResult && (
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-8">
+                  <div className="bg-[#0B1023] border border-cyan-500/20 rounded-[2rem] p-8 md:p-10 shadow-[0_0_50px_rgba(34,211,238,0.1)] relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[150px] rounded-full pointer-events-none" />
+                     <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none" />
+                     
+                     <div className="relative z-10 space-y-8">
+                        <div className="flex flex-col md:flex-row gap-10">
+                           {/* Left side: Preview/Image */}
+                           <div className="w-full md:w-1/3 flex flex-col gap-4">
+                              <div className="aspect-[3/4] bg-slate-950 rounded-3xl border border-cyan-500/20 shadow-[0_0_30px_rgba(34,211,238,0.1)] relative overflow-hidden group">
+                                 {charImagePreview ? (
+                                   <img src={charImagePreview} alt="Character" className="w-full h-full object-cover" />
+                                 ) : (
+                                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                                      <User className="w-16 h-16 text-cyan-500/20 mb-4" />
+                                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/50">Awaiting Visual Rendering</p>
+                                   </div>
+                                 )}
+                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                                    {charImagePreview && <button onClick={() => window.open(charImagePreview, '_blank')} className="w-full py-3 bg-cyan-500 text-black text-[10px] font-black uppercase tracking-widest rounded-xl">Download Image</button>}
+                                 </div>
+                              </div>
+                              <button onClick={handleCharImage} className="w-full py-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_0_15px_rgba(34,211,238,0.1)] flex items-center justify-center gap-2">
+                                <ImageIcon className="w-4 h-4" /> Generate Image
+                              </button>
+                           </div>
+
+                           {/* Right side: Details */}
+                           <div className="w-full md:w-2/3 space-y-6">
+                              <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">{charType}</span>
+                                  <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">{charPersonality}</span>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-black mt-2 mb-1 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight">{charResult.name}</h2>
+                                {charResult.catchphrase && <p className="text-lg text-cyan-400 font-medium italic">"{charResult.catchphrase}"</p>}
+                              </div>
+
+                              <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5">
+                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Backstory</p>
+                                 <p className="text-sm text-slate-300 leading-relaxed font-medium">{charResult.backstory}</p>
+                              </div>
+
+                              <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5">
+                                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-2">Powers & Abilities</p>
+                                   <ul className="space-y-1">
+                                     {charResult.abilities?.map((a: string, i: number) => (
+                                       <li key={i} className="text-[11px] text-slate-300 flex items-center gap-2"><div className="w-1 h-1 bg-emerald-400 rounded-full"/> {a}</li>
+                                     ))}
+                                   </ul>
+                                </div>
+                                {charResult.weaknesses && (
+                                  <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5">
+                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 mb-2">Weaknesses</p>
+                                     <ul className="space-y-1">
+                                       {charResult.weaknesses?.map((w: string, i: number) => (
+                                         <li key={i} className="text-[11px] text-slate-300 flex items-center gap-2"><div className="w-1 h-1 bg-red-400 rounded-full"/> {w}</li>
+                                       ))}
+                                     </ul>
+                                  </div>
+                                )}
+                              </div>
+
+                              {charResult.stats && (
+                                <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5 space-y-4">
+                                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Combat & Trait Stats</p>
+                                   <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                                     {Object.entries(charResult.stats).map(([stat, val]: any) => (
+                                       <div key={stat}>
+                                         <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-1">
+                                           <span className="text-slate-400">{stat}</span>
+                                           <span className="text-cyan-400">{val}/100</span>
+                                         </div>
+                                         <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden">
+                                           <div className="h-full bg-gradient-to-r from-cyan-500 to-purple-500" style={{ width: `${val}%` }} />
+                                         </div>
+                                       </div>
+                                     ))}
+                                   </div>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+
+                        {/* Extended Features */}
+                        <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                           <div className="space-y-4">
+                             <button onClick={handleGenerateDialogue} className="w-full py-4 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2">
+                               <MessageSquare className="w-4 h-4" /> Generate Dialogue
+                             </button>
+                             {charDialogue && (
+                               <div className="bg-purple-950/20 p-5 rounded-2xl border border-purple-500/20 space-y-3">
+                                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 mb-2">Simulated Dialogue</p>
+                                 {charDialogue.map((d, i) => (
+                                   <div key={i} className="bg-purple-900/10 p-3 rounded-xl border border-purple-500/10 text-xs text-slate-300 font-medium italic">"{d}"</div>
+                                 ))}
+                               </div>
+                             )}
+                           </div>
+
+                           <div className="space-y-4">
+                             <button onClick={handleExpandStory} className="w-full py-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2">
+                               <Globe className="w-4 h-4" /> Expand Universe Lore
+                             </button>
+                             {charStoryExpansion && (
+                               <div className="bg-emerald-950/20 p-5 rounded-2xl border border-emerald-500/20 space-y-4">
+                                 <div>
+                                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">World</p>
+                                   <p className="text-xs text-slate-300 font-medium">{charStoryExpansion.world}</p>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                   <div>
+                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 mb-1">Enemies</p>
+                                     <ul className="text-xs text-slate-400">{charStoryExpansion.enemies?.map((e:string,i:number)=><li key={i}>• {e}</li>)}</ul>
+                                   </div>
+                                   <div>
+                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">Allies</p>
+                                     <ul className="text-xs text-slate-400">{charStoryExpansion.allies?.map((a:string,i:number)=><li key={i}>• {a}</li>)}</ul>
+                                   </div>
+                                 </div>
+                                 <div>
+                                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-400 mb-1">Current Mission</p>
+                                   <p className="text-xs text-slate-300 font-medium">{charStoryExpansion.currentMission}</p>
+                                 </div>
+                               </div>
+                             )}
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Right Column: Trending & History */}
+            <div className="space-y-6">
+              <div className="bg-[#0B1023]/60 border border-cyan-500/10 rounded-[2rem] p-8 space-y-5 sticky top-32">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 mb-2 flex items-center gap-2"><Zap className="w-3 h-3"/> Trending Tropes</h4>
+                 <div className="space-y-2">
+                   {['Cyberpunk Assassin', 'Anime Hero', 'AI Hacker', 'Dark Villain', 'Futuristic Soldier', 'Neon Samurai', 'Multiverse Traveler'].map(t => (
+                     <button key={t} onClick={() => setCharType(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-cyan-500/40 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
+                       {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-cyan-400 transition-opacity" />
+                     </button>
+                   ))}
+                 </div>
+
+                 {creativeHistory.filter(h => h.type === 'character').length > 0 && (
+                   <div className="mt-8 pt-6 border-t border-white/5">
+                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4 flex items-center gap-2"><Clock className="w-3 h-3" /> Creation History</h4>
+                     <div className="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar">
+                       {creativeHistory.filter(h => h.type === 'character').map((h, i) => (
+                         <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl cursor-pointer hover:border-cyan-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setCharResult(h.result); setCharImagePreview(null); setCharDialogue(null); setCharStoryExpansion(null); }}>
+                           <div className="flex justify-between items-center mb-1">
+                             <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] line-clamp-1">{h.result?.name}</span>
+                           </div>
+                           <p className="text-[9px] uppercase tracking-widest text-slate-500 mb-2">{h.result?.personality} {charType}</p>
+                           <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{h.result?.backstory}</p>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function renderCreativeDashboard() {
     const categories = [
       {
@@ -2906,7 +3376,7 @@ export default function App() {
       {
         name: "Character & World Building",
         tools: [
-          { name: "AI Character Creator", desc: "Create unique characters with backstory.", icon: User, color: "text-violet-400", bg: "bg-violet-600/10" },
+          { name: "AI Character Creator", id: "character", desc: "Create unique characters with backstory.", icon: User, color: "text-violet-400", bg: "bg-violet-600/10" },
           { name: "World / Universe Builder", desc: "Build your own world, settings & lore.", icon: Globe, color: "text-blue-400", bg: "bg-blue-600/10" },
           { name: "Fantasy Story Builder", desc: "Create fantasy stories with AI magic.", icon: Book, color: "text-emerald-400", bg: "bg-emerald-600/10" },
           { name: "Game Story Generator", desc: "Generate storylines for your game ideas.", icon: Layout, color: "text-rose-400", bg: "bg-rose-600/10" }
@@ -2948,10 +3418,15 @@ export default function App() {
       setMemeImagePreview(null);
       setIdeaResult(null);
       setExpandedIdeaContent(null);
+      setCharResult(null);
+      setCharImagePreview(null);
+      setCharDialogue(null);
+      setCharStoryExpansion(null);
     };
 
     if (creativeSubTab === 'joke') return renderMemeGenerator();
     if (creativeSubTab === 'idea') return renderIdeaGenerator();
+    if (creativeSubTab === 'character') return renderCharacterCreator();
 
     return (
       <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar">
