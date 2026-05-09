@@ -275,6 +275,26 @@ export default function App() {
   const [memeResult, setMemeResult] = useState<any>(null);
   const [memeImagePreview, setMemeImagePreview] = useState<string | null>(null);
 
+  // Idea Generator Specific State
+  const [ideaTopic, setIdeaTopic] = useState('');
+  const [ideaType, setIdeaType] = useState('Business Idea');
+  const [ideaAudience, setIdeaAudience] = useState('General Public');
+  const [ideaPlatform, setIdeaPlatform] = useState('YouTube');
+  const [ideaCreativity, setIdeaCreativity] = useState(70);
+  const [ideaLanguage, setIdeaLanguage] = useState('English');
+  const [showAdvancedIdea, setShowAdvancedIdea] = useState(false);
+  const [ideaTrendingOnly, setIdeaTrendingOnly] = useState(false);
+  const [ideaViralOpt, setIdeaViralOpt] = useState(false);
+  const [ideaLowBudget, setIdeaLowBudget] = useState(false);
+  const [ideaBeginner, setIdeaBeginner] = useState(false);
+  const [ideaAiPowered, setIdeaAiPowered] = useState(false);
+  const [ideaPassiveIncome, setIdeaPassiveIncome] = useState(false);
+  const [ideaMonetization, setIdeaMonetization] = useState(true);
+  const [isIdeaGenerating, setIsIdeaGenerating] = useState(false);
+  const [ideaLoadingText, setIdeaLoadingText] = useState('');
+  const [ideaResult, setIdeaResult] = useState<any>(null);
+  const [expandedIdeaContent, setExpandedIdeaContent] = useState<any>(null);
+
   useEffect(() => {
     const handleStorageChange = () => {
       setIsAdmin(localStorage.getItem('smartai_admin_session') === 'active');
@@ -2485,6 +2505,392 @@ export default function App() {
       );
     }
 
+    function renderIdeaGenerator() {
+      const generateIdea = async () => {
+        if (!ideaTopic.trim()) return;
+        setIsIdeaGenerating(true);
+        setIdeaLoadingText('Generating Smart Ideas...');
+        
+        const loadingSteps = [
+          'Connecting Creativity Engine...',
+          'Finding Unique Concepts...',
+          'Analyzing Market Trends...',
+          'Finalizing Blueprint...'
+        ];
+
+        let step = 0;
+        const interval = setInterval(() => {
+          if (step < loadingSteps.length) {
+            setIdeaLoadingText(loadingSteps[step]);
+            step++;
+          }
+        }, 1000);
+
+        const isBusiness = ideaType.includes('Business') || ideaType.includes('Startup') || ideaType.includes('Product');
+        
+        const systemPrompt = `You are a World-Class AI Brainstorming Expert, Business Strategist, and Content Visionary. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
+        Format: {
+          "title": "...",
+          "description": "...",
+          "whyViral": "...",
+          "monetization": "...",
+          "difficulty": "Easy/Medium/Hard",
+          "audienceMatch": "...",
+          "growthScore": 95,
+          "details": ["...", "..."]
+        }`;
+
+        let fullPrompt = `Generate a highly unique ${ideaType} about "${ideaTopic}".
+        Target Audience: ${ideaAudience}. Platform: ${ideaPlatform}.
+        Creativity Level: ${ideaCreativity}% (${ideaCreativity > 80 ? 'Crazy Unique/Futuristic' : ideaCreativity > 50 ? 'Innovative' : 'Practical'}).
+        Language: ${ideaLanguage}. (If Hindi/Urdu, MUST use Roman alphabets).
+        Advanced Settings: 
+        ${ideaTrendingOnly ? '- Focus ONLY on current internet trends.' : ''}
+        ${ideaViralOpt ? '- Optimize for maximum virality/shareability.' : ''}
+        ${ideaLowBudget ? '- Must be low or zero budget to start.' : ''}
+        ${ideaBeginner ? '- Must be beginner friendly.' : ''}
+        ${ideaAiPowered ? '- Must utilize AI technology.' : ''}
+        ${ideaPassiveIncome ? '- Must focus on passive income potential.' : ''}`;
+
+        if (isBusiness) {
+          fullPrompt += `\nInclude in details: Problem, Solution, Revenue Model, Target Market, Marketing Strategy, AI Advantage.`;
+        } else {
+          fullPrompt += `\nInclude in details: Video Titles/Hooks, Thumbnail Ideas, Viral Captions, Hashtags, Posting Strategy.`;
+        }
+
+        try {
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+          
+          const rawText = await res.text();
+          let parsed: any = null;
+          const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try { parsed = JSON.parse(jsonMatch[0]); } catch {}
+          }
+
+          if (!parsed || !parsed.title) {
+            parsed = {
+              title: `${ideaType} for ${ideaTopic}`,
+              description: cleanText || "Error generating detailed idea. Please try again.",
+              whyViral: "Highly relevant to current trends.",
+              monetization: "Ads, Sponsorships, Products",
+              difficulty: "Medium",
+              audienceMatch: ideaAudience,
+              growthScore: 85,
+              details: ["Focus on quality content", "Engage with community"]
+            };
+          }
+
+          setIdeaResult(parsed);
+          setCreativeHistory(prev => [{ type: 'idea', topic: ideaTopic, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
+        } catch (e) {
+          console.error(e);
+          setIdeaResult({
+            title: "Network Error",
+            description: "Failed to connect to the creativity engine. Please try again later.",
+            whyViral: "N/A", monetization: "N/A", difficulty: "Hard", audienceMatch: "N/A", growthScore: 0, details: []
+          });
+        } finally {
+          clearInterval(interval);
+          setIsIdeaGenerating(false);
+        }
+      };
+
+      const handleExpandIdea = async () => {
+        if (!ideaResult) return;
+        setIsIdeaGenerating(true);
+        setIdeaLoadingText('Generating Full Blueprint...');
+        try {
+          const systemPrompt = "You are an elite business and content strategist. Return valid JSON only. Format: { \"roadmap\": [\"Phase 1: ...\", \"Phase 2: ...\"], \"marketing\": [\"...\"], \"monetization\": [\"...\"] }";
+          const fullPrompt = `Create a detailed expansion roadmap for this idea: Title: ${ideaResult.title}. Description: ${ideaResult.description}.`;
+          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const rawText = await res.text();
+            let parsed = null;
+            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
+            if (parsed) setExpandedIdeaContent(parsed);
+          }
+        } catch (e) { console.error(e); }
+        finally { setIsIdeaGenerating(false); }
+      };
+
+      return (
+        <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
+          <AnimatePresence>
+            {isIdeaGenerating && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+                <div className="relative">
+                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="w-40 h-40 border-4 border-purple-500/20 border-t-purple-500 rounded-full" />
+                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="absolute inset-4 border-4 border-emerald-500/20 border-b-emerald-500 rounded-full" />
+                   <div className="absolute inset-0 flex items-center justify-center">
+                      <Lightbulb className="w-12 h-12 text-purple-400 animate-pulse" />
+                   </div>
+                </div>
+                <motion.p key={ideaLoadingText} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-xl font-black italic uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-emerald-400">{ideaLoadingText}</motion.p>
+                <div className="mt-6 flex gap-4">
+                   {[...Array(5)].map((_, i) => (
+                      <motion.div key={i} animate={{ y: [0, -15, 0], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }} className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#00FFB2]" />
+                   ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Top Section */}
+          <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
+            <div className="md:ml-8">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,97,255,0.3)]">
+                  <Lightbulb className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Idea <span className="text-purple-400">Generator</span></h1>
+              </div>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Generate powerful content, business, startup & creative ideas instantly.</p>
+            </div>
+            <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+               <button onClick={generateIdea} className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-purple-600/20">Generate</button>
+               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Save className="w-4 h-4" /></button>
+               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Clock className="w-4 h-4" /></button>
+               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Download className="w-4 h-4" /></button>
+            </div>
+          </div>
+
+          <div className="max-w-[1600px] mx-auto p-6 md:p-10 grid xl:grid-cols-3 gap-10">
+            {/* Left Column: Inputs */}
+            <div className="xl:col-span-2 space-y-10">
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Main Topic / Niche</label>
+                  <div className="relative group">
+                    <input 
+                      value={ideaTopic} 
+                      onChange={e => setIdeaTopic(e.target.value)} 
+                      placeholder="Try: Fitness, AI, Gaming, Finance, EdTech..." 
+                      className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-6 py-5 text-lg font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex gap-2">
+                      {['AI', 'Finance', 'Gaming'].map(t => (
+                        <button key={t} onClick={() => setIdeaTopic(t)} className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold text-slate-500 transition-colors border border-white/5">{t}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Idea Type</label>
+                  <select value={ideaType} onChange={e => setIdeaType(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                    {['Business Idea', 'Startup Idea', 'YouTube Video Idea', 'Instagram Content Idea', 'TikTok Idea', 'App Idea', 'AI Tool Idea', 'Side Hustle', 'Blog Topic', 'Product Idea', 'Gaming Channel Idea', 'Course Idea', 'Brand Name Idea', 'Story Idea', 'Reel Idea'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Target Audience</label>
+                  <select value={ideaAudience} onChange={e => setIdeaAudience(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                    {['General Public', 'Kids', 'Teenagers', 'Students', 'Gamers', 'Professionals', 'Business Owners', 'Creators', 'Developers'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Platform Focus</label>
+                  <select value={ideaPlatform} onChange={e => setIdeaPlatform(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                    {['YouTube', 'Instagram', 'TikTok', 'Facebook', 'Blog', 'Mobile App', 'Website', 'Startup', 'Online Business'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Language</label>
+                  <select value={ideaLanguage} onChange={e => setIdeaLanguage(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                    {['English', 'Hindi', 'Roman Urdu', 'Hinglish', 'Urdu'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2 space-y-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Creativity Level</label>
+                    <span className="text-[10px] font-black text-purple-400">{ideaCreativity}% - {ideaCreativity > 80 ? 'Crazy Unique' : ideaCreativity > 60 ? 'Innovative' : ideaCreativity > 40 ? 'Creative' : ideaCreativity > 20 ? 'Smart' : 'Simple'}</span>
+                  </div>
+                  <input type="range" min="0" max="100" value={ideaCreativity} onChange={e => setIdeaCreativity(parseInt(e.target.value))} className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center">
+                 <button onClick={() => setShowAdvancedIdea(!showAdvancedIdea)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-white transition-colors border border-purple-500/20 px-6 py-4 rounded-2xl w-full justify-center bg-purple-500/5">
+                   <Settings className="w-4 h-4" /> Advanced Idea Controls
+                 </button>
+              </div>
+
+              <AnimatePresence>
+                {showAdvancedIdea && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023]/50 border border-white/5 rounded-3xl p-8 overflow-hidden">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      {[
+                        { state: ideaTrendingOnly, setter: setIdeaTrendingOnly, label: 'Trending Only' },
+                        { state: ideaViralOpt, setter: setIdeaViralOpt, label: 'Viral Optimize' },
+                        { state: ideaLowBudget, setter: setIdeaLowBudget, label: 'Low Budget' },
+                        { state: ideaBeginner, setter: setIdeaBeginner, label: 'Beginner Friendly' },
+                        { state: ideaAiPowered, setter: setIdeaAiPowered, label: 'AI Powered' },
+                        { state: ideaPassiveIncome, setter: setIdeaPassiveIncome, label: 'Passive Income' },
+                        { state: ideaMonetization, setter: setIdeaMonetization, label: 'Monetization' },
+                      ].map((opt, i) => (
+                         <div key={i} className="space-y-2">
+                           <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">{opt.label}</label>
+                           <button onClick={() => opt.setter(!opt.state)} className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase transition-all ${opt.state ? 'bg-purple-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                             {opt.state ? 'ON' : 'OFF'}
+                           </button>
+                         </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex justify-center pt-6">
+                <motion.button 
+                  whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(123,97,255,0.4)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={generateIdea}
+                  disabled={!ideaTopic.trim()}
+                  className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-emerald-600 px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-2xl disabled:opacity-50 transition-all w-full md:w-auto"
+                >
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative z-10 flex items-center justify-center gap-3">
+                     <Lightbulb className="w-5 h-5 animate-pulse" /> GENERATE IDEAS
+                  </div>
+                </motion.button>
+              </div>
+
+              {ideaResult && (
+                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
+                  <div className="bg-[#0B1023] border border-purple-500/20 rounded-[2rem] p-8 md:p-10 shadow-[0_0_50px_rgba(123,97,255,0.1)] relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
+                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
+                     
+                     <div className="relative z-10 space-y-8">
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                          <div>
+                            <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">{ideaResult.audienceMatch}</span>
+                            <h2 className="text-3xl md:text-4xl font-black mt-6 mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 leading-tight">{ideaResult.title}</h2>
+                          </div>
+                          <div className="md:text-right flex items-center md:flex-col gap-3 md:gap-0">
+                             <div className="flex items-center gap-2 text-purple-400 font-black text-2xl bg-purple-500/10 px-4 py-2 rounded-xl border border-purple-500/20">
+                                🔥 {ideaResult.growthScore}<span className="text-sm opacity-50">/100</span>
+                             </div>
+                             <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Viral Potential</p>
+                          </div>
+                        </div>
+                        
+                        <p className="text-lg text-slate-300 leading-relaxed font-medium bg-slate-900/50 p-6 rounded-2xl border border-white/5">{ideaResult.description}</p>
+                        
+                        <div className="grid md:grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                          <div className="bg-slate-900/80 p-5 rounded-2xl border border-emerald-500/10 shadow-[inset_0_0_20px_rgba(16,185,129,0.02)]">
+                             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2"><Sparkles className="w-3 h-3"/> Why It Works</p>
+                             <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.whyViral}</p>
+                          </div>
+                          <div className="bg-slate-900/80 p-5 rounded-2xl border border-amber-500/10 shadow-[inset_0_0_20px_rgba(245,158,11,0.02)]">
+                             <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2"><CreditCard className="w-3 h-3"/> Monetization</p>
+                             <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.monetization}</p>
+                          </div>
+                          <div className="bg-slate-900/80 p-5 rounded-2xl border border-blue-500/10 shadow-[inset_0_0_20px_rgba(59,130,246,0.02)]">
+                             <p className="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-3 flex items-center gap-2"><Zap className="w-3 h-3"/> Difficulty</p>
+                             <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.difficulty}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 bg-white/[0.01] p-6 rounded-2xl border border-white/5">
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Actionable Execution Details</p>
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            {ideaResult.details?.map((d: string, i: number) => (
+                              <div key={i} className="flex items-start gap-3">
+                                <Check className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                                <p className="text-xs text-slate-300 leading-relaxed font-medium">{d}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {expandedIdeaContent && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-6 border-t border-white/5 space-y-6">
+                            {expandedIdeaContent.roadmap && (
+                              <div className="bg-emerald-950/20 p-6 rounded-2xl border border-emerald-500/10">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Layout className="w-4 h-4" /> Expansion Roadmap</p>
+                                <ul className="space-y-3">
+                                  {expandedIdeaContent.roadmap.map((item: string, i: number) => (
+                                    <li key={i} className="text-xs text-slate-300 flex items-start gap-3 bg-emerald-900/10 p-3 rounded-lg"><span className="text-emerald-500 font-black">{i+1}.</span> {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {expandedIdeaContent.marketing && (
+                              <div className="bg-purple-950/20 p-6 rounded-2xl border border-purple-500/10">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-4 flex items-center gap-2"><Share2 className="w-4 h-4" /> Marketing Strategy</p>
+                                <ul className="space-y-3">
+                                  {expandedIdeaContent.marketing.map((item: string, i: number) => (
+                                    <li key={i} className="text-xs text-slate-300 flex items-start gap-3 bg-purple-900/10 p-3 rounded-lg"><span className="text-purple-500 font-black">•</span> {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+
+                        <div className="flex flex-wrap gap-3 pt-6 border-t border-white/5">
+                           <button onClick={() => copyToClipboard(JSON.stringify(ideaResult, null, 2), 'text')} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 py-4 px-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
+                             <Copy className="w-4 h-4" /> Copy
+                           </button>
+                           {!expandedIdeaContent && (
+                             <button onClick={handleExpandIdea} className="flex-[2] min-w-[200px] bg-purple-600 hover:bg-purple-500 py-4 px-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-600/20">
+                               <Layout className="w-4 h-4" /> Expand Full Blueprint
+                             </button>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Right Column: Trending & History */}
+            <div className="space-y-6">
+              <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 sticky top-32">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">📈 Trending Ideas</h4>
+                 <div className="space-y-2">
+                   {['AI SaaS Platform', 'Faceless YouTube', 'Crypto Trading Bot', 'Online Course', 'Personal Branding', 'Fitness App', 'Automation Agency'].map(t => (
+                     <button key={t} onClick={() => setIdeaTopic(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-purple-500/30 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
+                       {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400" />
+                     </button>
+                   ))}
+                 </div>
+
+                 {creativeHistory.filter(h => h.type === 'idea').length > 0 && (
+                   <div className="mt-8 pt-6 border-t border-white/5">
+                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4 flex items-center gap-2"><Clock className="w-3 h-3" /> Idea History</h4>
+                     <div className="space-y-3 max-h-[300px] overflow-y-auto no-scrollbar">
+                       {creativeHistory.filter(h => h.type === 'idea').map((h, i) => (
+                         <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl cursor-pointer hover:border-purple-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setIdeaTopic(h.topic || ''); setIdeaResult(h.result); setExpandedIdeaContent(null); }}>
+                           <div className="flex justify-between items-center mb-2">
+                             <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest line-clamp-1">{h.result?.title}</span>
+                             <span className="text-[8px] text-slate-500 font-bold whitespace-nowrap ml-2">{h.date}</span>
+                           </div>
+                           <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{h.result?.description}</p>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function renderCreativeDashboard() {
     const categories = [
       {
@@ -2492,7 +2898,7 @@ export default function App() {
         tools: [
           { name: "AI Story Generator", desc: "Generate engaging stories on any topic.", icon: PenTool, color: "text-purple-400", bg: "bg-purple-600/10" },
           { name: "Script Writer", desc: "Write scripts for YouTube, Reels, Shorts & more.", icon: Video, color: "text-red-400", bg: "bg-red-600/10" },
-          { name: "Idea Generator", desc: "Get unique ideas for content, business or more.", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-600/10" },
+          { name: "Idea Generator", id: "idea", desc: "Get unique ideas for content, business or more.", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-600/10" },
           { name: "Song Lyrics Generator", desc: "Create original song lyrics in any style.", icon: Radio, color: "text-pink-400", bg: "bg-pink-600/10" },
           { name: "Joke / Meme Ideas", id: "joke", desc: "Generate funny jokes and meme ideas.", icon: MessageSquare, color: "text-emerald-400", bg: "bg-emerald-600/10" }
         ]
@@ -2540,9 +2946,12 @@ export default function App() {
       setCreativeToolResult('');
       setMemeResult(null);
       setMemeImagePreview(null);
+      setIdeaResult(null);
+      setExpandedIdeaContent(null);
     };
 
     if (creativeSubTab === 'joke') return renderMemeGenerator();
+    if (creativeSubTab === 'idea') return renderIdeaGenerator();
 
     return (
       <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar">
