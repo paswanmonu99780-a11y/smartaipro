@@ -243,41 +243,41 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats Cards */}
-        <div className="flex overflow-x-auto md:grid md:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8 pb-2 md:pb-0 no-scrollbar snap-x">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-36 md:w-auto snap-center">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-              <Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
-              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Total Users</span>
+        <div className="flex overflow-x-auto md:grid md:grid-cols-5 gap-2 mb-4 pb-2 md:pb-0 no-scrollbar snap-x">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 shrink-0 w-32 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Users className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-[8px] uppercase font-bold text-slate-500 tracking-widest">Users</span>
             </div>
-            <div className="text-xl md:text-3xl font-bold text-white">{stats.totalUsers}</div>
+            <div className="text-xl font-black text-white">{stats.totalUsers}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-36 md:w-auto snap-center">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-              <CreditCard className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
-              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Credits</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 shrink-0 w-32 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[8px] uppercase font-bold text-slate-500 tracking-widest">Credits</span>
             </div>
-            <div className="text-xl md:text-3xl font-bold text-white">{stats.totalCredits.toLocaleString()}</div>
+            <div className="text-xl font-black text-white">{stats.totalCredits.toLocaleString()}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-28 md:w-auto snap-center">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-400" />
-              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Basic</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 shrink-0 w-24 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[8px] uppercase font-bold text-slate-500 tracking-widest">Normal</span>
             </div>
-            <div className="text-xl md:text-3xl font-bold text-slate-400">{stats.basicUsers}</div>
+            <div className="text-xl font-black text-slate-400">{stats.basicUsers}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-28 md:w-auto snap-center">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
-              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Pro</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 shrink-0 w-24 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <BarChart3 className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-[8px] uppercase font-bold text-slate-500 tracking-widest">Creative</span>
             </div>
-            <div className="text-xl md:text-3xl font-bold text-indigo-400">{stats.proUsers}</div>
+            <div className="text-xl font-black text-indigo-400">{stats.proUsers}</div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 md:p-4 shrink-0 w-28 md:w-auto snap-center">
-            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
-              <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
-              <span className="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-widest">Ultra</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 shrink-0 w-24 md:w-auto snap-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[8px] uppercase font-bold text-slate-500 tracking-widest">Expert</span>
             </div>
-            <div className="text-xl md:text-3xl font-bold text-emerald-400">{stats.ultraUsers}</div>
+            <div className="text-xl font-black text-emerald-400">{stats.ultraUsers}</div>
           </div>
         </div>
 

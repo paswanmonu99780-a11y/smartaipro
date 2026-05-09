@@ -1130,169 +1130,152 @@ export default function App() {
     const categories = [
       {
         id: 'ailab',
-        title: 'AI Intelligence Lab',
+        title: 'Intelligence Lab',
         icon: Mic2,
         color: '#818cf8',
         gradient: 'from-indigo-500/20 to-purple-500/20',
         tools: [
-          { name: 'Neural Prompt Builder', desc: 'Craft high-precision prompts for complex AI tasks.', icon: MessageSquare },
-          { name: 'Cognitive Memory', desc: 'Advanced long-term memory management for AI context.', icon: Database },
-          { name: 'Custom Model Forge', desc: 'Fine-tune and deploy specialized AI models.', icon: Cpu },
-          { name: 'Knowledge Synthesis', desc: 'Integrate deep knowledge bases into your AI workflows.', icon: Book },
+          { name: 'Prompt Builder', desc: 'Neural prompt engineering.', icon: MessageSquare },
+          { name: 'Cognitive Memory', desc: 'Long-term context.', icon: Database },
+          { name: 'Model Forge', desc: 'Specialized AI models.', icon: Cpu },
+          { name: 'Synthesis', desc: 'Knowledge integration.', icon: Book },
         ]
       },
       {
         id: 'workflows',
-        title: 'Automated Workflows',
+        title: 'Automation',
         icon: Workflow,
         color: '#a78bfa',
         gradient: 'from-purple-500/20 to-fuchsia-500/20',
         tools: [
-          { name: 'Workflow Architect', desc: 'Design complex multi-step automated processes.', icon: Network },
-          { name: 'Logic Engine', desc: 'Implement advanced conditional branching and triggers.', icon: GitBranch },
-          { name: 'Autonomous Triggers', desc: 'System-wide event monitoring and response.', icon: Zap },
+          { name: 'Architect', desc: 'Workflow design.', icon: Network },
+          { name: 'Logic Engine', desc: 'Branching & logic.', icon: GitBranch },
+          { name: 'Triggers', desc: 'Event monitoring.', icon: Zap },
         ]
       },
       {
         id: 'integrations',
-        title: 'Enterprise Integrations',
+        title: 'Integrations',
         icon: Link,
         color: '#60a5fa',
         gradient: 'from-blue-500/20 to-cyan-500/20',
         tools: [
-          { name: 'API Management', desc: 'Securely manage and rotate enterprise API keys.', icon: Key },
-          { name: 'Global Webhooks', desc: 'Real-time bidirectional data synchronization.', icon: Webhook },
-          { name: 'Connector Hub', desc: 'Seamlessly link 5000+ external applications.', icon: Layout },
-          { name: 'App Ecosystem', desc: 'Centralized control for all connected services.', icon: Link },
+          { name: 'API Manager', desc: 'Key rotation.', icon: Key },
+          { name: 'Webhooks', desc: 'Real-time sync.', icon: Webhook },
+          { name: 'Connector', desc: '5000+ links.', icon: Layout },
+          { name: 'Ecosystem', desc: 'Central control.', icon: Link },
         ]
       },
       {
         id: 'devtools',
-        title: 'Developer Environment',
+        title: 'Dev Environment',
         icon: Code,
         color: '#34d399',
         gradient: 'from-emerald-500/20 to-teal-500/20',
         tools: [
-          { name: 'Polyglot Generator', desc: 'High-performance code generation in 20+ languages.', icon: Code },
-          { name: 'Deep Debugger', desc: 'AI-driven semantic code analysis and debugging.', icon: Bug },
-          { name: 'API Validator', desc: 'Comprehensive testing suite for REST/GraphQL APIs.', icon: Server },
+          { name: 'Polyglot', desc: 'Multi-lang code.', icon: Code },
+          { name: 'Debugger', desc: 'Semantic analysis.', icon: Bug },
+          { name: 'Validator', desc: 'API suite.', icon: Server },
         ]
       },
       {
         id: 'datastudio',
-        title: 'Advanced Data Studio',
+        title: 'Data Studio',
         icon: BarChart3,
         color: '#fbbf24',
         gradient: 'from-amber-500/20 to-orange-500/20',
         tools: [
-          { name: 'Data Ingestor', desc: 'Large-scale dataset processing and management.', icon: FileSpreadsheet },
-          { name: 'Visual Intelligence', desc: 'Neural-powered dynamic data visualization.', icon: BarChart },
-          { name: 'Predictive Insights', desc: 'Advanced pattern recognition and forecasting.', icon: Lightbulb },
+          { name: 'Ingestor', desc: 'Dataset processing.', icon: FileSpreadsheet },
+          { name: 'Visual Intel', desc: 'Dynamic charts.', icon: BarChart },
+          { name: 'Predictive', desc: 'Pattern recognition.', icon: Lightbulb },
         ]
       },
     ];
 
     return (
       <div className="h-full flex flex-col overflow-hidden bg-slate-950 relative">
-        {/* Premium Background Elements */}
+        {/* Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 blur-[100px] rounded-full" />
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.05)_0%,transparent_50%)]" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
         </div>
 
-        {/* Expert Header */}
-        <div className="px-8 py-5 flex items-center justify-between bg-slate-900/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/20">
-              <Crown className="w-5 h-5 text-white" />
+        {/* Compact Header */}
+        <div className="px-4 py-3 flex items-center justify-between bg-slate-900/60 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/20">
+              <Crown className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white uppercase tracking-tighter">Expert Console</h2>
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Neural Link Active</p>
+              <h2 className="text-sm font-black text-white uppercase tracking-tighter">Expert Console</h2>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-ping" />
+                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Neural Link</p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsPricingOpen(true)}
-              className="group relative px-6 py-2.5 bg-white text-black rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 overflow-hidden"
+              className="px-4 py-1.5 bg-white text-black rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              Upgrade Plan
+              Upgrade
             </button>
-            <button onClick={() => setSmartMode('normal')} className="p-2.5 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all border border-white/5">
-              <LogOut className="w-4 h-4" />
+            <button onClick={() => setSmartMode('normal')} className="p-1.5 bg-slate-800/50 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-all border border-white/5">
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Scrollable Dashboard */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 relative z-10">
-          <div className="max-w-7xl mx-auto space-y-16">
+        {/* Compact Dashboard Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 relative z-10 no-scrollbar">
+          <div className="max-w-7xl mx-auto space-y-8">
             {categories.map((cat, catIdx) => (
               <motion.div 
                 key={cat.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: catIdx * 0.1 }}
-                className="space-y-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: catIdx * 0.05 }}
+                className="space-y-4"
               >
-                {/* Category Header */}
-                <div className="flex items-end justify-between border-b border-white/5 pb-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${cat.gradient} border border-white/10`} style={{ color: cat.color }}>
-                      <cat.icon className="w-6 h-6" />
+                {/* Compact Category Header */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg bg-gradient-to-br ${cat.gradient} border border-white/10`} style={{ color: cat.color }}>
+                      <cat.icon className="w-3.5 h-3.5" />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-black text-white tracking-tight">{cat.title}</h3>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Management Suite v2.0</p>
-                    </div>
-                  </div>
-                  <div className="hidden md:block text-[9px] font-black text-slate-600 uppercase tracking-widest">
-                    {cat.tools.length} Sub-Modules Available
+                    <h3 className="text-xs font-black text-white uppercase tracking-wider">{cat.title}</h3>
                   </div>
                 </div>
 
-                {/* Tools Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Dense Tools Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {cat.tools.map((tool, toolIdx) => (
                     <motion.div
                       key={tool.name}
-                      whileHover={{ y: -5, backgroundColor: 'rgba(255,255,255,0.04)' }}
-                      className="group relative bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 flex flex-col gap-6 cursor-pointer transition-all hover:border-indigo-500/30 overflow-hidden"
+                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.03)' }}
+                      className="group relative bg-slate-900/40 border border-white/5 rounded-2xl p-3.5 flex flex-col gap-3 cursor-pointer transition-all hover:border-indigo-500/30 overflow-hidden"
                     >
-                      {/* Card Glow */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-600/10 to-transparent blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                      
                       <div className="flex items-start justify-between">
-                        <div className="p-4 rounded-2xl bg-slate-950 border border-white/5 group-hover:border-indigo-500/20 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all">
-                          <tool.icon className="w-6 h-6 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                        <div className="p-2 rounded-lg bg-slate-950 border border-white/5 group-hover:border-indigo-500/20 transition-all">
+                          <tool.icon className="w-4 h-4 text-slate-400 group-hover:text-indigo-400" />
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                          <ChevronRight className="w-4 h-4 text-white" />
-                        </div>
+                        <ChevronRight className="w-3 h-3 text-white/10 group-hover:text-white transition-colors" />
                       </div>
 
-                      <div className="space-y-2">
-                        <h4 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">{tool.name}</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors">{tool.desc}</p>
+                      <div className="min-w-0">
+                        <h4 className="text-[11px] font-bold text-white group-hover:text-indigo-300 transition-colors truncate">{tool.name}</h4>
+                        <p className="text-[9px] text-slate-500 leading-snug font-medium group-hover:text-slate-400 transition-colors line-clamp-1">{tool.desc}</p>
                       </div>
 
-                      <div className="flex items-center gap-3 pt-2">
-                        <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: '100%' }}
-                            transition={{ duration: 1.5, delay: 0.5 + (toolIdx * 0.1) }}
-                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
-                          />
-                        </div>
-                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Active</span>
+                      <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: '100%' }}
+                          transition={{ duration: 1, delay: 0.3 + (toolIdx * 0.05) }}
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                        />
                       </div>
                     </motion.div>
                   ))}
@@ -1301,7 +1284,7 @@ export default function App() {
             ))}
 
             {/* Bottom Spacing */}
-            <div className="h-24" />
+            <div className="h-12" />
           </div>
         </div>
       </div>
@@ -2051,57 +2034,54 @@ export default function App() {
     ];
 
     return (
-      <div className="min-h-full bg-slate-950 p-4 md:p-8 overflow-y-auto no-scrollbar">
-        {/* Header Section */}
-        <div className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-[0_0_40px_rgba(79,70,229,0.3)] border border-white/10 rotate-3">
-              <Sparkles className="w-9 h-9 text-white" />
+      <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar">
+        {/* Compact Header Section */}
+        <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.2)] border border-white/10">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-white italic tracking-tight">Creative Mode</h1>
-              <p className="text-slate-500 text-sm mt-1 font-medium italic">Turn your imagination into amazing content, stories & ideas with AI.</p>
+              <h1 className="text-xl md:text-2xl font-black text-white italic tracking-tight uppercase">Creative <span className="font-light not-italic text-slate-500 tracking-normal">Mode</span></h1>
+              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.1em]">Imagination Engine v2.0</p>
             </div>
           </div>
           
-          <div className="flex gap-3">
-            <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-md">
+          <div className="flex gap-2">
+            <div className="bg-slate-900/50 border border-slate-800 p-2 px-4 rounded-xl flex items-center gap-3 backdrop-blur-md">
               <div className="text-right">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Credits Left</span>
-                <span className="text-2xl font-black text-white">{credits.toLocaleString()}</span>
-              </div>
-              <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center border border-indigo-500/30">
-                <Sparkles className="w-5 h-5 text-indigo-400" />
+                <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest block">Credits</span>
+                <span className="text-lg font-black text-white">{credits.toLocaleString()}</span>
               </div>
             </div>
-            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all shadow-xl shadow-white/5 h-full">Upgrade</button>
+            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all">Upgrade</button>
           </div>
         </div>
 
-        {/* Categories and Tools Grid */}
-        <div className="max-w-7xl mx-auto space-y-12">
+        {/* Compact Categories and Tools Grid */}
+        <div className="max-w-7xl mx-auto space-y-8">
           {categories.map((cat, idx) => (
-            <div key={idx} className="space-y-6">
-              <div className="flex items-center gap-4">
-                <h2 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] whitespace-nowrap">{cat.name}</h2>
-                <div className="h-[1px] w-full bg-slate-800/50" />
+            <div key={idx} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] whitespace-nowrap">{cat.name}</h2>
+                <div className="h-[1px] w-full bg-slate-800/30" />
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
                 {cat.tools.map((tool, tIdx) => (
                   <motion.button
                     key={tIdx}
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    className="group bg-slate-900/40 border border-slate-800 hover:border-indigo-500/50 p-4 rounded-2xl text-left transition-all relative overflow-hidden shadow-lg hover:shadow-indigo-600/10"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="group bg-slate-900/40 border border-slate-800/60 hover:border-indigo-500/50 p-3 rounded-xl text-left transition-all relative overflow-hidden"
                   >
-                    <div className={`w-10 h-10 rounded-xl ${tool.bg} flex items-center justify-center mb-4 border border-white/5 shadow-inner`}>
-                      <tool.icon className={`w-5 h-5 ${tool.color}`} />
+                    <div className={`w-8 h-8 rounded-lg ${tool.bg} flex items-center justify-center mb-2.5 border border-white/5`}>
+                      <tool.icon className={`w-4 h-4 ${tool.color}`} />
                     </div>
-                    <h3 className="text-sm font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">{tool.name}</h3>
-                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">{tool.desc}</p>
+                    <h3 className="text-[11px] font-bold text-white mb-0.5 group-hover:text-indigo-300 transition-colors truncate">{tool.name}</h3>
+                    <p className="text-[9px] text-slate-500 leading-snug line-clamp-1">{tool.desc}</p>
                     
-                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronRight className="w-4 h-4 text-indigo-500" />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-3 h-3 text-indigo-500" />
                     </div>
                   </motion.button>
                 ))}
@@ -2110,31 +2090,30 @@ export default function App() {
           ))}
         </div>
 
-        {/* Side/Extra Feature - AI Creative Lab (Filling the space) */}
-        <div className="max-w-7xl mx-auto mt-16 pt-16 border-t border-slate-900">
-           <div className="bg-gradient-to-br from-indigo-900/20 to-slate-900/20 border border-indigo-500/20 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
-             <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
-               <div className="space-y-6">
-                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest">Experimental Lab</div>
-                 <h2 className="text-4xl font-black text-white italic">AI Creative Studio <span className="text-slate-500 not-italic">v2.0</span></h2>
-                 <p className="text-slate-400 leading-relaxed max-w-md">Access our most advanced creative models including High-Resolution Image Synthesis, Procedural Storytelling, and Multi-Modal brainstorm engines.</p>
-                 <div className="flex flex-col sm:flex-row gap-4 w-full">
-                   <button className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 w-full sm:w-auto">Enter Studio</button>
-                   <button className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-700 transition-all w-full sm:w-auto">Documentation</button>
+        {/* Compact Lab Section */}
+        <div className="max-w-7xl mx-auto mt-10 pt-10 border-t border-slate-900">
+           <div className="bg-gradient-to-br from-indigo-900/10 to-slate-900/20 border border-indigo-500/10 rounded-3xl p-6 md:p-8 relative overflow-hidden">
+             <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+               <div className="space-y-4">
+                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-indigo-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest">Experimental Lab</div>
+                 <h2 className="text-2xl font-black text-white italic">AI Creative Studio</h2>
+                 <p className="text-slate-500 text-xs leading-relaxed max-w-sm font-medium">Access advanced creative models for HD synthesis and procedural storytelling.</p>
+                 <div className="flex gap-3">
+                   <button className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] hover:bg-indigo-500 transition-all">Enter Studio</button>
+                   <button className="bg-slate-800 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] hover:bg-slate-700 transition-all">Docs</button>
                  </div>
                </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <div className="grid grid-cols-2 gap-3">
                  {[
-                   { name: "Image Studio", icon: ImageIcon, desc: "Ultra-HD Visuals" },
-                   { name: "Video Lab", icon: Video, desc: "Motion Generation" },
-                   { name: "Voice Suite", icon: Mic2, desc: "Neural Voice Clone" },
-                   { name: "Dev Engine", icon: Code, desc: "AI Application Builder" }
+                   { name: "Image Studio", icon: ImageIcon, desc: "Ultra-HD" },
+                   { name: "Video Lab", icon: Video, desc: "Motion Gen" },
+                   { name: "Voice Suite", icon: Mic2, desc: "Neural Clone" },
+                   { name: "Dev Engine", icon: Code, desc: "AI Builder" }
                  ].map(item => (
-                   <div key={item.name} className="bg-slate-950/80 border border-slate-800 p-6 rounded-3xl hover:border-indigo-500/30 transition-all group">
-                     <item.icon className="w-6 h-6 text-indigo-500 mb-3 group-hover:scale-110 transition-transform" />
-                     <h4 className="text-sm font-bold text-white mb-1">{item.name}</h4>
-                     <p className="text-[10px] text-slate-500">{item.desc}</p>
+                   <div key={item.name} className="bg-slate-950/60 border border-slate-800 p-3 rounded-2xl hover:border-indigo-500/30 transition-all group">
+                     <item.icon className="w-4 h-4 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" />
+                     <h4 className="text-[10px] font-bold text-white mb-0.5">{item.name}</h4>
+                     <p className="text-[8px] text-slate-600">{item.desc}</p>
                    </div>
                  ))}
                </div>
@@ -2142,12 +2121,12 @@ export default function App() {
            </div>
         </div>
         
-        {/* Footer info */}
-        <div className="max-w-7xl mx-auto mt-20 text-center">
-          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-[0.5em]">SmartAI Neural Engine v4.8.2 | Premium Creative Access</p>
+        <div className="max-w-7xl mx-auto mt-10 text-center">
+          <p className="text-[8px] font-bold text-slate-800 uppercase tracking-[0.4em]">SmartAI Neural Engine v4.8.2</p>
         </div>
       </div>
     );
+  }
   }
 
   function renderNormalDashboard() {
@@ -2164,76 +2143,79 @@ export default function App() {
     };
 
     return (
-      <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-4 md:px-8 gap-5 py-4 relative overflow-y-auto no-scrollbar">
+      <div className="w-full h-full flex flex-col max-w-6xl mx-auto px-3 md:px-6 gap-3 py-3 relative overflow-y-auto no-scrollbar">
         {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
-          <div>
-            <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">Normal Mode</h1>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Your everyday AI tools for quick and easy tasks.</p>
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-indigo-600/10 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-lg shadow-indigo-600/5">
+                <Zap className="w-5 h-5 text-indigo-400" />
+             </div>
+             <div>
+                <h1 className="text-lg md:text-xl font-black text-white tracking-tight uppercase italic">Normal <span className="text-slate-500 font-light not-italic tracking-normal">Mode</span></h1>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em]">Efficiency Suite v1.0</p>
+             </div>
           </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3 px-5 flex items-center gap-5">
-            <div>
-              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Credits Left</p>
-              <p className="text-xl font-black text-white">{credits}</p>
-            </div>
-            <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-2 px-4 flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Credits</p>
+              <p className="text-base font-black text-white">{credits}</p>
             </div>
           </div>
         </div>
 
         {/* Quick Tools */}
         <div className="shrink-0">
-          <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Quick Tools</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="flex items-center justify-between mb-2">
+             <h2 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Quick Access</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {[
-              { name: 'Text to Image', desc: 'Generate images from text prompts.', icon: ImageIcon, color: 'text-indigo-400' },
-              { name: 'Image to Image', desc: 'Transform and restyle your images.', icon: Copy, color: 'text-blue-400' },
-              { name: 'Background Remover', desc: 'Remove background from any image.', icon: Layers, color: 'text-slate-400' },
-              { name: 'Image Enhance', desc: 'Improve image quality and resolution.', icon: Sparkles, color: 'text-purple-400' },
-              { name: 'Compress Image', desc: 'Reduce image size without losing quality.', icon: Download, color: 'text-emerald-400' }
+              { name: 'Text to Image', desc: 'Gen from text.', icon: ImageIcon, color: 'text-indigo-400' },
+              { name: 'Image to Image', desc: 'Restyle images.', icon: Copy, color: 'text-blue-400' },
+              { name: 'BG Remover', desc: 'One-click clear.', icon: Layers, color: 'text-slate-400' },
+              { name: 'Enhance', desc: 'Upscale & fix.', icon: Sparkles, color: 'text-purple-400' },
+              { name: 'Compress', desc: 'Optimize size.', icon: Download, color: 'text-emerald-400' }
             ].map((tool, i) => (
-              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl md:rounded-2xl p-3 md:p-4 text-left group">
-                <div className="flex items-start justify-between mb-2 md:mb-3">
-                  <div className={`w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-slate-700 transition-colors`}>
-                    <tool.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${tool.color}`} />
+              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/60 hover:bg-slate-800/60 transition-all rounded-xl p-3 text-left group">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-indigo-500/30 transition-colors`}>
+                    <tool.icon className={`w-3.5 h-3.5 ${tool.color}`} />
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors" />
+                  <ChevronRight className="w-3 h-3 text-white/5 group-hover:text-white transition-colors ml-auto" />
                 </div>
-                <h3 className="text-[11px] md:text-[13px] font-bold text-white mb-1 md:mb-1.5 leading-tight truncate">{tool.name}</h3>
-                <p className="text-[9px] md:text-[10px] text-slate-500 leading-snug line-clamp-2">{tool.desc}</p>
+                <h3 className="text-[11px] font-bold text-white mb-0.5 truncate">{tool.name}</h3>
+                <p className="text-[9px] text-slate-500 leading-tight line-clamp-1">{tool.desc}</p>
               </button>
             ))}
           </div>
         </div>
 
         {/* More Tools */}
-        <div className="pb-6 flex flex-col">
-          <h2 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">More Tools</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pb-20 md:pb-0">
+        <div className="pb-4 flex flex-col min-h-0">
+          <h2 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">All Utilities</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 pb-20 md:pb-0 overflow-y-auto no-scrollbar">
             {[
-              { name: 'Resize Image', desc: 'Change dimensions of your image.', icon: Monitor },
-              { name: 'Crop Image', desc: 'Crop your image to any size.', icon: Layout },
-              { name: 'Rotate / Flip', desc: 'Rotate or flip your image.', icon: RefreshCcw },
-              { name: 'Image Converter', desc: 'Convert image to different formats.', icon: FileText },
-              { name: 'Add Text', desc: 'Add custom text to your image.', icon: PenTool },
-              { name: 'Color Adjust', desc: 'Adjust brightness, contrast and more.', icon: Eye },
-              { name: 'Filters & Effects', desc: 'Apply filters and artistic effects.', icon: Sparkles },
-              { name: 'Collage Maker', desc: 'Create collage from multiple images.', icon: Layout },
-              { name: 'Meme Generator', desc: 'Create memes easily.', icon: User },
-              { name: 'Sticker Maker', desc: 'Add stickers to your images.', icon: Layers },
-              { name: 'Watermark Add', desc: 'Add custom watermark to image.', icon: CloudSun },
-              { name: 'QR Code Generator', desc: 'Generate QR code images.', icon: Code }
+              { name: 'Resize', desc: 'Dimensions.', icon: Monitor },
+              { name: 'Crop', desc: 'Any size.', icon: Layout },
+              { name: 'Rotate', desc: 'Flip/Rotate.', icon: RefreshCcw },
+              { name: 'Convert', desc: 'Formats.', icon: FileText },
+              { name: 'Text', desc: 'Add labels.', icon: PenTool },
+              { name: 'Adjust', desc: 'Color/Light.', icon: Eye },
+              { name: 'Filters', desc: 'FX effects.', icon: Sparkles },
+              { name: 'Collage', desc: 'Multi-grid.', icon: Layout },
+              { name: 'Memes', desc: 'Humor gen.', icon: User },
+              { name: 'Stickers', desc: 'Add icons.', icon: Layers },
+              { name: 'Watermark', desc: 'Ownership.', icon: CloudSun },
+              { name: 'QR Gen', desc: 'Codes.', icon: Code }
             ].map((tool, i) => (
-              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800 hover:bg-slate-800/60 transition-all rounded-xl p-2.5 md:p-3.5 flex items-center gap-3 md:gap-4 text-left group h-full">
-                <div className="w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg md:rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800">
-                  <tool.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-400" />
+              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/40 hover:bg-slate-800/60 transition-all rounded-xl p-2.5 flex items-center gap-2.5 text-left group">
+                <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-950 flex items-center justify-center border border-slate-800">
+                  <tool.icon className="w-3 h-3 text-indigo-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[11px] md:text-xs font-bold text-white mb-0.5 truncate">{tool.name}</h3>
-                  <p className="text-[9px] md:text-[10px] text-slate-500 truncate">{tool.desc}</p>
+                  <h3 className="text-[10px] font-bold text-white mb-0 truncate">{tool.name}</h3>
+                  <p className="text-[8px] text-slate-600 truncate">{tool.desc}</p>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 group-hover:text-white transition-colors" />
               </button>
             ))}
           </div>
@@ -2492,15 +2474,15 @@ export default function App() {
   const renderContent = () => {
     if (activeTab === 'home') return renderHome();
     return (
-      <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-4 md:p-6'}`}>
+      <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-2 md:p-4'}`}>
         {activeTab === 'chat' && (
           smartMode === 'expert' ? renderExpertPro() : (
             <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
               {/* Chat Header */}
-              <div className="flex justify-between items-center p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-                    <MessageSquare className="w-4 h-4 text-indigo-400" />
+              <div className="flex justify-between items-center p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
                   </div>
                   <div>
                     <h2 className="text-xs font-black text-white uppercase tracking-[0.1em]">AI Neural Chat</h2>
@@ -2513,12 +2495,12 @@ export default function App() {
               </div>
 
               {/* Chat Messages Area (Scrollable) */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar scroll-smooth">
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar scroll-smooth">
                 {messages.map((msg, idx) => {
                   return (
                     <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                      <div className={`max-w-[85%] p-3 md:p-4 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'} ${msg.isVoice ? 'border-dashed border-indigo-500/40' : ''}`}>
-                        <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                      <div className={`max-w-[90%] p-2.5 md:p-3 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'} ${msg.isVoice ? 'border-dashed border-indigo-500/40' : ''}`}>
+                        <p className="text-[12px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
                         {msg.role === 'assistant' && (
                           <div className="absolute -bottom-7 left-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 border border-slate-700 px-2 py-1 rounded-md shadow-lg">
                             <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
@@ -2548,8 +2530,8 @@ export default function App() {
               </div>
 
               {/* Chat Input Area (Fixed at bottom of container) */}
-              <div className="p-3 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
-                <div className="flex gap-2 items-center bg-slate-950 border border-slate-800 rounded-xl p-1.5 shadow-inner focus-within:border-indigo-500/50 transition-colors">
+              <div className="p-2 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
+                <div className="flex gap-1.5 items-center bg-slate-950 border border-slate-800 rounded-lg p-1 shadow-inner focus-within:border-indigo-500/50 transition-colors">
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
@@ -2700,13 +2682,13 @@ export default function App() {
             )}
 
             {imageHistory.length > 0 && (
-              <div className="mt-16">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
-                    <Clock className="w-6 h-6 text-indigo-400" />
-                    Recent Generations
+              <div className="mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-black text-white flex items-center gap-2 tracking-tight">
+                    <Clock className="w-5 h-5 text-indigo-400" />
+                    History
                   </h3>
-                  <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
+                  <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
                     {showHistory ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
                   </button>
                 </div>
@@ -2737,13 +2719,13 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <div className="max-w-4xl mx-auto space-y-6 pb-20">
+          <div className="max-w-4xl mx-auto space-y-4 pb-20">
             {/* Profile Card */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
-              <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+              <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
                 <div className="relative">
-                  <div className="w-32 h-32 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform overflow-hidden">
+                  <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-2xl border-4 border-slate-800 group-hover:scale-105 transition-transform overflow-hidden">
                     {tempAvatar ? <img src={tempAvatar} alt="avatar" className="w-full h-full object-cover" /> : <span>{(tempDisplayName || email || 'U').charAt(0).toUpperCase()}</span>}
                   </div>
                   <input
