@@ -1554,18 +1554,18 @@ export default function App() {
                 <p className="text-slate-500 opacity-50">[INFO] Context size: 128k tokens</p>
                 {polyIsGenerating ? (
                   <>
-                    <p className="text-cyan-400 animate-pulse">> ANALYZING REQUIREMENTS...</p>
-                    <p className="text-cyan-400 animate-pulse">> STRUCTURING MODULES...</p>
-                    <p className="text-purple-400 animate-pulse">> GENERATING OPTIMIZED ${polyLang.toUpperCase()} CODE...</p>
+                    <p className="text-cyan-400 animate-pulse">&gt; ANALYZING REQUIREMENTS...</p>
+                    <p className="text-cyan-400 animate-pulse">&gt; STRUCTURING MODULES...</p>
+                    <p className="text-purple-400 animate-pulse">&gt; GENERATING OPTIMIZED {polyLang.toUpperCase()} CODE...</p>
                   </>
                 ) : polyResult ? (
                   <>
-                    <p className="text-emerald-500">> COMPILATION SUCCESSFUL.</p>
-                    <p className="text-slate-400">> {polyResult.title} ready for deployment.</p>
-                    <p className="text-slate-400">> Framework: {polyFramework} |Complexity: {polyComplexity}%</p>
+                    <p className="text-emerald-500">&gt; COMPILATION SUCCESSFUL.</p>
+                    <p className="text-slate-400">&gt; {polyResult.title} ready for deployment.</p>
+                    <p className="text-slate-400">&gt; Framework: {polyFramework} |Complexity: {polyComplexity}%</p>
                   </>
                 ) : (
-                  <p className="text-slate-600">> Ready for input.</p>
+                  <p className="text-slate-600">&gt; Ready for input.</p>
                 )}
               </div>
             </div>
