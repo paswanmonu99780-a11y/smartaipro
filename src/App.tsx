@@ -354,8 +354,8 @@ export default function App() {
   const [polyShowPreview, setPolyShowPreview] = useState(false);
 
   // AI Debugger State
-  const [debugCode, setDebugCode] = useState('');
-  const [debugLogs, setDebugLogs] = useState('');
+  const [debugInputLogs, setDebugInputLogs] = useState('');
+  const [debugConsoleLogs, setDebugConsoleLogs] = useState<any[]>([]);
   const [debugLang, setDebugLang] = useState('JavaScript');
   const [debugType, setDebugType] = useState('Syntax Errors');
   const [debugComplexity, setDebugComplexity] = useState('Intermediate');
@@ -1819,6 +1819,7 @@ export default function App() {
     
     setDebugIsAnalyzing(true);
     setDebugResult(null);
+    setDebugConsoleLogs([{ type: 'info', msg: 'Initializing Debug Engine Sentinel V1...' }, { type: 'info', msg: 'Scanning AST Tree & Code Semantics...' }]);
 
     const advancedStr = Object.entries(debugAdvanced)
       .filter(([_, v]) => v)
@@ -1832,7 +1833,7 @@ export default function App() {
     ${debugCode}
     
     Associated Error Logs:
-    ${debugLogs}
+    ${debugInputLogs}
 
     Provide a professional developer debugging report in JSON format:
     {
@@ -1855,6 +1856,7 @@ export default function App() {
         const cleanJson = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
         const data = JSON.parse(cleanJson);
         setDebugResult(data);
+        setDebugConsoleLogs(prev => [...prev, { type: 'success', msg: `Analysis Complete. ${data.issues?.length || 0} issues detected.` }, { type: 'info', msg: 'Security Audit & Optimization Report Generated.' }]);
         
         setCreativeHistory(prev => [{
           id: Date.now().toString(),
@@ -1959,8 +1961,8 @@ export default function App() {
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Error Logs (Optional)</label>
                 <textarea 
-                  value={debugLogs}
-                  onChange={e => setDebugLogs(e.target.value)}
+                  value={debugInputLogs}
+                  onChange={e => setDebugInputLogs(e.target.value)}
                   placeholder="Paste terminal errors or console logs..."
                   className="w-full h-32 bg-slate-950 border border-white/5 rounded-2xl p-4 text-[11px] font-mono text-red-400/80 outline-none focus:border-red-500/30 resize-none no-scrollbar placeholder:text-slate-800"
                 />
@@ -2085,29 +2087,17 @@ export default function App() {
                    </span>
                 )}
               </div>
-              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar space-y-2">
-                {debugIsAnalyzing ? (
-                  <>
-                    <p className="text-red-400 animate-pulse">&gt; ANALYZING AST TREE...</p>
-                    <p className="text-cyan-400 animate-pulse">&gt; CHECKING FOR MEMORY LEAKS...</p>
-                    <p className="text-purple-400 animate-pulse">&gt; SCANNING VULNERABILITIES...</p>
-                  </>
-                ) : debugResult ? (
-                  <div className="space-y-3">
-                    <p className="text-emerald-500 font-bold">&gt; ANALYSIS COMPLETE: {debugResult.issues?.length || 0} Issues Identified.</p>
-                    <p className="text-slate-400 leading-relaxed">&gt; SUMMARY: {debugResult.summary}</p>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                       <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
-                         <p className="text-[9px] font-black text-red-400 uppercase mb-1">Top Security Risk</p>
-                         <p className="text-[10px] text-slate-400 italic">"{debugResult.securityAudit?.substring(0, 80)}..."</p>
-                       </div>
-                       <div className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl">
-                         <p className="text-[9px] font-black text-cyan-400 uppercase mb-1">Performance Insight</p>
-                         <p className="text-[10px] text-slate-400 italic">"{debugResult.performanceTips?.substring(0, 80)}..."</p>
-                       </div>
-                    </div>
+              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar space-y-1">
+                {debugConsoleLogs.map((log, idx) => (
+                  <div key={idx} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-red-400' : log.type === 'warn' ? 'text-amber-400' : 'text-slate-400'}`}>
+                    <span className="opacity-30">[{new Date().toLocaleTimeString()}]</span>
+                    <span className="font-bold">&gt; {log.msg}</span>
                   </div>
-                ) : (
+                ))}
+                {debugIsAnalyzing && (
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1 }} className="text-cyan-400">&gt; ANALYZING NEURAL AST TREE...</motion.p>
+                )}
+                {!debugIsAnalyzing && debugConsoleLogs.length === 0 && (
                   <p className="text-slate-700">&gt; Sentinel passive. Awaiting input stream.</p>
                 )}
               </div>
@@ -2311,10 +2301,10 @@ export default function App() {
                           setIsPricingOpen(true);
                           return;
                         }
-                        const tid = tool.name.toLowerCase();
-                        if (tid === 'polyglot') {
+                        const tid = tool.id || tool.name.toLowerCase();
+                        if (tid === 'polyglot' || tid.includes('polyglot')) {
                           setExpertSubTab('polyglot');
-                        } else if (tid === 'debugger') {
+                        } else if (tid === 'debugger' || tid.includes('debugger')) {
                           setExpertSubTab('debugger');
                         } else {
                           handleSendMessage(`Initialize Expert Tool: ${tool.name}. Provide a brief overview of how this module functions in the Enterprise Ecosystem.`);
