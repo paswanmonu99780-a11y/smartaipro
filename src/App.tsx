@@ -513,6 +513,36 @@ export default function App() {
     }
   }, [isAdmin]);
 
+  // ==========================================
+  // VIP MASTER REINFORCEMENT (LIFETIME)
+  // ==========================================
+  useEffect(() => {
+    const reinforceVip = () => {
+      if (email && isVipEmail(email)) {
+        if (plan !== 'Expert Mode') setPlan('Expert Mode');
+        if (credits < 99999999) setCredits(999999999);
+        if (smartMode !== 'expert') setSmartMode('expert');
+        if (!isAdmin) {
+           setIsAdmin(true);
+           localStorage.setItem('smartai_admin_session', 'active');
+        }
+        // Force VIP metadata
+        if (!userMetadata || userMetadata.plan !== 'Ultra') {
+          setUserMetadata({
+            email: email,
+            credits: 999999999,
+            plan: 'Ultra',
+            displayName: displayName || 'VIP MASTER',
+            avatar: avatar || ''
+          } as any);
+        }
+      }
+    };
+    
+    reinforceVip();
+    const interval = setInterval(reinforceVip, 2000); // Check every 2 seconds to prevent drift
+    return () => clearInterval(interval);
+  }, [email, plan, credits, isAdmin, smartMode, userMetadata]);
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const ref = urlParams.get('ref');
@@ -5211,8 +5241,13 @@ export default function App() {
           >
             <Sparkles className="w-4 h-4" /> Upgrade Plan
           </button>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">{(displayName || email || 'U').charAt(0)}</div>
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm relative group">
+            {email && isVipEmail(email) && (
+              <div className="absolute -top-2 -right-2 bg-rose-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full shadow-lg animate-pulse z-50 border border-white/20">VIP MASTER</div>
+            )}
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase overflow-hidden">
+               {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : (displayName || email || 'U').charAt(0)}
+            </div>
             <div className="flex-1 min-w-0">
               <div className="text-[10px] font-bold text-white truncate">{displayName || email?.split('@')[0] || 'User'}</div>
               <div className="text-[9px] text-slate-500 truncate">{email}</div>
