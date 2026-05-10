@@ -1458,14 +1458,17 @@ export default function App() {
     if (refineMsg) {
       prompt = `The user wants to refine the previous project: "${polyResult?.title}".
       Modification requested: "${refineMsg}".
-      Update the existing architecture and code. 
-      Current project files: ${JSON.stringify(polyResult?.files?.map((f: any) => f.name))}.
-      Return the ENTIRE updated project in the same JSON format.`;
+        Update the existing architecture and code. 
+        Current project files: ${JSON.stringify(polyResult?.files?.map((f: any) => f.name))}.
+        Return the ENTIRE updated project in the same JSON format. 
+        CRITICAL: Ensure all code strings are properly escaped and the JSON is valid. Do not use markdown blocks.`;
     } else {
       prompt = `Generate a professional ${polyComplexity}% complex ${polyType} for the task: "${taskToGen}" using ${polyLang} and ${polyFramework} framework.
       Style: ${polyStyle}.
       Advanced Requirements: ${advancedStr}.
-      Provide the response in JSON format:
+      Provide the response in PURE JSON format. 
+      CRITICAL: You MUST escape all newlines in the "code" field with \\n and escape double quotes with \\". 
+      The JSON must follow this exact structure:
       {
         "title": "Project Name",
         "overview": "Summary of architecture and logic",
@@ -1508,29 +1511,45 @@ export default function App() {
           });
         }
 
-        const cleanJson = fullText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("No valid JSON found in response");
-        const data = JSON.parse(jsonMatch[0]);
+        // Improved JSON cleaning logic
+        let cleanJson = fullText.trim();
+        // Remove markdown blocks if they exist
+        cleanJson = cleanJson.replace(/```json/gi, '').replace(/```/g, '').trim();
         
-        setPolyResult(data);
-        setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
-        if (data.files && data.files.length > 0) {
-          const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
-          setPolyActiveFile(mainFile.name);
-          setPolyPreviewCode(mainFile.code);
+        // Find the first { and the last }
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+        
+        if (firstBrace === -1 || lastBrace === -1) {
+          throw new Error("No valid JSON structure detected in AI response.");
         }
         
-        if (refineMsg) setPolyRefinement('');
+        cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
 
-        setCreativeHistory(prev => [{
-          id: Date.now().toString(),
-          type: 'polyglot',
-          toolName: 'Polyglot Pro',
-          input: taskToGen,
-          result: data,
-          date: new Date().toLocaleTimeString()
-        } as any, ...prev]);
+        try {
+          const data = JSON.parse(cleanJson);
+          setPolyResult(data);
+          setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
+          if (data.files && data.files.length > 0) {
+            const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
+            setPolyActiveFile(mainFile.name);
+            setPolyPreviewCode(mainFile.code);
+          }
+          
+          if (refineMsg) setPolyRefinement('');
+
+          setCreativeHistory(prev => [{
+            id: Date.now().toString(),
+            type: 'polyglot',
+            toolName: 'Polyglot Pro',
+            input: taskToGen,
+            result: data,
+            date: new Date().toLocaleTimeString()
+          } as any, ...prev]);
+        } catch (parseErr) {
+          console.error("Parse Error:", parseErr, "Cleaned JSON:", cleanJson);
+          throw new Error("AI returned invalid JSON structure. Please try again with a simpler request.");
+        }
       } else {
         throw new Error("Failed to initialize stream.");
       }
@@ -1877,7 +1896,8 @@ export default function App() {
     Associated Error Logs:
     ${debugInputLogs}
 
-    Provide a professional developer debugging report in JSON format:
+    Provide a professional developer debugging report in PURE JSON format.
+    CRITICAL: You MUST escape all newlines in the code fields with \\n and escape double quotes with \\". 
     {
       "summary": "High level summary of the issues",
       "severity": "Low | Medium | High | Critical",
@@ -1918,22 +1938,31 @@ export default function App() {
           });
         }
 
-        const cleanJson = fullText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-        const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("No valid JSON found in response");
-        const data = JSON.parse(jsonMatch[0]);
+        // Improved JSON cleaning logic
+        let cleanJson = fullText.trim();
+        cleanJson = cleanJson.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1) throw new Error("No valid JSON structure detected.");
+        cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
 
-        setDebugResult(data);
-        setDebugConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: `Analysis Complete. ${data.issues?.length || 0} issues detected.` }, { type: 'info', msg: 'Security Audit & Optimization Report Generated.' }]);
-        
-        setCreativeHistory(prev => [{
-          id: Date.now().toString(),
-          type: 'debugger',
-          toolName: 'AI Debugger',
-          input: debugCode.substring(0, 50) + '...',
-          result: data,
-          date: new Date().toLocaleTimeString()
-        } as any, ...prev]);
+        try {
+          const data = JSON.parse(cleanJson);
+          setDebugResult(data);
+          setDebugConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: `Analysis Complete. ${data.issues?.length || 0} issues detected.` }, { type: 'info', msg: 'Security Audit & Optimization Report Generated.' }]);
+          
+          setCreativeHistory(prev => [{
+            id: Date.now().toString(),
+            type: 'debugger',
+            toolName: 'AI Debugger',
+            input: debugCode.substring(0, 50) + '...',
+            result: data,
+            date: new Date().toLocaleTimeString()
+          } as any, ...prev]);
+        } catch (parseErr) {
+          console.error("Debugger Parse Error:", parseErr, "Cleaned JSON:", cleanJson);
+          throw new Error("AI returned invalid JSON. Try again.");
+        }
       }
     } catch (e) {
       console.error("Debugger error:", e);
