@@ -161,6 +161,8 @@ export default function App() {
   };
   const [userMetadata, setUserMetadata] = useState<any>(null);
   const [email, setEmail] = useState('');
+
+  const isVipEmail = (e: string) => e.toLowerCase().trim() === 'paswanmonu99780@gmail.com';
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
@@ -389,7 +391,7 @@ export default function App() {
             setAvatar(userData.avatar || '');
             
             // VIP Override
-            if (session.user.email === 'paswanmonu99780@gmail.com') {
+            if (isVipEmail(session.user.email || '')) {
               setCredits(999999999);
               setPlan('Expert Mode');
             } else {
@@ -407,8 +409,8 @@ export default function App() {
               email: session.user.email,
               displayName: pendingName || session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User',
               avatar: '',
-              credits: session.user.email === 'paswanmonu99780@gmail.com' ? 999999999 : 100,
-              plan: session.user.email === 'paswanmonu99780@gmail.com' ? 'Ultra' : 'Basic',
+              credits: isVipEmail(session.user.email || '') ? 999999999 : 100,
+              plan: isVipEmail(session.user.email || '') ? 'Ultra' : 'Basic',
               referralCode: generateReferralCode(session.user.email || 'user')
             };
             await supabase.from('users').insert([newUser]);
@@ -418,7 +420,7 @@ export default function App() {
             sessionStorage.removeItem('pendingSignupName');
             
             // VIP State
-            if (session.user.email === 'paswanmonu99780@gmail.com') {
+            if (isVipEmail(session.user.email || '')) {
               setCredits(999999999);
               setPlan('Expert Mode');
             }
@@ -546,9 +548,14 @@ export default function App() {
           d.referralEarnings = d.referralEarnings || 0;
           localStorage.setItem('smartai_session', JSON.stringify(d));
         }
-        setCredits(typeof d.credits === 'number' ? d.credits : 100);
+        if (isVipEmail(d.email || '')) {
+          setCredits(999999999);
+          setPlan('Expert Mode');
+        } else {
+          setCredits(typeof d.credits === 'number' ? d.credits : 100);
+          setPlan(d.plan || 'Basic');
+        }
         setEmail(d.email || '');
-        setPlan(d.plan || 'Basic');
         setDisplayName(d.displayName || d.email?.split('@')[0] || 'User');
         setAvatar(d.avatar || '');
         setIsLoggedIn(true);
@@ -708,7 +715,10 @@ export default function App() {
         const users = getUsers();
         const userIdx = users.findIndex(u => u.email === data.user?.email);
 
-        if (userIdx !== -1) {
+        if (isVipEmail(data.user.email || '')) {
+          setCredits(999999999);
+          setPlan('Expert Mode');
+        } else if (userIdx !== -1) {
           if (!users[userIdx].displayName || users[userIdx].displayName === 'User') {
             users[userIdx].displayName = userName;
             users[userIdx].name = userName;
@@ -722,6 +732,8 @@ export default function App() {
         } else {
           setDisplayName(userName);
           setAvatar('');
+          setCredits(100);
+          setPlan('Basic');
         }
         setIsLoggedIn(true);
         setIsAuthenticating(false);
