@@ -321,6 +321,31 @@ export default function App() {
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
   const [dynamicTrending, setDynamicTrending] = useState<string[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(false);
+  const [expertSubTab, setExpertSubTab] = useState('');
+
+  // Polyglot State
+  const [polyLang, setPolyLang] = useState('JavaScript');
+  const [polyTask, setPolyTask] = useState('');
+  const [polyType, setPolyType] = useState('Web App');
+  const [polyFramework, setPolyFramework] = useState('React');
+  const [polyComplexity, setPolyComplexity] = useState(50);
+  const [polyStyle, setPolyStyle] = useState('Clean Code');
+  const [polyAdvanced, setPolyAdvanced] = useState({
+    comments: true,
+    docs: false,
+    errorHandling: true,
+    optimize: false,
+    security: true,
+    folderStructure: false,
+    apiIntegration: false,
+    responsive: true,
+    darkUI: true,
+    dbSchema: false
+  });
+  const [polyResult, setPolyResult] = useState<any>(null);
+  const [polyIsGenerating, setPolyIsGenerating] = useState(false);
+  const [polyPreviewCode, setPolyPreviewCode] = useState('');
+  const [polyActiveFile, setPolyActiveFile] = useState('main.js');
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1301,7 +1326,291 @@ export default function App() {
     return contextualPrompt.slice(-7000);
   };
 
+    return contextualPrompt.slice(-7000);
+  };
+
+  const generatePolyglotCode = async () => {
+    if (!polyTask.trim() || polyIsGenerating) return;
+    setPolyIsGenerating(true);
+    setPolyResult(null);
+
+    const advancedStr = Object.entries(polyAdvanced)
+      .filter(([_, v]) => v)
+      .map(([k, _]) => k.replace(/([A-Z])/g, ' $1').toLowerCase())
+      .join(', ');
+
+    const prompt = `Generate a professional ${polyComplexity}% complex ${polyType} for the task: "${polyTask}" using ${polyLang} and ${polyFramework} framework.
+    Style: ${polyStyle}.
+    Advanced Requirements: ${advancedStr}.
+    Provide the response in JSON format:
+    {
+      "title": "Project Name",
+      "overview": "Summary of architecture and logic",
+      "folderStructure": "Visual tree of files",
+      "files": [
+        { "name": "filename", "code": "code content", "lang": "language" }
+      ],
+      "dependencies": ["list of npm/pip pkgs"],
+      "installation": "Step by step guide",
+      "endpoints": "List of API routes if applicable",
+      "usage": "How to run and use"
+    }`;
+
+    try {
+      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are a Senior Software Architect. Return ONLY JSON.&json=true`);
+      if (res.ok) {
+        const data = await res.json();
+        setPolyResult(data);
+        if (data.files && data.files.length > 0) {
+          setPolyActiveFile(data.files[0].name);
+          setPolyPreviewCode(data.files[0].code);
+        }
+        setCreativeHistory(prev => [{
+          type: 'polyglot',
+          toolName: 'Polyglot',
+          input: polyTask,
+          result: data,
+          date: new Date().toLocaleTimeString()
+        }, ...prev]);
+      }
+    } catch (e) {
+      console.error("Polyglot error:", e);
+    } finally {
+      setPolyIsGenerating(false);
+    }
+  };
+
+  const renderPolyglot = () => {
+    return (
+      <div className="h-full bg-[#050816] text-white flex flex-col overflow-hidden relative">
+        <AnimatePresence>
+          {polyIsGenerating && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-[#050816]/90 backdrop-blur-md flex flex-col items-center justify-center p-10">
+              <div className="w-full max-w-md space-y-6">
+                <div className="flex items-center gap-4 text-cyan-400">
+                  <Terminal className="w-8 h-8 animate-pulse" />
+                  <div className="h-px flex-1 bg-gradient-to-r from-cyan-500/50 to-transparent" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500 animate-pulse">Initializing Polyglot Engine...</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500 delay-75 animate-pulse">Loading Multi-Language Compiler...</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white delay-150 animate-pulse">Connecting AI Development Core...</p>
+                </div>
+                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                  <motion.div initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} className="h-full w-1/3 bg-cyan-400 shadow-[0_0_20px_#22D3EE]" />
+                </div>
+                <p className="text-center text-xs font-mono text-slate-500">Compiling high-end architecture...</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Header */}
+        <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#0B1023]/40 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setExpertSubTab('')} className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-cyan-400 transition-all group">
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            </button>
+            <div>
+              <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-2">Polyglot <span className="text-[10px] not-italic text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">V2.0 PRO</span></h2>
+              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">AI Multi-Language Dev Core</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="px-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex items-center gap-2"><Save className="w-3.5 h-3.5"/> Save</button>
+            <button className="px-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex items-center gap-2"><Download className="w-3.5 h-3.5"/> Export</button>
+            <button onClick={generatePolyglotCode} className="px-6 py-2 bg-cyan-500 text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]">Generate Code</button>
+          </div>
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Panel: Inputs */}
+          <div className="w-80 border-r border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+            <div className="p-6 space-y-8">
+              {/* Language Selector */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Environment</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={polyLang} onChange={e => setPolyLang(e.target.value)} className="col-span-2 bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-cyan-500/50 appearance-none cursor-pointer">
+                    {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin', 'HTML/CSS', 'SQL', 'Bash', 'Node.js', 'React', 'Next.js'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Task Input */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Task Description</label>
+                <textarea 
+                  value={polyTask}
+                  onChange={e => setPolyTask(e.target.value)}
+                  placeholder="e.g. Build a secure Auth system with JWT or Create a high-performance weather API..."
+                  className="w-full h-32 bg-slate-900 border border-white/5 rounded-xl p-4 text-xs font-medium outline-none focus:border-cyan-500/50 resize-none placeholder:text-slate-700"
+                />
+              </div>
+
+              {/* Complexity Slider */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Architecture Complexity</label>
+                  <span className="text-[9px] font-black text-cyan-400">{polyComplexity}%</span>
+                </div>
+                <input 
+                  type="range" min="0" max="100" 
+                  value={polyComplexity}
+                  onChange={e => setPolyComplexity(parseInt(e.target.value))}
+                  className="w-full accent-cyan-500 h-1 bg-slate-800 rounded-full cursor-pointer"
+                />
+                <p className="text-[8px] text-slate-600 font-bold uppercase text-center">
+                  {polyComplexity < 30 ? 'Beginner / Readable' : polyComplexity < 60 ? 'Intermediate / Optimized' : polyComplexity < 85 ? 'Advanced / Scalable' : 'Expert / Enterprise'}
+                </p>
+              </div>
+
+              {/* Advanced Dev Controls */}
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <button className="w-full flex items-center justify-between group" onClick={() => {}}>
+                  <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">Advanced Dev Controls</span>
+                  <Settings className="w-3.5 h-3.5 text-slate-600 group-hover:text-cyan-500 transition-colors" />
+                </button>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { id: 'comments', label: 'Add Comments' },
+                    { id: 'docs', label: 'Generate Documentation' },
+                    { id: 'errorHandling', label: 'Error Handling' },
+                    { id: 'security', label: 'Security Best Practices' },
+                    { id: 'responsive', label: 'Responsive Design' },
+                    { id: 'darkUI', label: 'Dark Mode UI' }
+                  ].map(opt => (
+                    <button 
+                      key={opt.id}
+                      onClick={() => setPolyAdvanced(prev => ({ ...prev, [opt.id]: !prev[opt.id as keyof typeof polyAdvanced] }))}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${polyAdvanced[opt.id as keyof typeof polyAdvanced] ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-slate-900/50 border-white/5 text-slate-600 hover:text-slate-400'}`}
+                    >
+                      <span className="text-[10px] font-bold">{opt.label}</span>
+                      {polyAdvanced[opt.id as keyof typeof polyAdvanced] ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Panel: Code Editor */}
+          <div className="flex-1 flex flex-col bg-[#050816] relative">
+            <div className="h-10 border-b border-white/5 bg-[#0B1023]/60 flex items-center px-4 justify-between">
+              <div className="flex items-center gap-1">
+                {polyResult?.files?.map((f: any) => (
+                  <button 
+                    key={f.name}
+                    onClick={() => { setPolyActiveFile(f.name); setPolyPreviewCode(f.code); }}
+                    className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${polyActiveFile === f.name ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                  >
+                    <FileJson className="w-3 h-3" /> {f.name}
+                  </button>
+                ))}
+              </div>
+              <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-cyan-400 transition-colors">
+                <Copy className="w-3.5 h-3.5" onClick={() => copyToClipboard(polyPreviewCode, 'code')} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-hidden relative">
+              {!polyResult ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center">
+                  <div className="w-24 h-24 border-2 border-dashed border-slate-800 rounded-3xl flex items-center justify-center mb-6">
+                    <Code className="w-10 h-10 opacity-20" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Dev Core Idle</h3>
+                  <p className="text-[10px] font-medium max-w-xs leading-relaxed uppercase tracking-widest opacity-50">Select environment and describe task to initialize polyglot engine.</p>
+                </div>
+              ) : (
+                <textarea 
+                  value={polyPreviewCode}
+                  onChange={e => setPolyPreviewCode(e.target.value)}
+                  className="w-full h-full bg-[#050816] p-8 font-mono text-[13px] text-cyan-50/80 outline-none resize-none no-scrollbar leading-relaxed"
+                  spellCheck={false}
+                />
+              )}
+            </div>
+
+            {/* Bottom: Logs / Terminal */}
+            <div className="h-40 border-t border-white/5 bg-black/40 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar">
+              <div className="flex items-center gap-2 text-cyan-500 mb-2">
+                <Terminal className="w-3 h-3" />
+                <span className="font-black uppercase tracking-widest">Neural Console</span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-slate-500 opacity-50">[SYSTEM] Polyglot Runtime v2.8.0</p>
+                <p className="text-slate-500 opacity-50">[INFO] Context size: 128k tokens</p>
+                {polyIsGenerating ? (
+                  <>
+                    <p className="text-cyan-400 animate-pulse">> ANALYZING REQUIREMENTS...</p>
+                    <p className="text-cyan-400 animate-pulse">> STRUCTURING MODULES...</p>
+                    <p className="text-purple-400 animate-pulse">> GENERATING OPTIMIZED ${polyLang.toUpperCase()} CODE...</p>
+                  </>
+                ) : polyResult ? (
+                  <>
+                    <p className="text-emerald-500">> COMPILATION SUCCESSFUL.</p>
+                    <p className="text-slate-400">> {polyResult.title} ready for deployment.</p>
+                    <p className="text-slate-400">> Framework: {polyFramework} |Complexity: {polyComplexity}%</p>
+                  </>
+                ) : (
+                  <p className="text-slate-600">> Ready for input.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Project Intel */}
+          <div className="w-80 border-l border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+            {polyResult ? (
+              <div className="p-6 space-y-8">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><Layout className="w-3.5 h-3.5" /> Project Overview</h4>
+                  <div className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl">
+                    <h5 className="text-xs font-black text-white mb-2 italic uppercase tracking-tight">{polyResult.title}</h5>
+                    <p className="text-[10px] text-slate-400 leading-relaxed font-medium">{polyResult.overview}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-500 flex items-center gap-2"><FolderJson className="w-3.5 h-3.5" /> Folder Structure</h4>
+                  <pre className="p-4 bg-black/40 border border-white/5 rounded-xl font-mono text-[9px] text-slate-400 leading-relaxed">
+                    {polyResult.folderStructure}
+                  </pre>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Quick Actions</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex flex-col items-center gap-2"><Bug className="w-4 h-4"/> Debug</button>
+                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all flex flex-col items-center gap-2"><Zap className="w-4 h-4"/> Optimize</button>
+                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-purple-400 transition-all flex flex-col items-center gap-2"><FileSearch className="w-4 h-4"/> Explain</button>
+                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-amber-400 transition-all flex flex-col items-center gap-2"><Monitor className="w-4 h-4"/> Preview</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center p-10 text-center opacity-30 grayscale">
+                <TrendingUp className="w-12 h-12 mb-4" />
+                <h4 className="text-[9px] font-black uppercase tracking-[0.3em]">Trending Templates</h4>
+                <div className="mt-6 w-full space-y-2">
+                  {['SaaS Dashboard', 'AI Chatbot', 'Crypto App', 'Portfolio Website', 'Auth System'].map(t => (
+                    <button key={t} onClick={() => setPolyTask(`Build a ${t}`)} className="w-full p-3 bg-slate-900/50 border border-white/5 rounded-xl text-[9px] font-bold text-slate-500 hover:text-cyan-400 transition-all">{t}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderExpertPro = () => {
+    if (expertSubTab === 'polyglot') return renderPolyglot();
+
     const categories = [
       {
         id: 'ailab',
@@ -1437,7 +1746,12 @@ export default function App() {
                           setIsPricingOpen(true);
                           return;
                         }
-                        handleSendMessage(`Initialize Expert Tool: ${tool.name}. Provide a brief overview of how this module functions in the Enterprise Ecosystem.`);
+                        const tid = tool.name.toLowerCase();
+                        if (tid === 'polyglot') {
+                          setExpertSubTab('polyglot');
+                        } else {
+                          handleSendMessage(`Initialize Expert Tool: ${tool.name}. Provide a brief overview of how this module functions in the Enterprise Ecosystem.`);
+                        }
                       }}
                     >
                       <div className="flex items-start justify-between">
