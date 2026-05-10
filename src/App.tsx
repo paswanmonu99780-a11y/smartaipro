@@ -1478,6 +1478,7 @@ export default function App() {
         const data = JSON.parse(jsonMatch[0]);
         
         setPolyResult(data);
+        setPolyConsoleLogs(prev => [...prev, { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
         if (data.files && data.files.length > 0) {
           const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
           setPolyActiveFile(mainFile.name);
@@ -1489,15 +1490,19 @@ export default function App() {
         setCreativeHistory(prev => [{
           id: Date.now().toString(),
           type: 'polyglot',
-          toolName: 'Polyglot',
+          toolName: 'Polyglot Pro',
           input: taskToGen,
           result: data,
           date: new Date().toLocaleTimeString()
         } as any, ...prev]);
+      } else {
+        const errText = await res.text();
+        throw new Error(`Server responded with ${res.status}: ${errText}`);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Polyglot error:", e);
-      alert("Failed to generate code. AI might have returned invalid JSON. Try refining the prompt.");
+      setPolyConsoleLogs(prev => [...prev, { type: 'error', msg: `Generation Failed: ${e.message}` }]);
+      alert("Polyglot Engine Error: " + e.message);
     } finally {
       setPolyIsGenerating(false);
     }
@@ -1910,28 +1915,27 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Top Header */}
-        <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#0B1023]/40 backdrop-blur-xl shrink-0">
+        {/* TOP SECTION */}
+        <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#0B1023]/60 backdrop-blur-2xl shrink-0">
           <div className="flex items-center gap-6">
-            <button onClick={() => setExpertSubTab('')} className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-red-400 transition-all group">
+            <button onClick={() => setExpertSubTab('')} className="p-3 bg-slate-900 border border-white/5 rounded-2xl text-slate-400 hover:text-red-400 transition-all group">
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             </button>
-            <div>
-              <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-2">Debugger <span className="text-[10px] not-italic text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">SENTINEL V1</span></h2>
-              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">AI Semantic Diagnosis & Fix Core</p>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-black uppercase tracking-tighter italic flex items-center gap-3">
+                Debugger
+                <span className="text-[9px] not-italic text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 font-black tracking-widest">SENTINEL AI V2</span>
+              </h1>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">AI-powered semantic debugging, error fixing & code optimization system.</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => generateDebuggerAnalysis()}
-              disabled={debugIsAnalyzing}
-              className="px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-red-500/20 flex items-center gap-2"
-            >
-              <Search className="w-4 h-4" /> Analyze Code
+            <button onClick={() => generateDebuggerAnalysis()} disabled={debugIsAnalyzing} className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-red-500/20 flex items-center gap-2">
+              <Search className="w-4 h-4" /> Analyze
             </button>
-            <div className="h-8 w-px bg-white/5 mx-2" />
-            <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Save className="w-4 h-4" /></button>
-            <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Download className="w-4 h-4" /></button>
+            <button className="px-6 py-2.5 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600/20 transition-all">Fix Errors</button>
+            <button className="px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Save className="w-4 h-4" /> Save Report</button>
+            <button className="px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
           </div>
         </div>
 
