@@ -2223,54 +2223,6 @@ export default function App() {
               </div>
             )}
           </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-              {debugResult?.issues?.map((issue: any, i: number) => (
-                <div key={i} className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden hover:border-red-500/30 transition-all group">
-                   <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20">
-                      <div className="flex items-center gap-2">
-                         <Bug className={`w-3 h-3 ${issue.severity === 'Critical' ? 'text-red-500' : 'text-orange-500'}`} />
-                         <span className="text-[10px] font-black uppercase tracking-tight text-white">{issue.type}</span>
-                      </div>
-                      <span className="text-[9px] font-bold text-slate-500">Line {issue.line}</span>
-                   </div>
-                   <div className="p-4 space-y-4">
-                      <p className="text-[11px] text-slate-300 font-medium leading-relaxed">{issue.desc}</p>
-                      <div className="space-y-2">
-                         <div className="p-3 bg-red-500/5 rounded-xl border border-red-500/10">
-                            <p className="text-[9px] font-black text-red-400 uppercase mb-1">Cause</p>
-                            <p className="text-[10px] text-slate-400 italic">{issue.cause}</p>
-                         </div>
-                         <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10">
-                            <p className="text-[9px] font-black text-emerald-400 uppercase mb-1">Recommended Fix</p>
-                            <p className="text-[10px] text-slate-300 font-bold">{issue.fix}</p>
-                         </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <button 
-                          onClick={() => generateDebuggerAnalysis(`Explain this specific error in beginner-friendly terms: ${issue.type} - ${issue.desc}. Include why it happened and how to avoid it.`)}
-                          className="flex-1 py-2 bg-slate-900 border border-white/5 rounded-lg text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all"
-                        >
-                          Explain
-                        </button>
-                        <button 
-                          onClick={() => setDebugActiveTab('comparison')}
-                          className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
-                        >
-                          Apply Fix
-                        </button>
-                      </div>
-                   </div>
-                </div>
-              ))}
-
-              {!debugResult && (
-                <div className="h-full flex flex-col items-center justify-center text-center opacity-20 grayscale py-20">
-                   <FileSearch className="w-12 h-12 mb-4" />
-                   <p className="text-[9px] font-black uppercase tracking-[0.2em]">No Active Reports</p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -4918,7 +4870,6 @@ export default function App() {
     return (
       <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-2 md:p-4'}`}>
         {activeTab === 'chat' && (
-          smartMode === 'expert' ? renderExpertPro() : (
             <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
               {/* Chat Header */}
               <div className="flex justify-between items-center p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
@@ -5004,7 +4955,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-          )
         )}
 
         {activeTab === 'image' && (
