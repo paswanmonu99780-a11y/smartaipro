@@ -1395,7 +1395,10 @@ export default function App() {
 
   const generatePolyglotCode = async (refineMsg?: string) => {
     const taskToGen = refineMsg || polyTask;
-    if (!taskToGen.trim() || polyIsGenerating) return;
+    if (!taskToGen.trim() || polyIsGenerating) {
+      if (!taskToGen.trim() && !polyIsGenerating) alert("Please describe the task you want to generate.");
+      return;
+    }
     
     setPolyIsGenerating(true);
     setPolyShowPreview(false);
@@ -1436,9 +1439,11 @@ export default function App() {
       const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are a Senior Software Architect. Return ONLY pure JSON. No markdown tags like \`\`\`json.&json=true`);
       if (res.ok) {
         const text = await res.text();
-        // Clean markdown if present
-        const cleanJson = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-        const data = JSON.parse(cleanJson);
+        // More robust JSON cleaning
+        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("No valid JSON found in response");
+        const data = JSON.parse(jsonMatch[0]);
         
         setPolyResult(data);
         if (data.files && data.files.length > 0) {
@@ -1574,8 +1579,13 @@ export default function App() {
                 <textarea 
                   value={polyTask}
                   onChange={e => setPolyTask(e.target.value)}
-                  placeholder="e.g. Build a secure Auth system with JWT or Create a high-performance weather API..."
-                  className="w-full h-32 bg-slate-900 border border-white/5 rounded-xl p-4 text-xs font-medium outline-none focus:border-cyan-500/50 resize-none placeholder:text-slate-700"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      generatePolyglotCode();
+                    }
+                  }}
+                  placeholder="e.g. Build a secure Auth system with JWT or Create a high-performance weather API... (Ctrl+Enter to generate)"
+                  className="w-full h-32 bg-slate-900 border border-white/5 rounded-xl p-4 text-xs font-medium outline-none focus:border-cyan-500/50 resize-none placeholder:text-slate-700 transition-all"
                 />
               </div>
 
@@ -1747,10 +1757,13 @@ export default function App() {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex flex-col items-center gap-2"><Bug className="w-4 h-4"/> Debug</button>
+                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex flex-col items-center gap-2" onClick={() => setExpertSubTab('debugger')}><Bug className="w-4 h-4"/> Debug</button>
                     <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all flex flex-col items-center gap-2"><Zap className="w-4 h-4"/> Optimize</button>
                     <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-purple-400 transition-all flex flex-col items-center gap-2"><FileSearch className="w-4 h-4"/> Explain</button>
-                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-amber-400 transition-all flex flex-col items-center gap-2"><Monitor className="w-4 h-4"/> Preview</button>
+                    <button className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-cyan-500/20 transition-all flex flex-col items-center gap-2" onClick={() => setPolyShowPreview(true)}>
+                      <Monitor className="w-4 h-4 text-cyan-400"/> 
+                      {polyShowPreview ? 'Hide Preview' : 'Run Preview'}
+                    </button>
                   </div>
                 </div>
               </div>
