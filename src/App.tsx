@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote, Save, Box, FolderJson } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote, Save, Box, Folder } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
 import { supabase } from './lib/supabase';
 import AIVoiceAvatar from './AIVoiceAvatar';
+import SettingsComponent from './Settings';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
@@ -134,6 +135,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [smartMode, setSmartMode] = useState<SmartMode>('normal');
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [credits, setCredits] = useState(100);
   const [usage, setUsage] = useState({ messages: 0, images: 0, date: new Date().toLocaleDateString() });
 
@@ -1791,7 +1793,7 @@ export default function App() {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-500 flex items-center gap-2"><FolderJson className="w-3.5 h-3.5" /> Folder Structure</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-500 flex items-center gap-2"><Folder className="w-3.5 h-3.5" /> Folder Structure</h4>
                   <pre className="p-4 bg-black/40 border border-white/5 rounded-xl font-mono text-[9px] text-slate-400 leading-relaxed">
                     {polyResult.folderStructure}
                   </pre>
@@ -5257,6 +5259,11 @@ export default function App() {
               <span className="text-sm font-medium">{item.name}</span>
             </button>
           ))}
+          
+          <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white">
+            <Settings className="w-5 h-5" />
+            <span className="text-sm font-medium">Settings</span>
+          </button>
 
           <div className="my-4 px-2">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dashboards</span>
@@ -5393,6 +5400,11 @@ export default function App() {
                     <span className="text-base font-medium">{item.name}</span>
                   </button>
                 ))}
+                
+                <button onClick={() => { setIsSettingsOpen(true); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white">
+                  <Settings className="w-5 h-5" />
+                  <span className="text-base font-medium">Settings</span>
+                </button>
 
                 <div className="my-4 px-2">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dashboards</span>
@@ -5501,6 +5513,17 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+      {isSettingsOpen && (
+        <SettingsComponent 
+          onClose={() => setIsSettingsOpen(false)} 
+          onLogout={handleLogout}
+          userEmail={email}
+          userName={displayName}
+          userAvatar={avatar}
+          plan={plan}
+          credits={credits}
+        />
+      )}
     </div>
   );
 }
