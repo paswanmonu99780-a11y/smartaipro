@@ -1614,22 +1614,38 @@ export default function App() {
     const cssFiles = polyResult.files.filter((f: any) => f.name.endsWith('.css')).map((f: any) => `<style>${f.code}</style>`).join('\n');
     const jsFiles = polyResult.files.filter((f: any) => f.name.endsWith('.js') || f.name.endsWith('.ts')).map((f: any) => `<script>${f.code}</script>`).join('\n');
 
+    const tailwindCDN = '<script src="https://cdn.tailwindcss.com"></script>';
+
     if (htmlFile) {
-      return htmlFile.replace('</head>', `${cssFiles}</head>`).replace('</body>', `${jsFiles}</body>`);
+      let doc = htmlFile;
+      if (doc.includes('</head>')) {
+        doc = doc.replace('</head>', `${tailwindCDN}${cssFiles}</head>`);
+      } else {
+        doc = `${tailwindCDN}${cssFiles}${doc}`;
+      }
+      
+      if (doc.includes('</body>')) {
+        doc = doc.replace('</body>', `${jsFiles}</body>`);
+      } else {
+        doc = `${doc}${jsFiles}`;
+      }
+      return doc;
     }
 
-    // Default template if no HTML file
+    // Default template if no HTML file (assume it's a snippet or React-like)
     return `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <script src="https://cdn.tailwindcss.com"></script>
-          ${cssFiles}
+          \${tailwindCDN}
+          \${cssFiles}
         </head>
-        <body class="bg-[#050816] text-white">
-          <div id="root"></div>
+        <body class="bg-[#050816] text-white flex items-center justify-center min-h-screen">
+          <div id="root" class="w-full h-full flex items-center justify-center">
+            ${polyPreviewCode && !htmlFile ? `<div class="p-8 w-full">${polyPreviewCode}</div>` : ''}
+          </div>
           ${jsFiles}
         </body>
       </html>
@@ -1652,24 +1668,31 @@ export default function App() {
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500 delay-75 animate-pulse">Loading Multi-Language Compiler...</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white delay-150 animate-pulse">Connecting AI Development Core...</p>
                 </div>
-                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                  <motion.div initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} className="h-full w-1/3 bg-cyan-400 shadow-[0_0_20px_#22D3EE]" />
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-indigo-500" 
+                    initial={{ x: '-100%' }} 
+                    animate={{ x: '100%' }} 
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                  />
                 </div>
-                <p className="text-center text-xs font-mono text-slate-500">Compiling high-end architecture...</p>
+                <p className="text-[10px] text-slate-500 text-center font-mono italic animate-pulse">Compiling high-end architecture...</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Top Header */}
-        <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#0B1023]/40 backdrop-blur-xl shrink-0">
+        <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#0B1023]/40 backdrop-blur-xl shrink-0">
           <div className="flex items-center gap-6">
-            <button onClick={() => setExpertSubTab('')} className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-cyan-400 transition-all group">
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <button onClick={() => setExpertSubTab('dashboard')} className="p-2.5 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-2">Polyglot <span className="text-[10px] not-italic text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">V2.0 PRO</span></h2>
-              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">AI Multi-Language Dev Core</p>
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-2">Polyglot <span className="text-[10px] px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-md not-italic font-black tracking-widest">V2.0 PRO</span></h2>
+              </div>
+              <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">AI Multi-Language Dev Core</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -1686,10 +1709,6 @@ export default function App() {
             >
               <Eye className="w-4 h-4" /> {polyShowPreview ? 'View Code' : 'Run Preview'}
             </button>
-            <div className="flex items-center gap-2 ml-4">
-              <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Save className="w-4 h-4" /></button>
-              <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Download className="w-4 h-4" /></button>
-            </div>
           </div>
         </div>
 
@@ -1697,19 +1716,15 @@ export default function App() {
           {/* Left Panel: Inputs */}
           <div className="w-80 border-r border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
             <div className="p-6 space-y-8">
-              {/* Language Selector */}
               <div className="space-y-3">
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Environment</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <select value={polyLang} onChange={e => setPolyLang(e.target.value)} className="col-span-2 bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-cyan-500/50 appearance-none cursor-pointer">
-                    {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin', 'HTML/CSS', 'SQL', 'Bash', 'Node.js', 'React', 'Next.js'].map(l => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
-                </div>
+                <select value={polyLang} onChange={e => setPolyLang(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-cyan-500/50 appearance-none cursor-pointer">
+                  {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin', 'HTML/CSS', 'SQL', 'Bash', 'Node.js', 'React', 'Next.js'].map(l => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Task Input */}
               <div className="space-y-3">
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Task Description</label>
                 <textarea 
@@ -1720,12 +1735,11 @@ export default function App() {
                       generatePolyglotCode();
                     }
                   }}
-                  placeholder="e.g. Build a secure Auth system with JWT or Create a high-performance weather API... (Ctrl+Enter to generate)"
+                  placeholder="e.g. Build a secure Auth system with JWT..."
                   className="w-full h-32 bg-slate-900 border border-white/5 rounded-xl p-4 text-xs font-medium outline-none focus:border-cyan-500/50 resize-none placeholder:text-slate-700 transition-all"
                 />
               </div>
 
-              {/* Complexity Slider */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Architecture Complexity</label>
@@ -1737,25 +1751,15 @@ export default function App() {
                   onChange={e => setPolyComplexity(parseInt(e.target.value))}
                   className="w-full accent-cyan-500 h-1 bg-slate-800 rounded-full cursor-pointer"
                 />
-                <p className="text-[8px] text-slate-600 font-bold uppercase text-center">
-                  {polyComplexity < 30 ? 'Beginner / Readable' : polyComplexity < 60 ? 'Intermediate / Optimized' : polyComplexity < 85 ? 'Advanced / Scalable' : 'Expert / Enterprise'}
-                </p>
               </div>
 
-              {/* Advanced Dev Controls */}
               <div className="space-y-4 pt-4 border-t border-white/5">
-                <button className="w-full flex items-center justify-between group" onClick={() => {}}>
-                  <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">Advanced Dev Controls</span>
-                  <Settings className="w-3.5 h-3.5 text-slate-600 group-hover:text-cyan-500 transition-colors" />
-                </button>
                 <div className="grid grid-cols-1 gap-2">
                   {[
                     { id: 'comments', label: 'Add Comments' },
                     { id: 'docs', label: 'Generate Documentation' },
                     { id: 'errorHandling', label: 'Error Handling' },
-                    { id: 'security', label: 'Security Best Practices' },
-                    { id: 'responsive', label: 'Responsive Design' },
-                    { id: 'darkUI', label: 'Dark Mode UI' }
+                    { id: 'security', label: 'Security Best Practices' }
                   ].map(opt => (
                     <button 
                       key={opt.id}
@@ -1774,19 +1778,19 @@ export default function App() {
           {/* Center Panel: Code Editor */}
           <div className="flex-1 flex flex-col bg-[#050816] relative">
             <div className="h-10 border-b border-white/5 bg-[#0B1023]/60 flex items-center px-4 justify-between">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 {polyResult?.files?.map((f: any) => (
                   <button 
                     key={f.name}
                     onClick={() => { setPolyActiveFile(f.name); setPolyPreviewCode(f.code); }}
-                    className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${polyActiveFile === f.name ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                    className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 shrink-0 ${polyActiveFile === f.name ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
                   >
                     <FileJson className="w-3 h-3" /> {f.name}
                   </button>
                 ))}
               </div>
-              <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-cyan-400 transition-colors">
-                <Copy className="w-3.5 h-3.5" onClick={() => copyToClipboard(polyPreviewCode, 'code')} />
+              <button onClick={() => copyToClipboard(polyPreviewCode, 'code')} className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-cyan-400 transition-colors">
+                <Copy className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -1820,7 +1824,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Bottom: Logs & Refinement */}
+            {/* Bottom: Logs */}
             <div className="h-60 border-t border-white/5 bg-black/40 flex flex-col">
               <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar">
                 <div className="flex items-center gap-2 text-cyan-500 mb-2">
@@ -1829,22 +1833,25 @@ export default function App() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-slate-500 opacity-50">[SYSTEM] Polyglot Runtime v2.8.0</p>
-                  <p className="text-slate-500 opacity-50">[INFO] Context size: 128k tokens</p>
                   {polyIsGenerating ? (
                     <>
                       <p className="text-cyan-400 animate-pulse">&gt; ANALYZING REQUIREMENTS...</p>
                       <p className="text-cyan-400 animate-pulse">&gt; STRUCTURING MODULES...</p>
-                      <p className="text-purple-400 animate-pulse">&gt; GENERATING OPTIMIZED {polyLang.toUpperCase()} CODE...</p>
+                      <p className="text-purple-400 animate-pulse">&gt; GENERATING OPTIMIZED CODE...</p>
                     </>
                   ) : polyResult ? (
                     <>
                       <p className="text-emerald-500">&gt; COMPILATION SUCCESSFUL.</p>
                       <p className="text-slate-400">&gt; {polyResult.title} ready for deployment.</p>
-                      <p className="text-slate-400">&gt; Framework: {polyFramework} | Complexity: {polyComplexity}%</p>
                     </>
                   ) : (
                     <p className="text-slate-600">&gt; Ready for input.</p>
                   )}
+                  {polyConsoleLogs.map((log, idx) => (
+                    <p key={idx} className={log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-emerald-400' : 'text-slate-400'}>
+                      &gt; {log.msg}
+                    </p>
+                  ))}
                 </div>
               </div>
 
@@ -1853,17 +1860,13 @@ export default function App() {
                 <div className="flex-1 relative">
                   <input 
                     type="text"
-                    placeholder="Ask AI to add features, fix bugs, or change styles..."
+                    placeholder="Ask AI to add features, fix bugs..."
                     value={polyRefinement}
                     onChange={e => setPolyRefinement(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && generatePolyglotCode(polyRefinement)}
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/50 transition-all pr-12"
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500/50 transition-all pr-12"
                   />
-                  <button 
-                    onClick={() => generatePolyglotCode(polyRefinement)}
-                    disabled={!polyRefinement.trim() || polyIsGenerating}
-                    className="absolute right-1 top-1 bottom-1 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all disabled:opacity-30"
-                  >
+                  <button onClick={() => generatePolyglotCode(polyRefinement)} className="absolute right-1 top-1 bottom-1 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all">
                     <Send className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -1872,43 +1875,33 @@ export default function App() {
           </div>
 
           {/* Right Panel: Project Intel */}
-          <div className="w-80 border-l border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+          <div className="w-80 border-l border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar p-6 space-y-8">
             {polyResult ? (
-              <div className="p-6 space-y-8">
+              <>
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><Layout className="w-3.5 h-3.5" /> Project Overview</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><Layout className="w-3.5 h-3.5" /> Overview</h4>
                   <div className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl">
-                    <h5 className="text-xs font-black text-white mb-2 italic uppercase tracking-tight">{polyResult.title}</h5>
                     <p className="text-[10px] text-slate-400 leading-relaxed font-medium">{polyResult.overview}</p>
                   </div>
                 </div>
-
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-500 flex items-center gap-2"><Folder className="w-3.5 h-3.5" /> Folder Structure</h4>
-                  <pre className="p-4 bg-black/40 border border-white/5 rounded-xl font-mono text-[9px] text-slate-400 leading-relaxed">
-                    {polyResult.folderStructure}
-                  </pre>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-500 flex items-center gap-2"><Folder className="w-3.5 h-3.5" /> Structure</h4>
+                  <pre className="p-4 bg-black/40 border border-white/5 rounded-xl font-mono text-[9px] text-slate-400 leading-relaxed">{polyResult.folderStructure}</pre>
                 </div>
-
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Quick Actions</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex flex-col items-center gap-2" onClick={() => setExpertSubTab('debugger')}><Bug className="w-4 h-4"/> Debug</button>
+                    <button onClick={() => setExpertSubTab('debugger')} className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex flex-col items-center gap-2"><Bug className="w-4 h-4"/> Debug</button>
                     <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all flex flex-col items-center gap-2"><Zap className="w-4 h-4"/> Optimize</button>
-                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-purple-400 transition-all flex flex-col items-center gap-2"><FileSearch className="w-4 h-4"/> Explain</button>
-                    <button className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-cyan-500/20 transition-all flex flex-col items-center gap-2" onClick={() => setPolyShowPreview(true)}>
-                      <Monitor className="w-4 h-4 text-cyan-400"/> 
-                      {polyShowPreview ? 'Hide Preview' : 'Run Preview'}
-                    </button>
                   </div>
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center p-10 text-center opacity-30 grayscale">
+              <div className="h-full flex flex-col items-center justify-center text-center opacity-30 grayscale">
                 <TrendingUp className="w-12 h-12 mb-4" />
                 <h4 className="text-[9px] font-black uppercase tracking-[0.3em]">Trending Templates</h4>
                 <div className="mt-6 w-full space-y-2">
-                  {['SaaS Dashboard', 'AI Chatbot', 'Crypto App', 'Portfolio Website', 'Auth System'].map(t => (
+                  {['SaaS Dashboard', 'AI Chatbot', 'Portfolio'].map(t => (
                     <button key={t} onClick={() => setPolyTask(`Build a ${t}`)} className="w-full p-3 bg-slate-900/50 border border-white/5 rounded-xl text-[9px] font-bold text-slate-500 hover:text-cyan-400 transition-all">{t}</button>
                   ))}
                 </div>
