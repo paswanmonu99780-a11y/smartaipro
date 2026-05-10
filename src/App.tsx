@@ -367,17 +367,18 @@ export default function App() {
   const [debugActiveTab, setDebugActiveTab] = useState<'code' | 'preview' | 'comparison'>('code');
   const [debugAdvanced, setDebugAdvanced] = useState({
     autoFix: true,
-    optimize: false,
+    optimize: true,
     bestPractices: true,
-    security: false,
+    security: true,
     explain: true,
-    architecture: false,
+    architecture: true,
     cleanCode: true,
     refactor: false,
     imports: true,
     infiniteLoops: true
   });
   const [debugShowAdvanced, setDebugShowAdvanced] = useState(false);
+  const [debugHistory, setDebugHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -2093,27 +2094,130 @@ export default function App() {
                    </span>
                 )}
               </div>
-              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar space-y-1">
+              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar space-y-1 bg-black/60">
                 {debugConsoleLogs.map((log, idx) => (
-                  <div key={idx} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-red-400' : log.type === 'warn' ? 'text-amber-400' : 'text-slate-400'}`}>
+                  <div key={idx} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-emerald-400' : log.type === 'warn' ? 'text-amber-400' : 'text-slate-400'}`}>
                     <span className="opacity-30">[{new Date().toLocaleTimeString()}]</span>
                     <span className="font-bold">&gt; {log.msg}</span>
                   </div>
                 ))}
                 {debugIsAnalyzing && (
-                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1 }} className="text-cyan-400">&gt; ANALYZING NEURAL AST TREE...</motion.p>
+                  <div className="space-y-1">
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1 }} className="text-cyan-400">&gt; ANALYZING NEURAL AST TREE...</motion.p>
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1, delay: 0.3 }} className="text-red-400/50">&gt; SCANNING FOR SECURITY EXPLOITS...</motion.p>
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1, delay: 0.6 }} className="text-amber-400/50">&gt; CALCULATING PERFORMANCE OVERHEAD...</motion.p>
+                  </div>
                 )}
                 {!debugIsAnalyzing && debugConsoleLogs.length === 0 && (
-                  <p className="text-slate-700">&gt; Sentinel passive. Awaiting input stream.</p>
+                  <p className="text-slate-700 italic">&gt; Sentinel passive. Neural link established. Awaiting source code stream...</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right Panel: Report Cards */}
-          <div className="w-96 border-l border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-hidden">
-            <div className="p-6 border-b border-white/5">
-               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><BarChart3 className="w-3.5 h-3.5" /> Error Reports</h4>
+          {/* Right Panel: Report Cards & Insights */}
+          <div className="w-[400px] border-l border-white/5 bg-[#0B1023]/40 flex flex-col shrink-0 overflow-hidden">
+            <div className="p-6 border-b border-white/5 bg-[#0B1023]/60">
+               <div className="flex items-center justify-between mb-2">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 flex items-center gap-2"><Bug className="w-3.5 h-3.5" /> Diagnostic Report</h4>
+                 <div className="flex gap-1">
+                   {['Low', 'Medium', 'High', 'Critical'].map(s => (
+                     <div key={s} className={`w-2 h-2 rounded-full ${debugResult?.severity === s ? (s === 'Critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : s === 'High' ? 'bg-orange-500' : s === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-white/5'}`} />
+                   ))}
+                 </div>
+               </div>
+               <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest leading-relaxed">Detailed analysis of detected anomalies and architectural weaknesses.</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+              {debugResult ? (
+                <>
+                  {/* Summary Card */}
+                  <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-black border border-white/5 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Shield className="w-12 h-12 text-red-500" />
+                    </div>
+                    <h5 className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Executive Summary</h5>
+                    <p className="text-xs text-slate-300 leading-relaxed font-medium">{debugResult.summary}</p>
+                  </div>
+
+                  {/* Issue Cards */}
+                  <div className="space-y-4">
+                    <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">Detected Issues ({debugResult.issues?.length || 0})</h5>
+                    {debugResult.issues?.map((issue: any, idx: number) => (
+                      <motion.div 
+                        key={idx}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className={`p-4 rounded-xl border ${issue.severity === 'Critical' || issue.severity === 'High' ? 'bg-red-500/5 border-red-500/20' : 'bg-slate-900/50 border-white/5'} space-y-3 group hover:border-red-500/30 transition-all`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${issue.severity === 'Critical' ? 'bg-red-600 text-white' : issue.severity === 'High' ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                            {issue.severity}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-600">Line {issue.line}</span>
+                        </div>
+                        <div>
+                          <h6 className="text-[11px] font-black text-white mb-1">{issue.type}</h6>
+                          <p className="text-[10px] text-slate-400 leading-relaxed">{issue.desc}</p>
+                        </div>
+                        <div className="pt-2 border-t border-white/5 space-y-2">
+                           <div className="flex items-start gap-2">
+                             <div className="w-1 h-1 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                             <p className="text-[9px] text-slate-500 italic"><span className="text-red-500/80 font-black uppercase not-italic mr-1">Cause:</span> {issue.cause}</p>
+                           </div>
+                           <div className="flex items-start gap-2">
+                             <div className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                             <p className="text-[9px] text-slate-500 italic"><span className="text-emerald-500/80 font-black uppercase not-italic mr-1">Fix:</span> {issue.fix}</p>
+                           </div>
+                        </div>
+                        <div className="flex gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all">Explain</button>
+                           <button className="flex-1 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all">Apply Fix</button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Audit Sections */}
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10 space-y-2">
+                      <h5 className="text-[9px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2"><Shield className="w-3 h-3" /> Security Audit</h5>
+                      <p className="text-[10px] text-slate-400 leading-relaxed italic">"{debugResult.securityAudit}"</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/10 space-y-2">
+                      <h5 className="text-[9px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-2"><Zap className="w-3 h-3" /> Performance Tips</h5>
+                      <p className="text-[10px] text-slate-400 leading-relaxed italic">"{debugResult.performanceTips}"</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-2">
+                      <h5 className="text-[9px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-2"><BarChart className="w-3 h-3" /> Architecture Advice</h5>
+                      <p className="text-[10px] text-slate-400 leading-relaxed italic">"{debugResult.architectureAdvice}"</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center p-10 text-center space-y-6 grayscale opacity-20">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full" />
+                    <Database className="w-16 h-16 text-white relative" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Analysis Queue Empty</h4>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 leading-relaxed">Initiate a semantic scan to populate the diagnostic report cards.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom: Export Sidebar Actions */}
+            {debugResult && (
+              <div className="p-4 bg-[#0B1023]/60 border-t border-white/5 grid grid-cols-2 gap-2">
+                <button className="py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/5 transition-all">Copy Report</button>
+                <button className="py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/5 transition-all">Download PDF</button>
+              </div>
+            )}
+          </div>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
               {debugResult?.issues?.map((issue: any, i: number) => (
