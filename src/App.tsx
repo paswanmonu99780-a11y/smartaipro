@@ -5522,6 +5522,18 @@ export default function App() {
           userAvatar={avatar}
           plan={plan}
           credits={credits}
+          imageHistory={imageHistory}
+          chatHistory={chatHistory}
+          messages={messages}
+          onDisplayNameChange={(name: string) => { setDisplayName(name); }}
+          onAvatarChange={(av: string) => { setAvatar(av); }}
+          onClearHistory={() => {
+            setChatHistory([]);
+            setMessages([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
+            setImageHistory([]);
+            localStorage.removeItem(`smartai_chat_history_${email}`);
+            localStorage.removeItem(`smartai_image_history_${email}`);
+          }}
         />
       )}
     </div>

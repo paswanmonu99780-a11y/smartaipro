@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, Settings as SettingsIcon, Shield, Palette, Bell, 
@@ -17,7 +17,7 @@ interface SettingsProps {
   credits: number;
 }
 
-export default function Settings({ onClose, onLogout, userEmail, userName, userAvatar, plan, credits }: SettingsProps) {
+export default function Settings({ onClose, onLogout, userEmail, userName, userAvatar, plan, credits, imageHistory = [], chatHistory = [], messages = [], onDisplayNameChange, onAvatarChange, onClearHistory }: SettingsProps) {
   const [activeTab, setActiveTab] = useState('Profile Settings');
   const [isLoading, setIsLoading] = useState(true);
   const [loadingText, setLoadingText] = useState('Loading User Preferences...');
@@ -40,6 +40,14 @@ export default function Settings({ onClose, onLogout, userEmail, userName, userA
 
   // Logout Confirmation
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+  const [notifState, setNotifState] = useState(() => { try { return JSON.parse(localStorage.getItem('smartai_notif') || 'null') || {email:true,ai:true,features:false,security:true,marketing:false}; } catch { return {email:true,ai:true,features:false,security:true,marketing:false}; }});
+  const [privacyState, setPrivacyState] = useState(() => { try { return JSON.parse(localStorage.getItem('smartai_privacy') || 'null') || {privateHistory:true,publicProfile:false,dataSharing:true,aiTraining:false}; } catch { return {privateHistory:true,publicProfile:false,dataSharing:true,aiTraining:false}; }});
+  const [language, setLanguage] = useState(() => localStorage.getItem('smartai_language') || 'English');
+  const [aiPrefs, setAiPrefs] = useState(() => { try { return JSON.parse(localStorage.getItem('smartai_ai_prefs') || 'null') || {fastMode:false,autoSave:true,creativity:70}; } catch { return {fastMode:false,autoSave:true,creativity:70}; }});
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   useEffect(() => {
     setTimeout(() => {
@@ -664,6 +672,19 @@ export default function Settings({ onClose, onLogout, userEmail, userName, userA
             </>
           )}
 
+          {/* Clear History Confirm Modal */}
+          {showClearConfirm && (
+            <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#0B1023] border border-red-500/30 p-8 rounded-2xl max-w-md w-full shadow-[0_0_30px_rgba(239,68,68,0.2)] text-center">
+                <h3 className="text-xl font-bold text-white mb-2">Clear All Data?</h3>
+                <p className="text-slate-400 mb-6">This will delete all your chat and image history permanently.</p>
+                <div className="flex gap-4">
+                  <button onClick={() => setShowClearConfirm(false)} className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all">Cancel</button>
+                  <button onClick={() => { onClearHistory && onClearHistory(); setShowClearConfirm(false); }} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all">Clear All</button>
+                </div>
+              </motion.div>
+            </div>
+          )}
           {/* Logout Confirmation Modal */}
           {showLogoutConfirm && (
             <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
