@@ -162,8 +162,10 @@ export default function App() {
   };
   const [userMetadata, setUserMetadata] = useState<any>(null);
   const [email, setEmail] = useState('');
-
-  const isVipEmail = (e: string) => e?.toLowerCase().trim() === 'paswanmonu99780@gmail.com';
+  
+  // GLOBAL VIP MASTER CONSTANT
+  const VIP_EMAIL = 'paswanmonu99780@gmail.com';
+  const isVipEmail = (e: string) => e?.toLowerCase().trim() === VIP_EMAIL;
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
