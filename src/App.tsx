@@ -1513,21 +1513,36 @@ export default function App() {
 
         // Improved JSON cleaning logic
         let cleanJson = fullText.trim();
-        // Remove markdown blocks if they exist
         cleanJson = cleanJson.replace(/```json/gi, '').replace(/```/g, '').trim();
         
-        // Find the first { and the last }
         const firstBrace = cleanJson.indexOf('{');
         const lastBrace = cleanJson.lastIndexOf('}');
         
-        if (firstBrace === -1 || lastBrace === -1) {
-          throw new Error("No valid JSON structure detected in AI response.");
+        if (firstBrace === -1) {
+          throw new Error("No valid JSON structure detected.");
         }
         
-        cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+        cleanJson = cleanJson.substring(firstBrace, lastBrace !== -1 ? lastBrace + 1 : cleanJson.length);
+
+        // JSON Fixer: Handle unterminated strings or missing braces
+        const fixJson = (str: string) => {
+          let fixed = str;
+          // Count braces
+          let openBraces = (fixed.match(/\{/g) || []).length;
+          let closeBraces = (fixed.match(/\}/g) || []).length;
+          // Count quotes (basic check)
+          let quotes = (fixed.match(/"/g) || []).length;
+          
+          if (quotes % 2 !== 0) fixed += '"';
+          while (openBraces > closeBraces) {
+            fixed += '}';
+            closeBraces++;
+          }
+          return fixed;
+        };
 
         try {
-          const data = JSON.parse(cleanJson);
+          const data = JSON.parse(fixJson(cleanJson));
           setPolyResult(data);
           setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
           if (data.files && data.files.length > 0) {
@@ -2157,7 +2172,7 @@ export default function App() {
 
               {/* Glowing Analyze Button Overlay */}
               {!debugResult && !debugCode && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center pointer-events-none">
                   <div className="w-24 h-24 border-2 border-dashed border-slate-800 rounded-3xl flex items-center justify-center mb-6">
                     <Search className="w-10 h-10 opacity-20" />
                   </div>
