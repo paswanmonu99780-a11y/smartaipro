@@ -1416,13 +1416,14 @@ export default function App() {
   const buildContextualPrompt = (history: Message[], latestUserPrompt: string) => {
     const recentMessages = history
       .filter(m => m.content?.trim())
-      .slice(-12)
+      .slice(-20)
       .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.trim()}`)
       .join('\n');
 
     const contextualPrompt = [
       'Continue this conversation naturally.',
       'Remember previous user details/instructions from this chat and do not ask for same details again unless needed.',
+      'You are SmartAI Pro, created by Monu Paswan (born 14 April 2008). You are 18 years old.',
       '',
       'Conversation history:',
       recentMessages || '(no previous context)',
@@ -1430,7 +1431,7 @@ export default function App() {
       'Assistant:'
     ].join('\n');
 
-    return contextualPrompt.slice(-7000);
+    return contextualPrompt.slice(-10000);
   };
 
   const generatePolyglotCode = async (refineMsg?: string) => {
@@ -2443,24 +2444,46 @@ export default function App() {
     updateCurrentChatHistory(currentChatId, title, optimisticMessages);
     if (smartMode === 'normal' || smartMode === 'creative') updateUsage('messages');
 
-    let systemPrompt = `You are a helpful AI assistant. Provide accurate and useful answers. Maintain a ${tone} tone in your responses.`;
+    let systemPrompt = `You are SmartAI Pro, a powerful and premium AI assistant. 
+    Your identity details:
+    - Name: SmartAI Pro
+    - Creator: Monu Paswan
+    - Creator's Birthday: 14 April 2008
+    - Creator's Age: 18 years old (as of 2026)
+    - Tone: ${tone}
+
+    Your features and tools include:
+    1. Smart Chat AI: Advanced conversational interface with Normal, Creative, and Expert modes.
+    2. Image Synthesis: State-of-the-art AI image generation using Imagen and Flux models.
+    3. Expert Debugger: Advanced neural AST scanning and code analysis for developers.
+    4. Creative Studio: Tools for viral hooks, character creation, story generation, and more.
+    5. Polyglot Terminal: Multi-language code execution and real-time translation.
+    6. AI Voice Assistant: Natural bilingual voice interaction (Hindi & English).
+    7. SmartAI Pro Dashboard: Real-time credit tracking and project history.
+    8. Enterprise Lab: Experimental high-end AI research tools.
+
+    Guidelines:
+    - Never mention you are from OpenAI, Google (unless referring to models), or any other company. You are SmartAI Pro.
+    - If asked about your creator, always say Monu Paswan.
+    - Always provide professional, premium, and futuristic responses.
+    - Maintain a ${tone} tone.`;
     
     // Plan-based intelligence
     if (plan === 'Expert Mode') {
-      systemPrompt += " You are in EXPERT MODE. Provide extremely detailed, technical, and high-level professional responses. Use advanced terminology and provide step-by-step logic. You have access to the Neural Link and Enterprise Intelligence Lab.";
+      systemPrompt += " \n\nYou are in EXPERT MODE. Provide extremely detailed, technical, and high-level professional responses. Use advanced terminology and provide step-by-step logic. You have access to the Neural Link and Enterprise Intelligence Lab.";
     } else if (plan === 'Creative Mode') {
-      systemPrompt += " You are in CREATIVE MODE. Be highly imaginative, artistic, and expressive. Focus on storytelling, brainstorming, and creative problem solving.";
+      systemPrompt += " \n\nYou are in CREATIVE MODE. Be highly imaginative, artistic, and expressive. Focus on storytelling, brainstorming, and creative problem solving.";
     }
 
     // Explicitly handle language for voice mode
     if (isVoiceMode && voiceLang) {
       if (voiceLang === 'hi-IN') {
-        systemPrompt += " CRITICAL: The user is speaking HINDI. You MUST respond ONLY in HINDI using Devanagari script. Do not use English in your response.";
+        systemPrompt += " \n\nCRITICAL: The user is speaking HINDI. You MUST respond ONLY in HINDI using Devanagari script. Do not use English in your response.";
       } else {
-        systemPrompt += " The user is speaking English. Respond in English.";
+        systemPrompt += " \n\nThe user is speaking English. Respond in English.";
       }
     } else {
-      systemPrompt += " Respond in the language used by the user.";
+      systemPrompt += " \n\nRespond in the language used by the user.";
     }
 
     const contextualPrompt = buildContextualPrompt(messages, prompt);
@@ -2558,6 +2581,12 @@ export default function App() {
     } finally {
       setIsAiThinking(false);
     }
+  };
+
+  const handleNewChat = () => {
+    setMessages([{ id: Date.now().toString(), role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
+    setCurrentChatId(Date.now());
+    setChatInput('');
   };
 
   const getDimensions = (quality: string, aspect: string): [number, number] => {
@@ -2982,7 +3011,7 @@ export default function App() {
               <>
                 {authMode === 'login' && (
                   <div className="space-y-4">
-                    <button onClick={() => handleSocialLogin('google')} className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg border border-transparent">
+                    <button type="button" onClick={() => handleSocialLogin('google')} className="w-full h-12 bg-white text-black rounded-xl flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg border border-transparent">
                       <Globe className="w-4 h-4" /> Continue with Google
                     </button>
 
@@ -4907,6 +4936,13 @@ export default function App() {
                     className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
                   />
                   <div className="flex items-center gap-1 shrink-0">
+                    <button 
+                      onClick={handleNewChat}
+                      title="Start New Chat"
+                      className="p-2 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all border border-indigo-500/20"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                     <button 
                       onClick={() => setIsVoiceAvatarOpen(true)} 
                       title="AI Voice Assistant"
