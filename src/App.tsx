@@ -254,7 +254,7 @@ export default function App() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
-  const [creativeHistory, setCreativeHistory] = useState<Array<{ tool: string; toolName: string; input: string; result: string; time: string }>>([]);
+  const [creativeHistory, setCreativeHistory] = useState<Array<{ id: string, type: string, toolName: string, input: string, result: any, date: string }>>([]);
   const [activeExpertTool, setActiveExpertTool] = useState<string | null>(null);
   const [expertCategory, setExpertCategory] = useState<string>('All');
   const [expertToolInput, setExpertToolInput] = useState('');
@@ -379,6 +379,8 @@ export default function App() {
     imports: true,
     infiniteLoops: true
   });
+  const [debugCode, setDebugCode] = useState('');
+  const [polyConsoleLogs, setPolyConsoleLogs] = useState<any[]>([]);
   const [debugShowAdvanced, setDebugShowAdvanced] = useState(false);
   const [debugHistory, setDebugHistory] = useState<any[]>([]);
 
@@ -972,6 +974,8 @@ export default function App() {
     }, 30000);
     
     try {
+      let data: any = null;
+      let error: any = null;
       // Step 0: Handle Recovery OTP
       if (authMode === 'forgot') {
         console.log('Trying recovery type verification...');
@@ -1477,17 +1481,40 @@ export default function App() {
     }
 
     try {
-      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are a Senior Software Architect. Return ONLY pure JSON. No markdown tags like \`\`\`json.&json=true`);
-      if (res.ok) {
-        const text = await res.text();
-        // More robust JSON cleaning
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, system: "You are a Senior Software Architect. Return ONLY pure JSON. No markdown tags like ```json." })
+      });
+
+      if (response.ok && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+          
+          // Try to show progress in console
+          setPolyConsoleLogs(prev => {
+            const last = prev[prev.length - 1];
+            if (last?.type === 'streaming') {
+              return [...prev.slice(0, -1), { type: 'streaming', msg: `Received ${fullText.length} bytes...` }];
+            }
+            return [...prev, { type: 'streaming', msg: `Streaming architecture...` }];
+          });
+        }
+
+        const cleanJson = fullText.replace(/```json/g, '').replace(/```/g, '').trim();
         const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("No valid JSON found in response");
         const data = JSON.parse(jsonMatch[0]);
         
         setPolyResult(data);
-        setPolyConsoleLogs(prev => [...prev, { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
+        setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
         if (data.files && data.files.length > 0) {
           const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
           setPolyActiveFile(mainFile.name);
@@ -1505,12 +1532,11 @@ export default function App() {
           date: new Date().toLocaleTimeString()
         } as any, ...prev]);
       } else {
-        const errText = await res.text();
-        throw new Error(`Server responded with ${res.status}: ${errText}`);
+        throw new Error("Failed to initialize stream.");
       }
     } catch (e: any) {
       console.error("Polyglot error:", e);
-      setPolyConsoleLogs(prev => [...prev, { type: 'error', msg: `Generation Failed: ${e.message}` }]);
+      setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'error', msg: `Generation Failed: ${e.message}` }]);
       alert("Polyglot Engine Error: " + e.message);
     } finally {
       setPolyIsGenerating(false);
@@ -1866,13 +1892,39 @@ export default function App() {
     }`;
 
     try {
-      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are an elite Senior Debugger and Security Researcher. Return ONLY pure JSON. No markdown tags like \`\`\`json.&json=true`);
-      if (res.ok) {
-        const text = await res.text();
-        const cleanJson = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-        const data = JSON.parse(cleanJson);
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, system: "You are an elite Senior Debugger and Security Researcher. Return ONLY pure JSON. No markdown tags like ```json." })
+      });
+
+      if (response.ok && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+          
+          setDebugConsoleLogs(prev => {
+            const last = prev[prev.length - 1];
+            if (last?.type === 'streaming') {
+              return [...prev.slice(0, -1), { type: 'streaming', msg: `Analyzing... ${fullText.length} bytes processed.` }];
+            }
+            return [...prev, { type: 'streaming', msg: `Connecting to Sentinel AI...` }];
+          });
+        }
+
+        const cleanJson = fullText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+        const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("No valid JSON found in response");
+        const data = JSON.parse(jsonMatch[0]);
+
         setDebugResult(data);
-        setDebugConsoleLogs(prev => [...prev, { type: 'success', msg: `Analysis Complete. ${data.issues?.length || 0} issues detected.` }, { type: 'info', msg: 'Security Audit & Optimization Report Generated.' }]);
+        setDebugConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: `Analysis Complete. ${data.issues?.length || 0} issues detected.` }, { type: 'info', msg: 'Security Audit & Optimization Report Generated.' }]);
         
         setCreativeHistory(prev => [{
           id: Date.now().toString(),
@@ -1885,7 +1937,8 @@ export default function App() {
       }
     } catch (e) {
       console.error("Debugger error:", e);
-      alert("Failed to analyze code. AI might have returned invalid JSON. Try simplifying the code.");
+      setDebugConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'error', msg: `Sentinel Error: Neural link interrupted.` }]);
+      alert("Failed to analyze code. Neural link interrupted. Try again.");
     } finally {
       setDebugIsAnalyzing(false);
     }
@@ -2583,11 +2636,6 @@ export default function App() {
     }
   };
 
-  const handleNewChat = () => {
-    setMessages([{ id: Date.now().toString(), role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
-    setCurrentChatId(Date.now());
-    setChatInput('');
-  };
 
   const getDimensions = (quality: string, aspect: string): [number, number] => {
     // Feature enforcement based on plan
