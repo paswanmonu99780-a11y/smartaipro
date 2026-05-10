@@ -1326,9 +1326,6 @@ export default function App() {
     return contextualPrompt.slice(-7000);
   };
 
-    return contextualPrompt.slice(-7000);
-  };
-
   const generatePolyglotCode = async () => {
     if (!polyTask.trim() || polyIsGenerating) return;
     setPolyIsGenerating(true);
