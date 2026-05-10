@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote, Save } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote, Save, Box } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
@@ -318,6 +318,9 @@ export default function App() {
   const [charImagePreview, setCharImagePreview] = useState<string | null>(null);
   const [charDialogue, setCharDialogue] = useState<string[] | null>(null);
   const [charStoryExpansion, setCharStoryExpansion] = useState<any>(null);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  const [dynamicTrending, setDynamicTrending] = useState<string[]>([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -380,21 +383,15 @@ export default function App() {
             setDisplayName(newUser.displayName);
             setAvatar('');
             sessionStorage.removeItem('pendingSignupName');
+            setUserMetadata(userData);
           }
-        } catch (dbErr) {
-          console.error('Database sync error (non-blocking):', dbErr);
-          // Still logged in even if DB sync fails - use fallback values
-          const fallbackName = session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User';
-          if (!displayName) setDisplayName(fallbackName);
+        } catch (err) {
+          console.error('Error fetching user metadata:', err);
         }
       } else if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
-        setIsAuthenticating(false);
-        setAuthMode('login');
-        localStorage.removeItem('smartai_session');
-        localStorage.removeItem('smartai_admin_session');
-        localStorage.removeItem('smartai_admin_session_id');
-        setIsAdmin(false);
+        setEmail('');
+        setUserMetadata(null);
       }
     });
 
@@ -1428,7 +1425,7 @@ export default function App() {
                 </div>
 
                 {/* Expansive Tools Grid */}
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4 sm:gap-5">
                   {cat.tools.map((tool, toolIdx) => (
                     <motion.div
                       key={tool.name}
@@ -1832,11 +1829,12 @@ export default function App() {
     const toolSnapshot = creativeSubTab;
     let finalResult = '';
 
-    let systemPrompt = 'You are a highly advanced, empathetic, and intelligent AI assistant. Always provide a high-level, extremely helpful response. Understand the deep intent of the user, offer valuable extra suggestions, and express emotion using appropriate emojis! ðŸŒŸ Make the user feel heard and supported! ðŸ’–';
-    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! âœ ï¸ âœ¨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! ðŸŒº';
-    else if (creativeSubTab === 'code') systemPrompt = 'You are a Master Game Developer and Elite Senior Software Engineer! ðŸŽ®ðŸ’» Your mission is to generate high-end, visually stunning, and fully functional code. When generating games or interactive UI: 1. Use advanced logic (physics, state machines, proper game loops). 2. Create "Good Looking" visuals with modern CSS (glassmorphism, neon glows, smooth 60fps animations, professional typography). 3. ALWAYS include intuitive controls (Keyboard ARROW keys/WASD, Mouse, or Mobile Touch). 4. Prefer self-contained, high-performance HTML/CSS/JS that can be previewed. For other code, be professional, optimized, and follow best practices. Always wrap code in ``` blocks. Be encouraging and use emojis! ðŸš€âœ¨';
-    else if (creativeSubTab === 'summarizer') systemPrompt = 'You are an expert Speed-Reader and Analyst! ðŸ“šâš¡ Summarize the provided text beautifully and concisely. Retain the absolute core information, provide a "Key Takeaways" section, and suggest why this information matters! Use engaging emojis and an empathetic tone! ðŸ§ ðŸ’¡';
-    else if (creativeSubTab === 'idea') systemPrompt = 'You are a brilliant Idea Generator and Brainstorming Partner! ðŸ¤¯ðŸŽ¯ Provide innovative, out-of-the-box, and highly practical ideas. Structure your response perfectly, give actionable next steps, and motivate the user with a highly emotional, enthusiastic tone and lots of inspiring emojis! ðŸš€ðŸŒŸ';
+    let systemPrompt = 'You are a highly advanced, empathetic, and intelligent AI assistant. Always provide a high-level, extremely helpful response. Understand the deep intent of the user, offer valuable extra suggestions, and express emotion using appropriate emojis! 🌟 Make the user feel heard and supported! 💕';
+    if (creativeSubTab === 'writer') systemPrompt = 'You are a master AI Writer and a creative genius! ✍️✨ Write high-quality, engaging blogs, essays, and stories based on the user prompt. Add emotional depth, captivating hooks, and offer suggestions on how the user can improve their content further! Use emojis beautifully! 🌸';
+    else if (creativeSubTab === 'code') systemPrompt = 'You are a Master Game Developer and Elite Senior Software Engineer! 🎮💻 Your mission is to generate high-end, visually stunning, and fully functional code. When generating games or interactive UI: 1. Use advanced logic (physics, state machines, proper game loops). 2. Create "Good Looking" visuals with modern CSS (glassmorphism, neon glows, smooth 60fps animations, professional typography). 3. ALWAYS include intuitive controls (Keyboard ARROW keys/WASD, Mouse, or Mobile Touch). 4. Prefer self-contained, high-performance HTML/CSS/JS that can be previewed. For other code, be professional, optimized, and follow best practices. Always wrap code in ``` blocks. Be encouraging and use emojis! 🚀✨';
+    else if (creativeSubTab === 'summarizer') systemPrompt = 'You are an expert Speed-Reader and Analyst! 📚⚡ Summarize the provided text beautifully and concisely. Retain the absolute core information, provide a "Key Takeaways" section, and suggest why this information matters! Use engaging emojis and an empathetic tone! 🧠💡';
+    else if (creativeSubTab === 'idea') systemPrompt = 'You are a brilliant Idea Generator and Brainstorming Partner! 🤯🎯 Provide innovative, out-of-the-box, and highly practical ideas. If you don\'t have the latest data, use your advanced logic to predict viral trends. Structure your response perfectly, give actionable next steps, and motivate the user with a highly emotional, enthusiastic tone and lots of inspiring emojis! 🚀🌟';
+    else systemPrompt = 'You are a Master AI Assistant with advanced analytical capabilities. 🧠✨ Your goal is to provide perfect, unique, and highly accurate answers. If a user asks for latest info, use your internal knowledge to provide the most relevant data. Analyze the user\'s intent deeply and provide a response that feels human, intelligent, and world-class. If you are asked about the same topic repeatedly, provide deeper insights each time, acting as if you have an expanding memory of the conversation. 🚀';
 
     const seed = Math.floor(Math.random() * 0xFFFFFFFF);
     try {
@@ -2013,15 +2011,15 @@ export default function App() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#050505] text-slate-200 flex items-center justify-center p-4 font-sans relative overflow-hidden perspective-[1000px]">
+      <div className="min-h-screen bg-[#050505] text-slate-200 flex items-center justify-center p-0 sm:p-4 font-sans relative overflow-hidden perspective-[1000px]">
         {/* Cinematic Background */}
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-violet-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[-20%] left-[-10%] w-[100%] sm:w-[60%] h-[100%] sm:h-[60%] bg-indigo-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[100%] sm:w-[60%] h-[100%] sm:h-[60%] bg-violet-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
         
         <motion.div 
           initial={{ opacity: 0, y: 40, rotateX: 10 }} 
           animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          className="w-full max-w-[420px] bg-slate-900/40 border border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative z-10 mx-auto"
+          className="w-full sm:max-w-[420px] min-h-screen sm:min-h-0 bg-slate-900/40 sm:border border-white/10 sm:rounded-[2rem] p-8 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative z-10 flex flex-col justify-center"
         >
           <div className="flex flex-col items-center text-center mb-8">
             <motion.div 
@@ -2678,8 +2676,8 @@ export default function App() {
             </div>
             <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
                <button onClick={generateIdea} className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-purple-600/20">Generate</button>
+               <button onClick={() => setShowHistorySidebar(true)} className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors" title="History"><Clock className="w-4 h-4" /></button>
                <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Save className="w-4 h-4" /></button>
-               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Clock className="w-4 h-4" /></button>
                <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Download className="w-4 h-4" /></button>
             </div>
           </div>
@@ -2696,7 +2694,7 @@ export default function App() {
                       value={ideaTopic} 
                       onChange={e => setIdeaTopic(e.target.value)} 
                       placeholder="Try: Fitness, AI, Gaming, Finance, EdTech..." 
-                      className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-6 py-5 text-lg font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
+                      className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-5 py-4 sm:px-6 sm:py-5 text-sm sm:text-lg font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex gap-2">
                       {['AI', 'Finance', 'Gaming'].map(t => (
@@ -2879,34 +2877,21 @@ export default function App() {
               )}
             </div>
 
-            {/* Right Column: Trending & History */}
+            {/* Right Column: Trending */}
             <div className="space-y-6">
               <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 sticky top-32">
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">📈 Trending Ideas</h4>
+                 <div className="flex justify-between items-center mb-2">
+                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📈 Trending Ideas</h4>
+                   {isTrendingLoading && <RefreshCcw className="w-3 h-3 text-purple-400 animate-spin" />}
+                 </div>
                  <div className="space-y-2">
-                   {['AI SaaS Platform', 'Faceless YouTube', 'Crypto Trading Bot', 'Online Course', 'Personal Branding', 'Fitness App', 'Automation Agency'].map(t => (
+                   {(dynamicTrending.length > 0 ? dynamicTrending : ['AI SaaS Platform', 'Faceless YouTube', 'Crypto Trading Bot', 'Online Course', 'Personal Branding', 'Fitness App', 'Automation Agency']).map(t => (
                      <button key={t} onClick={() => setIdeaTopic(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-purple-500/30 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
                        {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400" />
                      </button>
                    ))}
                  </div>
-
-                 {creativeHistory.filter(h => h.type === 'idea').length > 0 && (
-                   <div className="mt-8 pt-6 border-t border-white/5">
-                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4 flex items-center gap-2"><Clock className="w-3 h-3" /> Idea History</h4>
-                     <div className="space-y-3 max-h-[300px] overflow-y-auto no-scrollbar">
-                       {creativeHistory.filter(h => h.type === 'idea').map((h, i) => (
-                         <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl cursor-pointer hover:border-purple-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setIdeaTopic(h.topic || ''); setIdeaResult(h.result); setExpandedIdeaContent(null); }}>
-                           <div className="flex justify-between items-center mb-2">
-                             <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest line-clamp-1">{h.result?.title}</span>
-                             <span className="text-[8px] text-slate-500 font-bold whitespace-nowrap ml-2">{h.date}</span>
-                           </div>
-                           <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{h.result?.description}</p>
-                         </div>
-                       ))}
-                     </div>
-                   </div>
-                 )}
+                 <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest text-center pt-2 italic">Updated Daily by AI</p>
               </div>
             </div>
           </div>
@@ -3086,6 +3071,7 @@ export default function App() {
             </div>
             <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
                <button onClick={generateCharacter} className="flex-1 md:flex-none bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]">Generate</button>
+               <button onClick={() => setShowHistorySidebar(true)} className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors" title="History"><Clock className="w-4 h-4" /></button>
                <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"><Save className="w-4 h-4" /></button>
                <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"><Download className="w-4 h-4" /></button>
             </div>
@@ -3326,34 +3312,28 @@ export default function App() {
               )}
             </div>
 
-            {/* Right Column: Trending & History */}
+            {/* Right Column: Trending */}
             <div className="space-y-6">
               <div className="bg-[#0B1023]/60 border border-cyan-500/10 rounded-[2rem] p-8 space-y-5 sticky top-32">
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 mb-2 flex items-center gap-2"><Zap className="w-3 h-3"/> Trending Tropes</h4>
+                 <div className="flex justify-between items-center mb-2">
+                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><Zap className="w-3 h-3"/> Trending Tropes</h4>
+                   {isTrendingLoading && <RefreshCcw className="w-3 h-3 text-cyan-400 animate-spin" />}
+                 </div>
                  <div className="space-y-2">
-                   {['Cyberpunk Assassin', 'Anime Hero', 'AI Hacker', 'Dark Villain', 'Futuristic Soldier', 'Neon Samurai', 'Multiverse Traveler'].map(t => (
+                   {(dynamicTrending.length > 0 ? dynamicTrending : ['Cyberpunk Assassin', 'Anime Hero', 'AI Hacker', 'Dark Villain', 'Futuristic Soldier', 'Neon Samurai', 'Multiverse Traveler']).map(t => (
                      <button key={t} onClick={() => setCharType(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-cyan-500/40 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
                        {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-cyan-400 transition-opacity" />
                      </button>
                    ))}
                  </div>
+                 <p className="text-[8px] text-cyan-500/30 font-bold uppercase tracking-widest text-center pt-2 italic">Refreshed Daily by AI</p>
 
-                 {creativeHistory.filter(h => h.type === 'character').length > 0 && (
-                   <div className="mt-8 pt-6 border-t border-white/5">
-                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4 flex items-center gap-2"><Clock className="w-3 h-3" /> Creation History</h4>
-                     <div className="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar">
-                       {creativeHistory.filter(h => h.type === 'character').map((h, i) => (
-                         <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl cursor-pointer hover:border-cyan-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setCharResult(h.result); setCharImagePreview(null); setCharDialogue(null); setCharStoryExpansion(null); }}>
-                           <div className="flex justify-between items-center mb-1">
-                             <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] line-clamp-1">{h.result?.name}</span>
-                           </div>
-                           <p className="text-[9px] uppercase tracking-widest text-slate-500 mb-2">{h.result?.personality} {charType}</p>
-                           <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{h.result?.backstory}</p>
-                         </div>
-                       ))}
-                     </div>
+                 <div className="mt-8 pt-6 border-t border-white/5">
+                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4 flex items-center gap-2"><Box className="w-3 h-3" /> 3D Export Hint</h4>
+                   <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
+                     <p className="text-[10px] text-amber-200/70 leading-relaxed font-medium">To turn this character into a <span className="text-amber-400">.glb / .fbx</span> 3D model for free, use the description above in <a href="https://www.meshy.ai/" target="_blank" className="underline hover:text-amber-400">Meshy.ai</a> or <a href="https://www.tripo3d.ai/" target="_blank" className="underline hover:text-amber-400">Tripo3D</a>'s free tier.</p>
                    </div>
-                 )}
+                 </div>
               </div>
             </div>
           </div>
@@ -3428,8 +3408,77 @@ export default function App() {
     if (creativeSubTab === 'idea') return renderIdeaGenerator();
     if (creativeSubTab === 'character') return renderCharacterCreator();
 
+    const renderHistorySidebar = () => (
+      <AnimatePresence>
+        {showHistorySidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowHistorySidebar(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              className="fixed right-0 top-0 h-full w-full md:w-96 bg-[#0B1023] border-l border-white/10 z-[151] p-6 shadow-2xl flex flex-col"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-purple-600/20 rounded-lg flex items-center justify-center border border-purple-500/30">
+                    <Clock className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-black uppercase tracking-widest italic">Tool <span className="text-purple-400">History</span></h3>
+                </div>
+                <button onClick={() => setShowHistorySidebar(false)} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
+                {creativeHistory.filter(h => h.type === creativeSubTab).length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-4 opacity-50">
+                    <Database className="w-12 h-12" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">No history found for this tool</p>
+                  </div>
+                ) : (
+                  creativeHistory.filter(h => h.type === creativeSubTab).map((h, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      onClick={() => {
+                        if (creativeSubTab === 'idea') {
+                          setIdeaTopic(h.topic || '');
+                          setIdeaResult(h.result);
+                        } else if (creativeSubTab === 'character') {
+                          setCharResult(h.result);
+                        }
+                        setShowHistorySidebar(false);
+                      }}
+                      className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl cursor-pointer hover:border-purple-500/50 hover:bg-slate-900 transition-all group"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest line-clamp-1">{h.result?.title || h.result?.name || 'Saved Generation'}</span>
+                        <span className="text-[8px] text-slate-500 font-bold">{h.date}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{h.result?.description || h.result?.backstory}</p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    );
+
     return (
-      <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar">
+      <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar relative">
+        {renderHistorySidebar()}
         {/* Compact Header Section */}
         <div className="max-w-full mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 md:px-4">
           <div className="flex items-center gap-4">
@@ -3462,7 +3511,7 @@ export default function App() {
                 <div className="h-[1px] w-full bg-slate-800/30" />
               </div>
               
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3 sm:gap-4">
                 {cat.tools.map((tool, tIdx) => (
                   <motion.button
                     key={tIdx}
@@ -3566,7 +3615,7 @@ export default function App() {
           <div className="flex items-center justify-between mb-2">
              <h2 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Quick Access</h2>
           </div>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 sm:gap-4">
             {[
               { name: 'Text to Image', desc: 'Gen from text.', icon: ImageIcon, color: 'text-indigo-400' },
               { name: 'Image to Image', desc: 'Restyle images.', icon: Copy, color: 'text-blue-400' },
@@ -3593,7 +3642,7 @@ export default function App() {
         {/* More Tools */}
         <div className="pb-4 flex flex-col min-h-0">
           <h2 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">All Utilities</h2>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 pb-20 md:pb-10 overflow-y-auto no-scrollbar">
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2 sm:gap-3 pb-20 md:pb-10 overflow-y-auto no-scrollbar">
             {[
               { name: 'Resize', desc: 'Dimensions.', icon: Monitor },
               { name: 'Crop', desc: 'Any size.', icon: Layout },
@@ -4164,7 +4213,7 @@ export default function App() {
 
             {/* Referral System */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center border border-emerald-500/30">
                     <Sparkles className="w-5 h-5 text-emerald-400" />
@@ -4201,7 +4250,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl flex flex-col justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
                     <TrendingUp className="w-5 h-5 text-indigo-400" />
@@ -4346,9 +4395,35 @@ export default function App() {
         </header>
 
         {/* Dynamic Content */}
-        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0">
+        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 pb-16 md:pb-0">
           {renderContent()}
         </div>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-800/50 flex items-center justify-around p-2 z-[45] safe-area-inset-bottom">
+          {[
+            { name: 'Chat', icon: MessageSquare, tab: 'chat' },
+            { name: 'Image', icon: ImageIcon, tab: 'image' },
+            { name: 'Creative', icon: Lightbulb, tab: 'home', mode: 'creative' },
+            { name: 'Profile', icon: User, tab: 'profile' }
+          ].map((item) => (
+            <button
+              key={item.name}
+              onClick={() => {
+                setActiveTab(item.tab as Tab);
+                if (item.mode) setSmartMode(item.mode as any);
+              }}
+              className={`flex flex-col items-center gap-1 p-2 transition-all ${
+                (activeTab === item.tab && (!item.mode || smartMode === item.mode)) 
+                  ? 'text-indigo-400' 
+                  : 'text-slate-500'
+              }`}
+            >
+              <item.icon className={`w-5 h-5 ${activeTab === item.tab && (!item.mode || smartMode === item.mode) ? 'animate-pulse' : ''}`} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{item.name}</span>
+            </button>
+          ))}
+        </nav>
       </main>
 
       {/* Mobile Drawer */}
@@ -4441,7 +4516,7 @@ export default function App() {
                 </div>
                 <button onClick={() => setIsPricingOpen(false)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg"><X className="w-4 h-4" /></button>
               </div>
-              <div className="grid md:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {PLANS.map(p => (
                   <div key={p.name} className={`p-5 md:p-6 rounded-2xl border transition-all duration-500 flex flex-col relative group ${p.popular ? 'border-indigo-600 bg-indigo-600/5 shadow-xl shadow-indigo-600/10' : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'}`}>
                     {p.popular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-lg">Best Value</span>}
