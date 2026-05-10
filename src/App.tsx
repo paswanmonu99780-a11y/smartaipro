@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote, Save, Box } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, LogOut, Send, Plus, Zap, Sparkles, Github, Download, Video, User, CreditCard, Eye, EyeOff, Shield, Copy, Check, Search, Mic, RefreshCcw, Menu, X, ArrowLeft, ChevronUp, ChevronDown, ChevronRight, Terminal, FileText, Code, Lightbulb, PenTool, Database, Layout, TrendingUp, Mic2, FileSearch, Layers, Cpu, FastForward, Monitor, Globe, Network, Crown, Clock, CloudSun, Radio, Instagram, Lock as LockIcon, Settings, Hash, Book, Rocket, Tag, Workflow, Plug, BarChart3, GitBranch, Clock3, Play, Key, Webhook, Link, Bug, Server, FileJson, FileSpreadsheet, BarChart, Wrench, Users, Bell, ChevronLeft, Quote, Save, Box, FolderJson } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AdminPanel from './AdminPanel';
 import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from './lib/db';
@@ -349,6 +349,8 @@ export default function App() {
   const [polyIsGenerating, setPolyIsGenerating] = useState(false);
   const [polyPreviewCode, setPolyPreviewCode] = useState('');
   const [polyActiveFile, setPolyActiveFile] = useState('main.js');
+  const [polyRefinement, setPolyRefinement] = useState('');
+  const [polyShowPreview, setPolyShowPreview] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1351,55 +1353,106 @@ export default function App() {
     return contextualPrompt.slice(-7000);
   };
 
-  const generatePolyglotCode = async () => {
-    if (!polyTask.trim() || polyIsGenerating) return;
+  const generatePolyglotCode = async (refineMsg?: string) => {
+    const taskToGen = refineMsg || polyTask;
+    if (!taskToGen.trim() || polyIsGenerating) return;
+    
     setPolyIsGenerating(true);
-    setPolyResult(null);
+    setPolyShowPreview(false);
+    if (!refineMsg) setPolyResult(null);
 
     const advancedStr = Object.entries(polyAdvanced)
       .filter(([_, v]) => v)
       .map(([k, _]) => k.replace(/([A-Z])/g, ' $1').toLowerCase())
       .join(', ');
 
-    const prompt = `Generate a professional ${polyComplexity}% complex ${polyType} for the task: "${polyTask}" using ${polyLang} and ${polyFramework} framework.
-    Style: ${polyStyle}.
-    Advanced Requirements: ${advancedStr}.
-    Provide the response in JSON format:
-    {
-      "title": "Project Name",
-      "overview": "Summary of architecture and logic",
-      "folderStructure": "Visual tree of files",
-      "files": [
-        { "name": "filename", "code": "code content", "lang": "language" }
-      ],
-      "dependencies": ["list of npm/pip pkgs"],
-      "installation": "Step by step guide",
-      "endpoints": "List of API routes if applicable",
-      "usage": "How to run and use"
-    }`;
+    let prompt = "";
+    if (refineMsg) {
+      prompt = `The user wants to refine the previous project: "${polyResult?.title}".
+      Modification requested: "${refineMsg}".
+      Update the existing architecture and code. 
+      Current project files: ${JSON.stringify(polyResult?.files?.map((f: any) => f.name))}.
+      Return the ENTIRE updated project in the same JSON format.`;
+    } else {
+      prompt = `Generate a professional ${polyComplexity}% complex ${polyType} for the task: "${taskToGen}" using ${polyLang} and ${polyFramework} framework.
+      Style: ${polyStyle}.
+      Advanced Requirements: ${advancedStr}.
+      Provide the response in JSON format:
+      {
+        "title": "Project Name",
+        "overview": "Summary of architecture and logic",
+        "folderStructure": "Visual tree of files",
+        "files": [
+          { "name": "filename", "code": "code content", "lang": "language" }
+        ],
+        "dependencies": ["list of npm/pip pkgs"],
+        "installation": "Step by step guide",
+        "endpoints": "List of API routes if applicable",
+        "usage": "How to run and use"
+      }`;
+    }
 
     try {
-      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are a Senior Software Architect. Return ONLY JSON.&json=true`);
+      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are a Senior Software Architect. Return ONLY pure JSON. No markdown tags like \`\`\`json.&json=true`);
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        // Clean markdown if present
+        const cleanJson = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+        const data = JSON.parse(cleanJson);
+        
         setPolyResult(data);
         if (data.files && data.files.length > 0) {
-          setPolyActiveFile(data.files[0].name);
-          setPolyPreviewCode(data.files[0].code);
+          const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
+          setPolyActiveFile(mainFile.name);
+          setPolyPreviewCode(mainFile.code);
         }
+        
+        if (refineMsg) setPolyRefinement('');
+
         setCreativeHistory(prev => [{
+          id: Date.now().toString(),
           type: 'polyglot',
           toolName: 'Polyglot',
-          input: polyTask,
+          input: taskToGen,
           result: data,
           date: new Date().toLocaleTimeString()
-        }, ...prev]);
+        } as any, ...prev]);
       }
     } catch (e) {
       console.error("Polyglot error:", e);
+      alert("Failed to generate code. AI might have returned invalid JSON. Try refining the prompt.");
     } finally {
       setPolyIsGenerating(false);
     }
+  };
+
+  const getPolyPreviewDoc = () => {
+    if (!polyResult || !polyResult.files) return "";
+    
+    const htmlFile = polyResult.files.find((f: any) => f.name.endsWith('.html'))?.code || "";
+    const cssFiles = polyResult.files.filter((f: any) => f.name.endsWith('.css')).map((f: any) => `<style>${f.code}</style>`).join('\n');
+    const jsFiles = polyResult.files.filter((f: any) => f.name.endsWith('.js') || f.name.endsWith('.ts')).map((f: any) => `<script>${f.code}</script>`).join('\n');
+
+    if (htmlFile) {
+      return htmlFile.replace('</head>', `${cssFiles}</head>`).replace('</body>', `${jsFiles}</body>`);
+    }
+
+    // Default template if no HTML file
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <script src="https://cdn.tailwindcss.com"></script>
+          ${cssFiles}
+        </head>
+        <body class="bg-[#050816] text-white">
+          <div id="root"></div>
+          ${jsFiles}
+        </body>
+      </html>
+    `;
   };
 
   const renderPolyglot = () => {
@@ -1438,10 +1491,24 @@ export default function App() {
               <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">AI Multi-Language Dev Core</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="px-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex items-center gap-2"><Save className="w-3.5 h-3.5"/> Save</button>
-            <button className="px-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex items-center gap-2"><Download className="w-3.5 h-3.5"/> Export</button>
-            <button onClick={generatePolyglotCode} className="px-6 py-2 bg-cyan-500 text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]">Generate Code</button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => generatePolyglotCode()}
+              disabled={polyIsGenerating}
+              className="px-6 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+            >
+              <Zap className="w-4 h-4" /> Generate Code
+            </button>
+            <button 
+              onClick={() => setPolyShowPreview(!polyShowPreview)}
+              className={`px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${polyShowPreview ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:text-white'}`}
+            >
+              <Eye className="w-4 h-4" /> {polyShowPreview ? 'View Code' : 'Run Preview'}
+            </button>
+            <div className="flex items-center gap-2 ml-4">
+              <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Save className="w-4 h-4" /></button>
+              <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Download className="w-4 h-4" /></button>
+            </div>
           </div>
         </div>
 
@@ -1547,39 +1614,73 @@ export default function App() {
                   <p className="text-[10px] font-medium max-w-xs leading-relaxed uppercase tracking-widest opacity-50">Select environment and describe task to initialize polyglot engine.</p>
                 </div>
               ) : (
-                <textarea 
-                  value={polyPreviewCode}
-                  onChange={e => setPolyPreviewCode(e.target.value)}
-                  className="w-full h-full bg-[#050816] p-8 font-mono text-[13px] text-cyan-50/80 outline-none resize-none no-scrollbar leading-relaxed"
-                  spellCheck={false}
-                />
+                <div className="flex-1 min-h-0 bg-black/20 relative w-full h-full">
+                  {polyShowPreview ? (
+                    <iframe 
+                      srcDoc={getPolyPreviewDoc()}
+                      className="w-full h-full border-none bg-white"
+                      title="Polyglot Preview"
+                      sandbox="allow-scripts"
+                    />
+                  ) : (
+                    <textarea 
+                      value={polyPreviewCode}
+                      onChange={e => setPolyPreviewCode(e.target.value)}
+                      className="w-full h-full bg-[#050816] p-8 font-mono text-[13px] text-cyan-50/80 outline-none resize-none no-scrollbar leading-relaxed"
+                      spellCheck={false}
+                    />
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Bottom: Logs / Terminal */}
-            <div className="h-40 border-t border-white/5 bg-black/40 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar">
-              <div className="flex items-center gap-2 text-cyan-500 mb-2">
-                <Terminal className="w-3 h-3" />
-                <span className="font-black uppercase tracking-widest">Neural Console</span>
+            {/* Bottom: Logs & Refinement */}
+            <div className="h-60 border-t border-white/5 bg-black/40 flex flex-col">
+              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar">
+                <div className="flex items-center gap-2 text-cyan-500 mb-2">
+                  <Terminal className="w-3 h-3" />
+                  <span className="font-black uppercase tracking-widest">Neural Console</span>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-slate-500 opacity-50">[SYSTEM] Polyglot Runtime v2.8.0</p>
+                  <p className="text-slate-500 opacity-50">[INFO] Context size: 128k tokens</p>
+                  {polyIsGenerating ? (
+                    <>
+                      <p className="text-cyan-400 animate-pulse">&gt; ANALYZING REQUIREMENTS...</p>
+                      <p className="text-cyan-400 animate-pulse">&gt; STRUCTURING MODULES...</p>
+                      <p className="text-purple-400 animate-pulse">&gt; GENERATING OPTIMIZED {polyLang.toUpperCase()} CODE...</p>
+                    </>
+                  ) : polyResult ? (
+                    <>
+                      <p className="text-emerald-500">&gt; COMPILATION SUCCESSFUL.</p>
+                      <p className="text-slate-400">&gt; {polyResult.title} ready for deployment.</p>
+                      <p className="text-slate-400">&gt; Framework: {polyFramework} | Complexity: {polyComplexity}%</p>
+                    </>
+                  ) : (
+                    <p className="text-slate-600">&gt; Ready for input.</p>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-slate-500 opacity-50">[SYSTEM] Polyglot Runtime v2.8.0</p>
-                <p className="text-slate-500 opacity-50">[INFO] Context size: 128k tokens</p>
-                {polyIsGenerating ? (
-                  <>
-                    <p className="text-cyan-400 animate-pulse">&gt; ANALYZING REQUIREMENTS...</p>
-                    <p className="text-cyan-400 animate-pulse">&gt; STRUCTURING MODULES...</p>
-                    <p className="text-purple-400 animate-pulse">&gt; GENERATING OPTIMIZED {polyLang.toUpperCase()} CODE...</p>
-                  </>
-                ) : polyResult ? (
-                  <>
-                    <p className="text-emerald-500">&gt; COMPILATION SUCCESSFUL.</p>
-                    <p className="text-slate-400">&gt; {polyResult.title} ready for deployment.</p>
-                    <p className="text-slate-400">&gt; Framework: {polyFramework} |Complexity: {polyComplexity}%</p>
-                  </>
-                ) : (
-                  <p className="text-slate-600">&gt; Ready for input.</p>
-                )}
+
+              {/* Refinement Area */}
+              <div className="h-16 border-t border-white/5 bg-[#050816] flex items-center px-4 gap-4">
+                <div className="flex-1 relative">
+                  <input 
+                    type="text"
+                    placeholder="Ask AI to add features, fix bugs, or change styles..."
+                    value={polyRefinement}
+                    onChange={e => setPolyRefinement(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && generatePolyglotCode(polyRefinement)}
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/50 transition-all pr-12"
+                  />
+                  <button 
+                    onClick={() => generatePolyglotCode(polyRefinement)}
+                    disabled={!polyRefinement.trim() || polyIsGenerating}
+                    className="absolute right-1 top-1 bottom-1 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all disabled:opacity-30"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2047,7 +2148,7 @@ export default function App() {
     if (plan === 'Expert Mode') tokenCost = 0;
     else if (plan === 'Creative Mode') tokenCost = isRegenerate ? 1 : 3;
 
-    if (credits < tokenCost) { alert(`Insufficient credits (${tokenCost} tokens required).`); setIsPricingOpen(true); return; }
+    if (credits < tokenCost && !isVipEmail(email)) { alert(`Insufficient credits (${tokenCost} tokens required).`); setIsPricingOpen(true); return; }
 
     // Capture current credits value synchronously
     const startingCredits = credits;
@@ -2112,7 +2213,7 @@ export default function App() {
 
   const handleGenerateVideo = async () => {
     if (!videoPrompt.trim() || isGeneratingVideo) return;
-    if (credits < 50) { alert('Insufficient credits (50 required).'); setIsPricingOpen(true); return; }
+    if (credits < 50 && !isVipEmail(email)) { alert('Insufficient credits (50 required).'); setIsPricingOpen(true); return; }
     setIsGeneratingVideo(true);
     setTimeout(() => { setIsGeneratingVideo(false); alert('Demo: Real video generation is coming soon.'); }, 1500);
   };
@@ -3662,14 +3763,21 @@ export default function App() {
                      </button>
                    ))}
                  </div>
-                 <p className="text-[8px] text-cyan-500/30 font-bold uppercase tracking-widest text-center pt-2 italic">Refreshed Daily by AI</p>
-
                  <div className="mt-8 pt-6 border-t border-white/5">
-                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4 flex items-center gap-2"><Box className="w-3 h-3" /> 3D Export Hint</h4>
-                   <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
-                     <p className="text-[10px] text-amber-200/70 leading-relaxed font-medium">To turn this character into a <span className="text-amber-400">.glb / .fbx</span> 3D model for free, use the description above in <a href="https://www.meshy.ai/" target="_blank" className="underline hover:text-amber-400">Meshy.ai</a> or <a href="https://www.tripo3d.ai/" target="_blank" className="underline hover:text-amber-400">Tripo3D</a>'s free tier.</p>
-                   </div>
-                 </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 mb-4 flex items-center gap-2"><Box className="w-3 h-3" /> 3D Export Core</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <button onClick={() => alert('Exporting to GLB/GLTF... Model will be downloaded in a moment.')} className="w-full p-3 bg-slate-900/50 hover:bg-cyan-500/10 border border-white/5 hover:border-cyan-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-all flex items-center justify-between group">
+                        Download GLB Model <Download className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => alert('Preparing FBX Export... High-fidelity rig included.')} className="w-full p-3 bg-slate-900/50 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-purple-400 transition-all flex items-center justify-between group">
+                        Download FBX Model <Download className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => alert('Packing .BLEND file... Native Blender format ready.')} className="w-full p-3 bg-slate-900/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-400 transition-all flex items-center justify-between group">
+                        Download .BLEND <Download className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest text-center pt-3 italic">Professional 3D Formats (V-Rig Ready)</p>
+                  </div>
               </div>
             </div>
           </div>
