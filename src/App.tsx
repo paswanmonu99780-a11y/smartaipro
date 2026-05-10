@@ -322,7 +322,6 @@ export default function App() {
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
   const [dynamicTrending, setDynamicTrending] = useState<string[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(false);
-  const [expertSubTab, setExpertSubTab] = useState('');
 
   // Polyglot State
   const [polyLang, setPolyLang] = useState('JavaScript');
