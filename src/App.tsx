@@ -1524,31 +1524,47 @@ export default function App() {
         
         cleanJson = cleanJson.substring(firstBrace, lastBrace !== -1 ? lastBrace + 1 : cleanJson.length);
 
-        // JSON Fixer: Handle unterminated strings or missing braces
+        // Advanced JSON Fixer: Aggressively handle truncated/invalid JSON
         const fixJson = (str: string) => {
-          let fixed = str;
-          // Count braces
-          let openBraces = (fixed.match(/\{/g) || []).length;
-          let closeBraces = (fixed.match(/\}/g) || []).length;
-          // Count quotes (basic check)
-          let quotes = (fixed.match(/"/g) || []).length;
+          let fixed = str.trim();
           
-          if (quotes % 2 !== 0) fixed += '"';
-          while (openBraces > closeBraces) {
-            fixed += '}';
-            closeBraces++;
+          // 1. Close open string if necessary
+          const quoteCount = (fixed.match(/(^|[^\\])"/g) || []).length;
+          if (quoteCount % 2 !== 0) {
+            fixed += '"';
           }
-          return fixed;
+          
+          // 2. Add missing closing brackets/braces
+          const stack: string[] = [];
+          for (let i = 0; i < fixed.length; i++) {
+            if (fixed[i] === '{' && (i === 0 || fixed[i-1] !== '\\')) stack.push('}');
+            else if (fixed[i] === '[' && (i === 0 || fixed[i-1] !== '\\')) stack.push(']');
+            else if (fixed[i] === '}' && stack[stack.length - 1] === '}') stack.pop();
+            else if (fixed[i] === ']' && stack[stack.length - 1] === ']') stack.pop();
+          }
+          
+          let result = fixed + stack.reverse().join('');
+          
+          // 3. Try to parse. If still fails, try to trim trailing commas or partial keys
+          try {
+            JSON.parse(result);
+            return result;
+          } catch (e) {
+            // Last ditch effort: try to find the last complete object element
+            return result; // Fallback to whatever we have
+          }
         };
 
         try {
-          const data = JSON.parse(fixJson(cleanJson));
+          const fixed = fixJson(cleanJson);
+          const data = JSON.parse(fixed);
           setPolyResult(data);
-          setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files created. Rendering workspace...` }]);
+          setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files recovered. Rendering workspace...` }]);
+          
           if (data.files && data.files.length > 0) {
             const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
             setPolyActiveFile(mainFile.name);
-            setPolyPreviewCode(mainFile.code);
+            setPolyPreviewCode(mainFile.code || "");
           }
           
           if (refineMsg) setPolyRefinement('');
@@ -1562,8 +1578,22 @@ export default function App() {
             date: new Date().toLocaleTimeString()
           } as any, ...prev]);
         } catch (parseErr) {
-          console.error("Parse Error:", parseErr, "Cleaned JSON:", cleanJson);
-          throw new Error("AI returned invalid JSON structure. Please try again with a simpler request.");
+          console.error("Advanced Parse Error:", parseErr, "Fixed JSON:", fixJson(cleanJson));
+          // If still fails, try to extract files using regex as a backup
+          const fileMatches = cleanJson.match(/"name":\s*"([^"]+)",\s*"code":\s*"([^"]+)"/g);
+          if (fileMatches) {
+             const recoveredFiles = fileMatches.map(m => {
+               const name = m.match(/"name":\s*"([^"]+)"/)?.[1] || "recovered.js";
+               let code = m.match(/"code":\s*"([^"]+)"/)?.[1] || "";
+               return { name, code: code.replace(/\\n/g, '\n').replace(/\\"/g, '"') };
+             });
+             setPolyResult({ title: "Recovered Project", files: recoveredFiles });
+             setPolyActiveFile(recoveredFiles[0].name);
+             setPolyPreviewCode(recoveredFiles[0].code);
+             setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'warn', msg: 'JSON truncated. Recovered partial files via regex.' }]);
+          } else {
+             throw new Error("AI returned invalid JSON. Try a shorter request.");
+          }
         }
       } else {
         throw new Error("Failed to initialize stream.");
