@@ -151,7 +151,8 @@ export default function App() {
     }
   }, []);
 
-  const updateUsage = (type: 'messages' | 'images') => {
+   const updateUsage = (type: 'messages' | 'images') => {
+    if (email === 'paswanmonu99780@gmail.com') return; // VIP: No usage tracking
     setUsage(prev => {
       const next = { ...prev, [type]: prev[type] + 1 };
       localStorage.setItem('smartai_usage', JSON.stringify(next));
@@ -386,10 +387,17 @@ export default function App() {
             localStorage.setItem('smartai_session', JSON.stringify(userData));
             setDisplayName(userData.displayName || userData.email?.split('@')[0] || 'User');
             setAvatar(userData.avatar || '');
-            setCredits(typeof userData.credits === 'number' ? userData.credits : 100);
-            if (userData.plan === 'Pro') setPlan('Creative Mode');
-            else if (userData.plan === 'Ultra') setPlan('Expert Mode');
-            else setPlan('Normal Mode');
+            
+            // VIP Override
+            if (session.user.email === 'paswanmonu99780@gmail.com') {
+              setCredits(999999999);
+              setPlan('Expert Mode');
+            } else {
+              setCredits(typeof userData.credits === 'number' ? userData.credits : 100);
+              if (userData.plan === 'Pro') setPlan('Creative Mode');
+              else if (userData.plan === 'Ultra') setPlan('Expert Mode');
+              else setPlan('Normal Mode');
+            }
           } else {
             console.log('User profile not found, creating one...');
             const pendingName = sessionStorage.getItem('pendingSignupName');
@@ -399,8 +407,8 @@ export default function App() {
               email: session.user.email,
               displayName: pendingName || session.user.user_metadata?.displayName || session.user.email?.split('@')[0] || 'User',
               avatar: '',
-              credits: 100,
-              plan: 'Basic',
+              credits: session.user.email === 'paswanmonu99780@gmail.com' ? 999999999 : 100,
+              plan: session.user.email === 'paswanmonu99780@gmail.com' ? 'Ultra' : 'Basic',
               referralCode: generateReferralCode(session.user.email || 'user')
             };
             await supabase.from('users').insert([newUser]);
@@ -408,7 +416,12 @@ export default function App() {
             setDisplayName(newUser.displayName);
             setAvatar('');
             sessionStorage.removeItem('pendingSignupName');
-            setUserMetadata(userData);
+            
+            // VIP State
+            if (session.user.email === 'paswanmonu99780@gmail.com') {
+              setCredits(999999999);
+              setPlan('Expert Mode');
+            }
           }
         } catch (err) {
           console.error('Error fetching user metadata:', err);
