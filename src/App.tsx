@@ -159,6 +159,7 @@ export default function App() {
       return next;
     });
   };
+  const [userMetadata, setUserMetadata] = useState<any>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
