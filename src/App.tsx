@@ -152,7 +152,7 @@ export default function App() {
   }, []);
 
    const updateUsage = (type: 'messages' | 'images') => {
-    if (email === 'paswanmonu99780@gmail.com') return; // VIP: No usage tracking
+    if (isVipEmail(email)) return; // VIP: No usage tracking
     setUsage(prev => {
       const next = { ...prev, [type]: prev[type] + 1 };
       localStorage.setItem('smartai_usage', JSON.stringify(next));
@@ -162,7 +162,7 @@ export default function App() {
   const [userMetadata, setUserMetadata] = useState<any>(null);
   const [email, setEmail] = useState('');
 
-  const isVipEmail = (e: string) => e.toLowerCase().trim() === 'paswanmonu99780@gmail.com';
+  const isVipEmail = (e: string) => e?.toLowerCase().trim() === 'paswanmonu99780@gmail.com';
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
@@ -438,6 +438,21 @@ export default function App() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Force VIP check on mount in case session is already active
+  useEffect(() => {
+    const checkInitialVip = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email && isVipEmail(session.user.email)) {
+        setEmail(session.user.email);
+        setIsLoggedIn(true);
+        setCredits(999999999);
+        setPlan('Expert Mode');
+        setSmartMode('expert');
+      }
+    };
+    checkInitialVip();
   }, []);
 
   useEffect(() => {
