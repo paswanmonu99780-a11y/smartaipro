@@ -85,6 +85,7 @@ const IMAGE_TOOLS = [
 
 const EXPERT_TOOLS = [
   { id: 'agent', name: 'AI Agent Mode', badge: 'NEW', icon: Zap, desc: 'AI handles complete tasks automatically from planning to execution.', color: '#a855f7' },
+  { id: 'debugger', name: 'AI Debugger Pro', badge: 'NEW', icon: Bug, desc: 'Advanced semantic debugging, error fixing & security audit system.', color: '#ef4444' },
   { id: 'memory', name: 'Memory + Personal AI', badge: 'NEW', icon: Database, desc: 'AI remembers your chats, preferences and provides personalized results.', color: '#3b82f6' },
   { id: 'video', name: 'AI Video Generator', badge: 'NEW', icon: Video, desc: 'Turn text into full videos with scenes, voiceovers and captions.', color: '#ec4899' },
   { id: 'reverse', name: 'Image â†’ Prompt Reverse', badge: 'NEW', icon: ImageIcon, desc: 'Upload an image and AI will detect the exact prompt used.', color: '#10b981' },
@@ -351,6 +352,30 @@ export default function App() {
   const [polyActiveFile, setPolyActiveFile] = useState('main.js');
   const [polyRefinement, setPolyRefinement] = useState('');
   const [polyShowPreview, setPolyShowPreview] = useState(false);
+
+  // AI Debugger State
+  const [debugCode, setDebugCode] = useState('');
+  const [debugLogs, setDebugLogs] = useState('');
+  const [debugLang, setDebugLang] = useState('JavaScript');
+  const [debugType, setDebugType] = useState('Syntax Errors');
+  const [debugComplexity, setDebugComplexity] = useState('Intermediate');
+  const [debugResult, setDebugResult] = useState<any>(null);
+  const [debugIsAnalyzing, setDebugIsAnalyzing] = useState(false);
+  const [debugShowPreview, setDebugShowPreview] = useState(false);
+  const [debugActiveTab, setDebugActiveTab] = useState<'code' | 'preview' | 'comparison'>('code');
+  const [debugAdvanced, setDebugAdvanced] = useState({
+    autoFix: true,
+    optimize: false,
+    bestPractices: true,
+    security: false,
+    explain: true,
+    architecture: false,
+    cleanCode: true,
+    refactor: false,
+    imports: true,
+    infiniteLoops: true
+  });
+  const [debugShowAdvanced, setDebugShowAdvanced] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1746,8 +1771,367 @@ export default function App() {
     );
   };
 
+  const generateDebuggerAnalysis = async (customPrompt?: string) => {
+    if (!debugCode.trim() || debugIsAnalyzing) return;
+    
+    setDebugIsAnalyzing(true);
+    setDebugResult(null);
+
+    const advancedStr = Object.entries(debugAdvanced)
+      .filter(([_, v]) => v)
+      .map(([k, _]) => k.replace(/([A-Z])/g, ' $1').toLowerCase())
+      .join(', ');
+
+    const prompt = customPrompt || `Analyze the following ${debugLang} code for ${debugType}.
+    Complexity Level: ${debugComplexity}.
+    Advanced Controls: ${advancedStr}.
+    Code to analyze:
+    ${debugCode}
+    
+    Associated Error Logs:
+    ${debugLogs}
+
+    Provide a professional developer debugging report in JSON format:
+    {
+      "summary": "High level summary of the issues",
+      "severity": "Low | Medium | High | Critical",
+      "issues": [
+        { "type": "Error Type", "desc": "Description", "line": 0, "severity": "Level", "cause": "Why it happened", "fix": "How to fix it" }
+      ],
+      "fixedCode": "Complete corrected and optimized code",
+      "explanation": "Beginner-friendly explanation of the bugs",
+      "securityAudit": "Analysis of vulnerabilities",
+      "performanceTips": "Optimization suggestions",
+      "architectureAdvice": "Better structure suggestions"
+    }`;
+
+    try {
+      const res = await fetch(`/api/chat?prompt=${encodeURIComponent(prompt)}&system=You are an elite Senior Debugger and Security Researcher. Return ONLY pure JSON. No markdown tags like \`\`\`json.&json=true`);
+      if (res.ok) {
+        const text = await res.text();
+        const cleanJson = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+        const data = JSON.parse(cleanJson);
+        setDebugResult(data);
+        
+        setCreativeHistory(prev => [{
+          id: Date.now().toString(),
+          type: 'debugger',
+          toolName: 'AI Debugger',
+          input: debugCode.substring(0, 50) + '...',
+          result: data,
+          date: new Date().toLocaleTimeString()
+        } as any, ...prev]);
+      }
+    } catch (e) {
+      console.error("Debugger error:", e);
+      alert("Failed to analyze code. AI might have returned invalid JSON. Try simplifying the code.");
+    } finally {
+      setDebugIsAnalyzing(false);
+    }
+  };
+
+  const renderDebugger = () => {
+    return (
+      <div className="h-full bg-[#050816] text-white flex flex-col overflow-hidden relative">
+        <AnimatePresence>
+          {debugIsAnalyzing && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-[#050816]/95 backdrop-blur-xl flex flex-col items-center justify-center p-10">
+              <div className="w-full max-w-md space-y-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-red-500/20 blur-[50px] animate-pulse rounded-full" />
+                  <Bug className="w-16 h-16 text-red-500 mx-auto relative animate-bounce" />
+                </div>
+                <div className="space-y-3 text-center">
+                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-red-500 animate-pulse">Initializing Debug Engine...</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-cyan-500 delay-75 animate-pulse">Scanning Code Structure...</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white delay-150 animate-pulse">Detecting Errors & Vulnerabilities...</p>
+                </div>
+                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden relative">
+                   <motion.div 
+                     initial={{ left: '-100%' }} 
+                     animate={{ left: '100%' }} 
+                     transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                     className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-red-500 to-transparent" 
+                   />
+                </div>
+                <div className="flex justify-between font-mono text-[9px] text-slate-500 uppercase tracking-widest">
+                  <span>Semantic Grid Active</span>
+                  <span>Scanning Line 409...</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Header */}
+        <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#0B1023]/40 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setExpertSubTab('')} className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-red-400 transition-all group">
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            </button>
+            <div>
+              <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-2">Debugger <span className="text-[10px] not-italic text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">SENTINEL V1</span></h2>
+              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">AI Semantic Diagnosis & Fix Core</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => generateDebuggerAnalysis()}
+              disabled={debugIsAnalyzing}
+              className="px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-red-500/20 flex items-center gap-2"
+            >
+              <Search className="w-4 h-4" /> Analyze Code
+            </button>
+            <div className="h-8 w-px bg-white/5 mx-2" />
+            <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Save className="w-4 h-4" /></button>
+            <button className="p-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><Download className="w-4 h-4" /></button>
+          </div>
+        </div>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Panel: Inputs */}
+          <div className="w-80 border-r border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+            <div className="p-6 space-y-8">
+              {/* Language & Complexity */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Environment</label>
+                  <select value={debugLang} onChange={e => setDebugLang(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-red-500/50 appearance-none cursor-pointer">
+                    {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'React', 'Next.js', 'Node.js', 'SQL', 'HTML/CSS'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Debug Type</label>
+                  <select value={debugType} onChange={e => setDebugType(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-red-500/50 appearance-none cursor-pointer">
+                    {['Syntax Errors', 'Runtime Errors', 'Logic Errors', 'Performance Issues', 'Security Vulnerabilities', 'API Errors', 'Database Errors', 'UI Bugs', 'Full Code Audit'].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Error Logs */}
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Error Logs (Optional)</label>
+                <textarea 
+                  value={debugLogs}
+                  onChange={e => setDebugLogs(e.target.value)}
+                  placeholder="Paste terminal errors or console logs..."
+                  className="w-full h-32 bg-slate-950 border border-white/5 rounded-2xl p-4 text-[11px] font-mono text-red-400/80 outline-none focus:border-red-500/30 resize-none no-scrollbar placeholder:text-slate-800"
+                />
+              </div>
+
+              {/* Advanced Controls */}
+              <div className="space-y-4">
+                <button 
+                  onClick={() => setDebugShowAdvanced(!debugShowAdvanced)}
+                  className="w-full py-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2"
+                >
+                  <Settings className="w-3.5 h-3.5" /> Advanced Debug Controls
+                </button>
+                <AnimatePresence>
+                  {debugShowAdvanced && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-black/20 rounded-2xl p-4 space-y-3">
+                      {Object.entries(debugAdvanced).map(([key, val]) => (
+                        <label key={key} className="flex items-center justify-between cursor-pointer group">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-300 transition-colors">{key.replace(/([A-Z])/g, ' $1')}</span>
+                          <input 
+                            type="checkbox" 
+                            checked={val} 
+                            onChange={() => setDebugAdvanced(prev => ({ ...prev, [key]: !val }))}
+                            className="w-4 h-4 rounded border-white/10 bg-slate-900 text-red-500 focus:ring-red-500/20"
+                          />
+                        </label>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Quick Templates */}
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">Quick Templates</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {['Fix React Errors', 'Optimize API', 'Secure Backend', 'Database Crash'].map(t => (
+                    <button key={t} className="w-full p-3 bg-slate-900/40 border border-white/5 rounded-xl text-[9px] font-bold text-slate-500 hover:text-red-400 text-left transition-all">{t}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Panel: Workspace */}
+          <div className="flex-1 flex flex-col bg-[#050816] relative">
+            <div className="h-10 border-b border-white/5 bg-[#0B1023]/60 flex items-center px-4 justify-between">
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setDebugActiveTab('code')}
+                  className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${debugActiveTab === 'code' ? 'border-red-500 text-red-400 bg-red-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                >
+                  <Code className="w-3.5 h-3.5" /> Source Code
+                </button>
+                {debugResult && (
+                  <button 
+                    onClick={() => setDebugActiveTab('comparison')}
+                    className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${debugActiveTab === 'comparison' ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                  >
+                    <Layers className="w-3.5 h-3.5" /> Compare & Fix
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-red-400 transition-colors">
+                  <RefreshCcw className="w-3.5 h-3.5" />
+                </button>
+                <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-red-400 transition-colors">
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden relative">
+              {debugActiveTab === 'code' ? (
+                <textarea 
+                  value={debugCode}
+                  onChange={e => setDebugCode(e.target.value)}
+                  placeholder="Paste your code here for semantic AI analysis..."
+                  className="w-full h-full bg-[#050816] p-8 font-mono text-[13px] text-slate-300 outline-none resize-none no-scrollbar leading-relaxed"
+                  spellCheck={false}
+                />
+              ) : (
+                <div className="h-full flex overflow-hidden">
+                  <div className="flex-1 border-r border-white/5 flex flex-col">
+                    <div className="p-2 bg-red-500/5 border-b border-white/5 text-[9px] font-black uppercase text-red-400 px-4">Original Code</div>
+                    <textarea value={debugCode} readOnly className="flex-1 bg-black/20 p-6 font-mono text-xs text-slate-500 outline-none resize-none no-scrollbar opacity-50" />
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <div className="p-2 bg-emerald-500/5 border-b border-white/5 text-[9px] font-black uppercase text-emerald-400 px-4">Corrected & Optimized</div>
+                    <textarea value={debugResult?.fixedCode} readOnly className="flex-1 bg-[#050816] p-6 font-mono text-xs text-emerald-50/80 outline-none resize-none no-scrollbar" />
+                  </div>
+                </div>
+              )}
+
+              {/* Glowing Analyze Button Overlay */}
+              {!debugResult && !debugCode && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center">
+                  <div className="w-24 h-24 border-2 border-dashed border-slate-800 rounded-3xl flex items-center justify-center mb-6">
+                    <Search className="w-10 h-10 opacity-20" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Diagnosis Core Idle</h3>
+                  <p className="text-[10px] font-medium max-w-xs leading-relaxed uppercase tracking-widest opacity-50">Paste code to begin semantic error detection and architectural audit.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom: Diagnostics Log */}
+            <div className="h-48 border-t border-white/5 bg-black/40 flex flex-col overflow-hidden">
+              <div className="p-4 flex items-center justify-between border-b border-white/5">
+                <div className="flex items-center gap-2 text-red-500">
+                  <Terminal className="w-3 h-3" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Diagnostic Console</span>
+                </div>
+                {debugResult && (
+                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
+                     debugResult.severity === 'Critical' ? 'bg-red-500 text-white' : 
+                     debugResult.severity === 'High' ? 'bg-orange-500 text-white' : 
+                     'bg-cyan-500 text-black'
+                   }`}>
+                     {debugResult.severity} Risk Detected
+                   </span>
+                )}
+              </div>
+              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar space-y-2">
+                {debugIsAnalyzing ? (
+                  <>
+                    <p className="text-red-400 animate-pulse">&gt; ANALYZING AST TREE...</p>
+                    <p className="text-cyan-400 animate-pulse">&gt; CHECKING FOR MEMORY LEAKS...</p>
+                    <p className="text-purple-400 animate-pulse">&gt; SCANNING VULNERABILITIES...</p>
+                  </>
+                ) : debugResult ? (
+                  <div className="space-y-3">
+                    <p className="text-emerald-500 font-bold">&gt; ANALYSIS COMPLETE: {debugResult.issues?.length || 0} Issues Identified.</p>
+                    <p className="text-slate-400 leading-relaxed">&gt; SUMMARY: {debugResult.summary}</p>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                       <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
+                         <p className="text-[9px] font-black text-red-400 uppercase mb-1">Top Security Risk</p>
+                         <p className="text-[10px] text-slate-400 italic">"{debugResult.securityAudit?.substring(0, 80)}..."</p>
+                       </div>
+                       <div className="p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl">
+                         <p className="text-[9px] font-black text-cyan-400 uppercase mb-1">Performance Insight</p>
+                         <p className="text-[10px] text-slate-400 italic">"{debugResult.performanceTips?.substring(0, 80)}..."</p>
+                       </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-slate-700">&gt; Sentinel passive. Awaiting input stream.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Report Cards */}
+          <div className="w-96 border-l border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-hidden">
+            <div className="p-6 border-b border-white/5">
+               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><BarChart3 className="w-3.5 h-3.5" /> Error Reports</h4>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+              {debugResult?.issues?.map((issue: any, i: number) => (
+                <div key={i} className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden hover:border-red-500/30 transition-all group">
+                   <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/20">
+                      <div className="flex items-center gap-2">
+                         <Bug className={`w-3 h-3 ${issue.severity === 'Critical' ? 'text-red-500' : 'text-orange-500'}`} />
+                         <span className="text-[10px] font-black uppercase tracking-tight text-white">{issue.type}</span>
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-500">Line {issue.line}</span>
+                   </div>
+                   <div className="p-4 space-y-4">
+                      <p className="text-[11px] text-slate-300 font-medium leading-relaxed">{issue.desc}</p>
+                      <div className="space-y-2">
+                         <div className="p-3 bg-red-500/5 rounded-xl border border-red-500/10">
+                            <p className="text-[9px] font-black text-red-400 uppercase mb-1">Cause</p>
+                            <p className="text-[10px] text-slate-400 italic">{issue.cause}</p>
+                         </div>
+                         <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10">
+                            <p className="text-[9px] font-black text-emerald-400 uppercase mb-1">Recommended Fix</p>
+                            <p className="text-[10px] text-slate-300 font-bold">{issue.fix}</p>
+                         </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button 
+                          onClick={() => generateDebuggerAnalysis(`Explain this specific error in beginner-friendly terms: ${issue.type} - ${issue.desc}. Include why it happened and how to avoid it.`)}
+                          className="flex-1 py-2 bg-slate-900 border border-white/5 rounded-lg text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all"
+                        >
+                          Explain
+                        </button>
+                        <button 
+                          onClick={() => setDebugActiveTab('comparison')}
+                          className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+                        >
+                          Apply Fix
+                        </button>
+                      </div>
+                   </div>
+                </div>
+              ))}
+
+              {!debugResult && (
+                <div className="h-full flex flex-col items-center justify-center text-center opacity-20 grayscale py-20">
+                   <FileSearch className="w-12 h-12 mb-4" />
+                   <p className="text-[9px] font-black uppercase tracking-[0.2em]">No Active Reports</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderExpertPro = () => {
     if (expertSubTab === 'polyglot') return renderPolyglot();
+    if (expertSubTab === 'debugger') return renderDebugger();
 
     const categories = [
       {
@@ -1887,6 +2271,8 @@ export default function App() {
                         const tid = tool.name.toLowerCase();
                         if (tid === 'polyglot') {
                           setExpertSubTab('polyglot');
+                        } else if (tid === 'debugger') {
+                          setExpertSubTab('debugger');
                         } else {
                           handleSendMessage(`Initialize Expert Tool: ${tool.name}. Provide a brief overview of how this module functions in the Enterprise Ecosystem.`);
                         }
