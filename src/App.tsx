@@ -2992,52 +2992,20 @@ export default function App() {
                       <div className="h-[1px] flex-1 bg-white/10" />
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-3">
-                      <input type="text" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email or Mobile Number" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 font-medium text-sm" />
-                      <div className="relative">
-                        <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 pr-12 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-4 h-4" /></button>
-                      </div>
+                    <form onSubmit={async (e) => { e.preventDefault(); if (!email) return setAuthError('Please enter your email'); setAuthError(null); await sendOtp('login'); }} className="space-y-3">
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 font-medium text-sm" />
                       <button type="submit" disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20 disabled:opacity-50 mt-2">
-                        {isAuthenticating ? 'Logging in...' : 'Login'}
+                        {isAuthenticating ? 'Sending OTP...' : 'Login'}
                       </button>
                     </form>
 
-                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">
-                      <button onClick={() => setAuthMode('signup')} className="hover:text-white transition-colors">Create Account</button>
+                    <div className="flex justify-center items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">
                       <button onClick={() => setAuthMode('forgot')} className="hover:text-white transition-colors">Forgot Password?</button>
                     </div>
                   </div>
                 )}
 
-                {authMode === 'signup' && (
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-white text-center">Join SmartAI Pro</h2>
-                    <div className="space-y-3">
-                      <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} placeholder="Full Name" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="relative">
-                          <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-3.5 h-3.5" /></button>
-                        </div>
-                        <div className="relative">
-                          <input type={showPassword ? "text" : "password"} value={signupConfirmPassword} onChange={e => setSignupConfirmPassword(e.target.value)} placeholder="Confirm" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"><IconComponent icon={showPassword ? EyeOff : Eye} className="w-3.5 h-3.5" /></button>
-                        </div>
-                      </div>
-                      <input type="text" value={signupReferCode} onChange={e => setSignupReferCode(e.target.value)} placeholder="Referral Code (Optional)" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm uppercase" />
-                    </div>
-                    <button onClick={handleSignup} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all active:scale-[0.98] shadow-xl shadow-indigo-600/20 disabled:opacity-50">
-                      {isAuthenticating ? 'Initializing...' : 'Continue'}
-                    </button>
-                    <div className="text-center">
-                       <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
-                    </div>
-                  </div>
-                )}
 
-                
 
                 {authMode === 'forgot' && (
                   <div className="space-y-4">
