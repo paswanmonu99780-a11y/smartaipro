@@ -521,7 +521,10 @@ export default function App() {
   // ==========================================
   useEffect(() => {
     const reinforceVip = () => {
-      if (email && isVipEmail(email)) {
+      // Check both state and localStorage for maximum reliability
+      const currentEmail = email || localStorage.getItem('smartai_last_email');
+      if (currentEmail && isVipEmail(currentEmail)) {
+        console.log('Supreme VIP Guard: Reinforcing Lifetime Privileges for MASTER ACCOUNT...');
         if (plan !== 'Expert Mode') setPlan('Expert Mode');
         if (credits < 99999999) setCredits(999999999);
         if (smartMode !== 'expert') setSmartMode('expert');
@@ -532,18 +535,20 @@ export default function App() {
         // Force VIP metadata
         if (!userMetadata || userMetadata.plan !== 'Ultra') {
           setUserMetadata({
-            email: email,
+            email: currentEmail,
             credits: 999999999,
             plan: 'Ultra',
             displayName: displayName || 'VIP MASTER',
             avatar: avatar || ''
           } as any);
         }
+        // Redundant set for state sync
+        if (!email) setEmail(currentEmail);
       }
     };
     
     reinforceVip();
-    const interval = setInterval(reinforceVip, 2000); // Check every 2 seconds to prevent drift
+    const interval = setInterval(reinforceVip, 1000); // Check every 1 second (Ultra Frequency)
     return () => clearInterval(interval);
   }, [email, plan, credits, isAdmin, smartMode, userMetadata]);
   useEffect(() => {
