@@ -110,12 +110,12 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "deepseek-ai/deepseek-v3",
+          model: "meta/llama-3.3-70b-instruct", // Most stable and fast on NVIDIA NIM
           messages: [
             { role: "system", content: system || "You are SmartAI Pro Jarvis assistant." },
             { role: "user", content: prompt }
           ],
-          temperature: 0.6,
+          temperature: 0.5,
           max_tokens: 1024,
           stream: false
         })
@@ -312,7 +312,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
 
       // 1. Try NVIDIA NIM (Primary Brain)
       const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
-      if (nvidiaText) {
+      if (nvidiaText && !nvidiaText.includes("Pollinations")) {
         return res.type('text/plain; charset=utf-8').send(nvidiaText);
       }
 
