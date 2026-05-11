@@ -19,7 +19,8 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   const transcriptRef = useRef('');
   const [waveform, setWaveform] = useState<number[]>(new Array(10).fill(5));
 
-  useEffect(() => {
+  // Speech Recognition Setup with Auto-Recovery
+  const initRecognition = () => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
@@ -32,6 +33,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
           setState('listening');
           setTranscript('');
           transcriptRef.current = '';
+          console.log("Jarvis Listening System Active...");
         };
 
         recognitionRef.current.onresult = (event: any) => {
@@ -41,18 +43,24 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         };
 
         recognitionRef.current.onend = () => {
-          setTimeout(() => {
-            processVoiceCommand();
-          }, 300);
+          if (state === 'listening') {
+            setTimeout(() => processVoiceCommand(), 300);
+          }
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error("Speech Error:", event.error);
+          console.error("Mic Error:", event.error);
           setState('idle');
+          // Silently restart if needed
+          if (event.error === 'no-speech') initRecognition();
         };
       }
-      synthRef.current = window.speechSynthesis;
     }
+  };
+
+  useEffect(() => {
+    initRecognition();
+    synthRef.current = window.speechSynthesis;
   }, []);
 
   useEffect(() => {
@@ -75,6 +83,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       try {
         recognitionRef.current?.start();
       } catch (e) {
+        // Force restart on error
         recognitionRef.current?.stop();
         setTimeout(() => recognitionRef.current?.start(), 100);
       }
@@ -92,9 +101,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     }
 
     const lowerText = rawText.toLowerCase();
-    onMessage('user', rawText); // Sync user transcript to main chat
+    onMessage('user', rawText);
     
-    // 1. Direct Command Check (Navigation)
+    // Priority 1: Navigation
     if (lowerText.includes("settings") || lowerText.includes("setting kholo") || lowerText.includes("setting dikhao")) {
        executeAction("settings", "Opening settings panel for you, sir.");
        return;
@@ -105,23 +114,15 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
        return;
     }
 
-    if (lowerText.includes("expert mode") || lowerText.includes("neural link")) {
+    if (lowerText.includes("expert mode")) {
        executeAction("expert", "Activating Expert Mode.");
        return;
     }
 
-    if (lowerText.includes("banao") || lowerText.includes("generate") || lowerText.includes("create")) {
-       if (lowerText.includes("image") || lowerText.includes("photo")) {
-          const subject = rawText.replace(/generate|banao|create|image|photo|an|a/gi, "").trim();
-          executeAction("generate_image", `Generating image for ${subject || 'you'}.`, subject);
-          return;
-       }
-    }
-
-    // 2. Chat Brain (Always use NVIDIA via Server)
+    // Priority 2: AI Brain (Always use NVIDIA NIM via Server)
     setState('thinking');
     try {
-      const system = "You are SmartAI Pro Jarvis. Use NVIDIA NIM brain. Be brief. Use tags like [ACTION:settings] if needed.";
+      const system = "You are SmartAI Pro Jarvis. Use NVIDIA NIM. Be very brief. Use [ACTION:settings] if needed.";
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,12 +134,12 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       if (response.includes("[ACTION:settings]")) onCommand("settings");
       if (response.includes("[ACTION:image]")) onCommand("image");
       
-      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Action completed, sir.";
-      onMessage('assistant', cleanResponse); // Sync AI response to main chat
+      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Yes, sir.";
+      onMessage('assistant', cleanResponse);
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (e) {
-      const fallback = "Connecting to backup neural core...";
+      const fallback = "I am processing your request through my backup core, sir.";
       setAiResponse(fallback);
       speak(fallback);
       setState('idle');
@@ -147,7 +148,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
 
   const executeAction = (action: string, response: string, data?: any) => {
     onCommand(action, data);
-    onMessage('assistant', response); // Sync action confirmation to main chat
+    onMessage('assistant', response);
     setAiResponse(response);
     speak(response);
   };
@@ -178,18 +179,18 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
               {state === 'listening' && (
                 <div className="flex gap-1.5 items-center h-6">
                    {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-purple-500 rounded-full" animate={{ height: h }} />))}
-                   <span className="text-sm font-bold text-purple-400 animate-pulse ml-2">LISTENING...</span>
+                   <span className="text-sm font-bold text-purple-400 animate-pulse ml-2">JARVIS LISTENING...</span>
                 </div>
               )}
-              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-bold text-purple-400">NVIDIA BRAIN...</span></>)}
+              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-bold text-purple-400">ANALYZING...</span></>)}
               {state === 'speaking' && (
                  <div className="flex gap-1.5 items-center h-6">
                    {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-indigo-500 rounded-full" animate={{ height: h * 1.5 }} />))}
-                   <span className="text-sm font-bold text-indigo-400 ml-2">JARVIS SPEAKING</span>
+                   <span className="text-sm font-bold text-indigo-400 ml-2">REPLYING...</span>
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || (state === 'speaking' ? aiResponse : "Sir, NVIDIA core is ready...")}</p>
+            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || (state === 'speaking' ? aiResponse : "I'm processing your speech...")}</p>
           </motion.div>
         )}
       </AnimatePresence>
