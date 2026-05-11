@@ -16,54 +16,39 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
 
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [waveform, setWaveform] = useState<number[]>(new Array(10).fill(5));
 
-  // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true; // Use continuous to manually handle silence
+        recognitionRef.current.continuous = false;
         recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = language;
 
         recognitionRef.current.onstart = () => {
           setState('listening');
           setTranscript('');
+          console.log("Mic Started...");
         };
 
         recognitionRef.current.onresult = (event: any) => {
-          // Clear previous silence timer
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-          let interimTranscript = '';
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-              setTranscript(prev => prev + event.results[i][0].transcript);
-            } else {
-              interimTranscript += event.results[i][0].transcript;
-            }
-          }
-          
-          // If we have interim results, update transcript for feedback
-          if (interimTranscript) {
-            setTranscript(interimTranscript);
-          }
-
-          // Start a 2-second silence timer to auto-process
-          silenceTimerRef.current = setTimeout(() => {
-            console.log("Silence detected, stopping recognition...");
-            recognitionRef.current?.stop();
-          }, 2000);
+          const current = event.resultIndex;
+          const text = event.results[current][0].transcript;
+          setTranscript(text);
         };
 
         recognitionRef.current.onend = () => {
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          if (state === 'listening') {
-             processVoiceCommand();
-          }
+          console.log("Mic Ended automatically.");
+          // Use a small delay before processing to ensure transcript state is updated
+          setTimeout(() => {
+            setState(prev => {
+               if (prev === 'listening') return 'thinking';
+               return prev;
+            });
+            processVoiceCommand();
+          }, 500);
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -73,10 +58,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       }
       synthRef.current = window.speechSynthesis;
     }
-    return () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    };
-  }, [language, state]);
+  }, [language]);
 
   // Handle waveform animation
   useEffect(() => {
@@ -96,7 +78,14 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
 
   const toggleListening = () => {
     if (state === 'idle') {
-      recognitionRef.current?.start();
+      try {
+        recognitionRef.current?.start();
+      } catch (e) {
+        console.error("Failed to start recognition:", e);
+        // If it's already started or fails, try to reset
+        recognitionRef.current?.stop();
+        setTimeout(() => recognitionRef.current?.start(), 200);
+      }
     } else {
       recognitionRef.current?.stop();
       if (state === 'speaking') {
@@ -107,74 +96,56 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   const processVoiceCommand = async () => {
-    const rawText = transcript.trim();
-    if (!rawText) {
-      setState('idle');
-      return;
-    }
-
-    setState('thinking');
-    const lowerTranscript = rawText.toLowerCase();
-    console.log("Processing Voice Command:", lowerTranscript);
-    
-    // 1. Navigation Commands
-    if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo") || lowerTranscript.includes("setting dikhao")) {
-      executeAction("settings", "Opening settings for you, sir.");
-      return;
-    }
-
-    if (lowerTranscript.includes("image") || lowerTranscript.includes("photo banao") || lowerTranscript.includes("image generator") || lowerTranscript.includes("tab par jao")) {
-      executeAction("image", "Switching to Image Generator tab.");
-      return;
-    }
-
-    if (lowerTranscript.includes("expert mode") || lowerTranscript.includes("expert mode activate")) {
-      executeAction("expert", "Activating Expert Mode. Neural links established.");
-      return;
-    }
-
-    if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
-      executeAction("admin", "Accessing Admin Panel.");
-      return;
-    }
-
-    // 2. Active Generation Commands
-    if (lowerTranscript.includes("generate") || lowerTranscript.includes("banao") || lowerTranscript.includes("create")) {
-      if (lowerTranscript.includes("image") || lowerTranscript.includes("photo") || lowerTranscript.includes("picture")) {
-        const subject = rawText.replace(/generate|banao|create|image|photo|picture|an|a/gi, "").trim();
-        executeAction("generate_image", `Generating an image of ${subject || 'what you requested'}.`, subject);
-        return;
+    // Note: This is called after onend or manual stop
+    // We use the transcript from the state
+    setTranscript(prev => {
+      const rawText = prev.trim();
+      if (!rawText) {
+        setState('idle');
+        return prev;
       }
-    }
+      
+      const lowerTranscript = rawText.toLowerCase();
+      
+      // Handle actions
+      if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo") || lowerTranscript.includes("setting dikhao")) {
+        executeAction("settings", "Opening settings for you, sir.");
+      } else if (lowerTranscript.includes("image") || lowerTranscript.includes("photo banao") || lowerTranscript.includes("image generator") || lowerTranscript.includes("tab par jao")) {
+        executeAction("image", "Switching to Image Generator tab.");
+      } else if (lowerTranscript.includes("expert mode") || lowerTranscript.includes("expert mode activate")) {
+        executeAction("expert", "Activating Expert Mode.");
+      } else if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
+        executeAction("admin", "Accessing Admin Panel.");
+      } else if (lowerTranscript.includes("generate") || lowerTranscript.includes("banao") || lowerTranscript.includes("create")) {
+          const subject = rawText.replace(/generate|banao|create|image|photo|picture|an|a/gi, "").trim();
+          executeAction("generate_image", `Generating an image of ${subject || 'what you requested'}.`, subject);
+      } else {
+        // AI Brain Fallback
+        handleAiBrainRequest(rawText);
+      }
+      
+      return prev;
+    });
+  };
 
-    // 3. Prompt Optimization
-    if (lowerTranscript.includes("optimize") || lowerTranscript.includes("prompt likho") || lowerTranscript.includes("describe")) {
-      const optimizedPrompt = await fetchGroqResponse(`Write a highly detailed, professional AI image generation prompt for: ${rawText}. Return ONLY the prompt, no extra text.`);
-      executeAction("set_prompt", "I've written an optimized prompt for you. You can see it in the input field.", optimizedPrompt);
-      return;
-    }
-
-    // 4. Default: AI Brain
+  const handleAiBrainRequest = async (text: string) => {
+    setState('thinking');
     try {
       const systemPrompt = `You are SmartAI Pro, a futuristic Jarvis-like assistant. 
-      Website tags: [ACTION:settings], [ACTION:image], [ACTION:expert], [ACTION:admin], [ACTION:home].
+      Tags: [ACTION:settings], [ACTION:image], [ACTION:expert], [ACTION:admin].
       Respond in the user's language. Keep it short.`;
 
-      const response = await fetchGroqResponse(rawText, systemPrompt);
+      const response = await fetchGroqResponse(text, systemPrompt);
       
       if (response.includes("[ACTION:settings]")) onCommand("settings");
       if (response.includes("[ACTION:image]")) onCommand("image");
       if (response.includes("[ACTION:expert]")) onCommand("expert");
-      if (response.includes("[ACTION:admin]")) onCommand("admin");
-      if (response.includes("[ACTION:home]")) onCommand("home");
       
       const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (error) {
-      const errorMsg = "I'm having trouble connecting to my brain right now.";
-      setAiResponse(errorMsg);
-      speak(errorMsg);
+      setState('idle');
     }
   };
 
@@ -202,21 +173,18 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         }
         return fullText.trim();
       }
-      return "I processed your request, but the connection was interrupted.";
+      return "";
     } catch (e) {
-      return "Internal neural error.";
+      return "";
     }
   };
 
   const speak = (text: string) => {
-    if (!synthRef.current) return;
+    if (!synthRef.current || !text) return;
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const isHindi = /[\u0900-\u097F]/.test(text);
     utterance.lang = isHindi ? 'hi-IN' : 'en-US';
-    const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(v => v.lang.includes(isHindi ? 'hi' : 'en') && v.name.includes('Google'));
-    if (preferredVoice) utterance.voice = preferredVoice;
     utterance.onstart = () => setState('speaking');
     utterance.onend = () => setState('idle');
     utterance.onerror = () => setState('idle');
