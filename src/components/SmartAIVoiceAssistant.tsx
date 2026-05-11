@@ -40,7 +40,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
 
         recognitionRef.current.onend = () => {
           setTimeout(() => {
-            setState(prev => (prev === 'listening' ? 'thinking' : prev));
             processVoiceCommand();
           }, 300);
         };
@@ -93,10 +92,10 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       return;
     }
 
+    setState('thinking');
     const lowerTranscript = rawText.toLowerCase();
-    console.log("Voice Command Detected:", lowerTranscript);
     
-    // Direct Navigation Mappings
+    // Hardcoded Shortcuts
     if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo") || lowerTranscript.includes("setting dikhao")) {
       executeAction("settings", "Opening settings for you, sir.");
       return;
@@ -111,11 +110,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       executeAction("expert", "Activating Expert Mode.");
       return;
     } 
-    
-    if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
-      executeAction("admin", "Accessing Admin Panel.");
-      return;
-    } 
 
     if (lowerTranscript.includes("generate") || lowerTranscript.includes("banao") || lowerTranscript.includes("create")) {
       if (lowerTranscript.includes("image") || lowerTranscript.includes("photo") || lowerTranscript.includes("picture")) {
@@ -125,35 +119,35 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       }
     }
 
-    // AI Brain Fallback
-    handleAiBrainRequest(rawText);
-  };
-
-  const handleAiBrainRequest = async (text: string) => {
-    setState('thinking');
+    // AI Brain
     try {
       const systemPrompt = `You are SmartAI Pro, a futuristic Jarvis-like assistant. 
-      Tags: [ACTION:settings], [ACTION:image], [ACTION:expert], [ACTION:admin], [ACTION:home].
-      Respond in the user's language. Keep it short. If user wants a tool, use the tag.`;
+      Tags: [ACTION:settings], [ACTION:image], [ACTION:expert], [ACTION:admin].
+      Respond in the user's language. Keep it short.`;
 
-      const response = await fetchGroqResponse(text, systemPrompt);
+      const response = await fetchGroqResponse(rawText, systemPrompt);
       
       if (response.includes("[ACTION:settings]")) onCommand("settings");
       if (response.includes("[ACTION:image]")) onCommand("image");
       if (response.includes("[ACTION:expert]")) onCommand("expert");
-      if (response.includes("[ACTION:admin]")) onCommand("admin");
-      if (response.includes("[ACTION:home]")) onCommand("home");
       
       const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
-      setAiResponse(cleanResponse);
-      speak(cleanResponse);
+      if (!cleanResponse) {
+        const fallback = "I processed your request, sir.";
+        setAiResponse(fallback);
+        speak(fallback);
+      } else {
+        setAiResponse(cleanResponse);
+        speak(cleanResponse);
+      }
     } catch (error) {
-      setState('idle');
+      const errorMsg = "Neural interface error. Please try again.";
+      setAiResponse(errorMsg);
+      speak(errorMsg);
     }
   };
 
   const executeAction = (action: string, response: string, data?: any) => {
-    console.log("Executing Action:", action);
     onCommand(action, data);
     setAiResponse(response);
     speak(response);
@@ -215,7 +209,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
                 </div>
               )}
             </div>
-            <p className="text-[10px] text-slate-300 font-medium text-center max-w-[250px] line-clamp-2 italic">{transcript || "..."}</p>
+            <p className="text-[10px] text-slate-300 font-medium text-center max-w-[250px] line-clamp-2 italic">{transcript || (state === 'speaking' ? aiResponse : "...")}</p>
           </motion.div>
         )}
       </AnimatePresence>

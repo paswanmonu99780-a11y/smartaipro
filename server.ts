@@ -47,6 +47,27 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     return null;
   };
 
+  const generateOllamaChatText = async (prompt: string, system?: string) => {
+    try {
+      const response = await fetch('http://localhost:11434/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: "llama3",
+          messages: [
+            { role: "system", content: system || "You are SmartAI Pro." },
+            { role: "user", content: prompt }
+          ],
+          stream: false
+        })
+      });
+      const data: any = await response.json();
+      return data.message?.content || null;
+    } catch {
+      return null;
+    }
+  };
+
   const generateGroqChatText = async (prompt: string, system?: string) => {
     if (!groqApiKey) return null;
     try {
@@ -184,8 +205,6 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   });
 
   app.get("/api/auth/me", (req, res) => {
-    // In a real app, this would use JWT or sessions. 
-    // For this beginner-friendly task, we return a mock state or null.
     res.json({ user: users.length > 0 ? { id: users[0].id, email: users[0].email } : null });
   });
 
@@ -259,54 +278,35 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&json=false`;
-      
-      // Try Groq first for the Voice Assistant and High-speed needs
+      // 1. Try Ollama (Local) First
+      const ollamaText = await generateOllamaChatText(String(prompt), String(system || ''));
+      if (ollamaText) {
+        return res.type('text/plain; charset=utf-8').send(ollamaText);
+      }
+
+      // 2. Try Groq Second
       const groqText = await generateGroqChatText(String(prompt), String(system || ''));
       if (groqText) {
         return res.type('text/plain; charset=utf-8').send(groqText);
       }
 
-      const upstream = await fetch(chatUrl, {
-        headers: { 'Accept': 'text/plain' }
-      });
+      // 3. Fallback to Pollinations
+      const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&json=false`;
+      const upstream = await fetch(chatUrl, { headers: { 'Accept': 'text/plain' } });
 
       if (!upstream.ok) {
         const fallbackText = await generateGeminiChatText(String(prompt), String(system || ''));
-        if (fallbackText) {
-          return res.type('text/plain; charset=utf-8').send(fallbackText);
-        }
-
-        const errorText = await upstream.text();
-        return res.status(upstream.status).send(errorText || 'Chat generation failed');
+        if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
+        return res.status(upstream.status).send('Chat generation failed');
       }
 
-      if (!upstream.body) {
-        const text = await upstream.text();
-        return res.type('text/plain').send(text);
-      }
-
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache, no-transform');
-      res.setHeader('Connection', 'keep-alive');
-
-      const reader = upstream.body.getReader();
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) {
-          res.write(Buffer.from(value));
-        }
-      }
-
-      res.end();
+      const text = await upstream.text();
+      res.type('text/plain; charset=utf-8').send(text);
     } catch (err: any) {
       console.error('[Chat Stream Proxy] Error:', err);
       const fallbackText = await generateGeminiChatText(String(req.body?.prompt || ''), String(req.body?.system || ''));
-      if (fallbackText) {
-        return res.type('text/plain; charset=utf-8').send(fallbackText);
-      }
-      res.status(500).json({ error: err.message || "Chat stream proxy failed" });
+      if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
+      res.status(500).json({ error: "Chat stream proxy failed" });
     }
   });
 
@@ -315,96 +315,43 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       const { prompt, seed, system, json } = req.query;
       const url = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed}&system=${encodeURIComponent(String(system))}&json=${json}`;
       const response = await fetch(url);
-
       if (!response.ok) {
         const fallbackText = await generateGeminiChatText(String(prompt || ''), String(system || ''));
-        if (fallbackText) {
-          return res.type('text/plain; charset=utf-8').send(fallbackText);
-        }
+        if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
       }
-
       const text = await response.text();
-      res.setHeader('Content-Type', 'text/plain');
-      res.send(text);
+      res.setHeader('Content-Type', 'text/plain').send(text);
     } catch (err: any) {
-      console.error('[Chat Proxy] Error:', err);
       const fallbackText = await generateGeminiChatText(String(req.query?.prompt || ''), String(req.query?.system || ''));
-      if (fallbackText) {
-        return res.type('text/plain; charset=utf-8').send(fallbackText);
-      }
-      res.status(500).json({ error: err.message || "Chat proxy failed" });
+      if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
+      res.status(500).json({ error: "Chat proxy failed" });
     }
   });
 
   app.get("/api/image", async (req, res) => {
     try {
       const prompt = String(req.query.prompt || '').trim();
-      if (!prompt) {
-        return res.status(400).json({ error: 'Prompt is required' });
-      }
-
       const width = String(req.query.width || '768');
       const height = String(req.query.height || '768');
       const seed = String(req.query.seed || Math.floor(Math.random() * 999999));
       const model = String(req.query.model || 'flux');
 
-      const commonParams = new URLSearchParams({
-        width,
-        height,
-        seed,
-        model,
-        nologo: 'true'
-      });
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=true`;
+      const response = await fetch(imageUrl);
 
-      const candidates = [
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${commonParams.toString()}`,
-        `https://image.pollinations.ai/generate?prompt=${encodeURIComponent(prompt)}&${commonParams.toString()}&enhance=true`,
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`
-      ];
-
-      for (const imageUrl of candidates) {
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            const response = await fetch(imageUrl, {
-              headers: {
-                'Accept': 'image/*',
-                'User-Agent': 'Mozilla/5.0 SmartAIPro/1.0'
-              }
-            });
-
-            if (!response.ok) {
-              if (response.status === 429) {
-                await sleep(800 + attempt * 500);
-              }
-              continue;
-            }
-
-            const contentType = response.headers.get('content-type') || 'image/jpeg';
-            if (!contentType.includes('image')) continue;
-
-            const buffer = Buffer.from(await response.arrayBuffer());
-            if (!buffer.length) continue;
-
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Cache-Control', 'no-store');
-            return res.send(buffer);
-          } catch {
-            continue;
-          }
+      if (!response.ok) {
+        const geminiImage = await generateGeminiImage(prompt, Number(width), Number(height), Number(seed));
+        if (geminiImage) {
+          res.setHeader('Content-Type', geminiImage.mimeType || 'image/png');
+          return res.send(geminiImage.buffer);
         }
       }
 
-      const geminiImage = await generateGeminiImage(prompt, Number(width), Number(height), Number(seed));
-      if (geminiImage) {
-        res.setHeader('Content-Type', geminiImage.mimeType || 'image/png');
-        res.setHeader('Cache-Control', 'no-store');
-        return res.send(geminiImage.buffer);
-      }
-
-      return res.status(502).json({ error: 'All image providers failed. Please try another prompt.' });
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.setHeader('Content-Type', response.headers.get('content-type') || 'image/jpeg');
+      res.send(buffer);
     } catch (err: any) {
-      console.error('[Image Proxy] Error:', err.message);
-      return res.status(500).json({ error: err.message || 'Image proxy failed' });
+      return res.status(500).json({ error: 'Image proxy failed' });
     }
   });
 
@@ -414,33 +361,25 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     res.status(500).json({ error: "Internal server error" });
   });
 
-  // 5. VITE MIDDLEWARE INTEGRATION
+  // 6. VITE MIDDLEWARE INTEGRATION
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
+    const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
   } else if (options.serveStatic !== false) {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
   return app;
 }
 
-// Start server only when running locally (not on Vercel)
 if (!process.env.VERCEL) {
   createApp().then(app => {
     const PORT = Number(process.env.PORT) || 5000;
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`SmartAI Pro Server running on http://localhost:${PORT}`);
     });
-  }).catch(err => {
-    console.error("Failed to start server:", err);
-  });
+  }).catch(err => console.error("Failed to start server:", err));
 }
