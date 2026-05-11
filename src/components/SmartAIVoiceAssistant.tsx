@@ -16,10 +16,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
 
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const [waveform, setWaveform] = useState<number[]>(new Array(10).fill(10));
+  const [waveform, setWaveform] = useState<number[]>(new Array(10).fill(5));
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -57,19 +54,12 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     }
   }, [language, state]);
 
-  // Handle waveform animation during speaking
+  // Handle waveform animation during speaking/listening
   useEffect(() => {
     let animationId: number;
-    if (state === 'speaking') {
+    if (state === 'speaking' || state === 'listening') {
       const updateWaveform = () => {
-        const newData = Array.from({ length: 10 }, () => Math.random() * 40 + 5);
-        setWaveform(newData);
-        animationId = requestAnimationFrame(updateWaveform);
-      };
-      updateWaveform();
-    } else if (state === 'listening') {
-       const updateWaveform = () => {
-        const newData = Array.from({ length: 10 }, () => Math.random() * 20 + 5);
+        const newData = Array.from({ length: 10 }, () => Math.random() * (state === 'speaking' ? 40 : 20) + 5);
         setWaveform(newData);
         animationId = requestAnimationFrame(updateWaveform);
       };
@@ -92,60 +82,55 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   const processVoiceCommand = async () => {
-    if (!transcript.trim()) {
+    const rawText = transcript.trim();
+    if (!rawText) {
       setState('idle');
       return;
     }
 
-    setState('thinking');
+    const lowerTranscript = rawText.toLowerCase();
+    console.log("Processing Voice Command:", lowerTranscript);
     
-    // Check for direct website control commands
-    const lowerTranscript = transcript.toLowerCase();
-    
-    if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo")) {
+    // 1. Priority Hardcoded Navigation Commands
+    if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo") || lowerTranscript.includes("setting dikhao")) {
       executeAction("settings", "Opening settings for you, sir.");
       return;
     }
 
-    // Advanced Intent: Generate Image
+    if (lowerTranscript.includes("image") || lowerTranscript.includes("photo banao") || lowerTranscript.includes("image generator") || lowerTranscript.includes("tab par jao")) {
+      executeAction("image", "Switching to Image Generator tab.");
+      return;
+    }
+
+    if (lowerTranscript.includes("expert mode") || lowerTranscript.includes("expert mode activate")) {
+      executeAction("expert", "Activating Expert Mode. Neural links established.");
+      return;
+    }
+
+    if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
+      executeAction("admin", "Accessing Admin Panel.");
+      return;
+    }
+
+    // 2. Active Generation Commands
     if (lowerTranscript.includes("generate") || lowerTranscript.includes("banao") || lowerTranscript.includes("create")) {
       if (lowerTranscript.includes("image") || lowerTranscript.includes("photo") || lowerTranscript.includes("picture")) {
-        const subject = transcript.replace(/generate|banao|create|image|photo|picture|an|a/gi, "").trim();
+        const subject = rawText.replace(/generate|banao|create|image|photo|picture|an|a/gi, "").trim();
         executeAction("generate_image", `Generating an image of ${subject || 'what you requested'}.`, subject);
         return;
       }
     }
 
-    // Advanced Intent: Optimize Prompt
+    // 3. Prompt Optimization
     if (lowerTranscript.includes("optimize") || lowerTranscript.includes("prompt likho") || lowerTranscript.includes("describe")) {
       setState('thinking');
-      const optimizedPrompt = await fetchGroqResponse(`Write a highly detailed, professional AI image generation prompt for: ${transcript}. Return ONLY the prompt, no extra text.`);
+      const optimizedPrompt = await fetchGroqResponse(`Write a highly detailed, professional AI image generation prompt for: ${rawText}. Return ONLY the prompt, no extra text.`);
       executeAction("set_prompt", "I've written an optimized prompt for you. You can see it in the input field.", optimizedPrompt);
       return;
     }
 
-    if (lowerTranscript.includes("image") || lowerTranscript.includes("photo banao")) {
-      executeAction("image", "Switching to Image Generator.");
-      return;
-    }
-    if (lowerTranscript.includes("expert mode") || lowerTranscript.includes("expert mode activate")) {
-      executeAction("expert", "Activating Expert Mode. Neural links established.");
-      return;
-    }
-    if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
-      executeAction("admin", "Accessing Admin Panel.");
-      return;
-    }
-    if (lowerTranscript.includes("workflow") || lowerTranscript.includes("kaam start karo")) {
-      executeAction("workflow", "Opening Workflow Builder.");
-      return;
-    }
-    if (lowerTranscript.includes("ai tools") || lowerTranscript.includes("tools dikhao")) {
-      executeAction("tools", "Navigating to AI Tools section.");
-      return;
-    }
-
-    // If not a direct hardcoded command, ask AI Brain
+    // 4. Default: AI Brain (Conversation + Tool Tags)
+    setState('thinking');
     try {
       const systemPrompt = `You are SmartAI Pro, a futuristic Jarvis-like assistant. 
       You can control the website using these tags:
@@ -158,7 +143,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       If the user asks to do something, include the tag and a brief confirmation. 
       Respond in the user's language (Hindi/English). Keep it short and premium.`;
 
-      const response = await fetchGroqResponse(transcript, systemPrompt);
+      const response = await fetchGroqResponse(rawText, systemPrompt);
       
       // Parse Actions from AI Response
       if (response.includes("[ACTION:settings]")) onCommand("settings");
@@ -167,7 +152,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       if (response.includes("[ACTION:admin]")) onCommand("admin");
       if (response.includes("[ACTION:home]")) onCommand("home");
       
-      // Clean the response for speaking
       const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
       setAiResponse(cleanResponse);
       speak(cleanResponse);
@@ -196,8 +180,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         })
       });
       
-      // Since it's a stream in the existing app, we'll collect it or use the non-stream version if available
-      // For the sake of "complete system", I'll assume a standard response here or handle the stream
       if (res.ok) {
         const reader = res.body?.getReader();
         const decoder = new TextDecoder();
@@ -222,12 +204,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Auto detect language for TTS (simple check)
     const isHindi = /[\u0900-\u097F]/.test(text);
     utterance.lang = isHindi ? 'hi-IN' : 'en-US';
     
-    // Try to find a good voice
     const voices = synthRef.current.getVoices();
     const preferredVoice = voices.find(v => v.lang.includes(isHindi ? 'hi' : 'en') && v.name.includes('Google'));
     if (preferredVoice) utterance.voice = preferredVoice;
@@ -244,7 +223,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4">
-      {/* Interaction Feedback Overlay */}
       <AnimatePresence>
         {state !== 'idle' && (
           <motion.div 
@@ -291,7 +269,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
                 </>
               )}
             </div>
-            
             <p className="text-[10px] text-slate-300 font-medium text-center max-w-[250px] line-clamp-2 italic">
               {state === 'listening' ? (transcript || "...") : (state === 'speaking' ? aiResponse : "")}
             </p>
@@ -299,9 +276,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         )}
       </AnimatePresence>
 
-      {/* Main Floating Button */}
       <div className="relative group">
-        {/* Animated Rings */}
         <AnimatePresence>
           {state === 'listening' && (
             <>
@@ -312,7 +287,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
           )}
         </AnimatePresence>
 
-        {/* Outer Rotating Frame (Jarvis Style) */}
         <div className={`absolute -inset-4 border border-purple-500/20 rounded-full transition-opacity duration-500 ${state !== 'idle' ? 'opacity-100' : 'opacity-0'}`}>
           <div className="absolute inset-0 animate-neural-spin">
              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]" />
@@ -320,7 +294,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
           </div>
         </div>
 
-        {/* The Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -332,38 +305,17 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
               'bg-[#0d111c] border-indigo-500 text-indigo-400 shadow-[0_0_40px_rgba(99,102,241,0.4)]'}
           `}
         >
-          {/* Glassmorphism Highlight */}
           <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
-          
-          {/* Internal Content */}
           <div className="relative z-10">
             {state === 'idle' && <Mic className="w-8 h-8 animate-float" />}
             {state === 'listening' && <Mic className="w-8 h-8" />}
             {state === 'thinking' && <Loader2 className="w-8 h-8 animate-spin" />}
             {state === 'speaking' && <Volume2 className="w-8 h-8" />}
           </div>
-
-          {/* Holographic Scan Effect */}
           {state !== 'idle' && <div className="absolute inset-0 hologram-effect opacity-30" />}
-          
-          {/* Particle Background Simulation (CSS based) */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-             {[...Array(6)].map((_, i) => (
-               <div 
-                key={i}
-                className="absolute w-1 h-1 bg-white rounded-full opacity-20"
-                style={{
-                  top: `${Math.random() * 100}%`,
-                  left: `${Math.random() * 100}%`,
-                  animation: `float ${2 + Math.random() * 3}s linear infinite`
-                }}
-               />
-             ))}
-          </div>
         </motion.button>
       </div>
 
-      {/* Quick Status Dot */}
       <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-white/5 backdrop-blur-md">
         <div className={`w-1.5 h-1.5 rounded-full ${state === 'idle' ? 'bg-purple-500 shadow-[0_0_5px_#a855f7]' : 'bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]'}`} />
         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Neural Link Stable</span>
