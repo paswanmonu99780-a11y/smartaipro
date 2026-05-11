@@ -25,7 +25,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true; // Use continuous for better transcription
+        recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = 'hi-IN';
 
@@ -38,21 +38,21 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         recognitionRef.current.onresult = (event: any) => {
           let interimTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const resultText = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              transcriptRef.current += event.results[i][0].transcript;
+              transcriptRef.current += resultText;
             } else {
-              interimTranscript += event.results[i][0].transcript;
+              interimTranscript += resultText;
             }
           }
           setTranscript(transcriptRef.current || interimTranscript);
           
-          // Reset silence timer whenever we get a result
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
             if (transcriptRef.current || interimTranscript) {
-              recognitionRef.current?.stop();
+               recognitionRef.current?.stop();
             }
-          }, 1500); // 1.5 seconds of silence and we process
+          }, 1000); // Super fast 1s silence detection
         };
 
         recognitionRef.current.onend = () => {
@@ -66,15 +66,13 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
           if (event.error !== 'no-speech') setState('idle');
         };
       }
+      synthRef.current = window.speechSynthesis;
     }
   };
 
   useEffect(() => {
     initRecognition();
-    synthRef.current = window.speechSynthesis;
-    return () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    };
+    return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
   }, []);
 
   useEffect(() => {
@@ -115,31 +113,44 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     
     const lowerText = rawText.toLowerCase();
     
-    // Command Logic
-    if (lowerText.includes("settings") || lowerText.includes("setting kholo")) {
-       executeAction("settings", "Opening settings panel.");
+    // Improved Command Keywords (Loose Match)
+    const isSettings = lowerText.includes("setting") || lowerText.includes("sating") || lowerText.includes("kholo");
+    const isImage = lowerText.includes("image") || lowerText.includes("photo") || lowerText.includes("generator") || lowerText.includes("tab");
+    const isExpert = lowerText.includes("expert") || lowerText.includes("mode") || lowerText.includes("neural");
+
+    if (isSettings && (lowerText.includes("kholo") || lowerText.includes("open") || lowerText.includes("setting"))) {
+       executeAction("settings", "Sir, I am opening the settings panel for you.");
        return;
     }
     
-    if (lowerText.includes("image") || lowerText.includes("generator") || lowerText.includes("tab")) {
-       executeAction("image", "Switching to Image Generator.");
+    if (isImage && (lowerText.includes("tab") || lowerText.includes("generator") || lowerText.includes("banao"))) {
+       executeAction("image", "Switching to the Image Generation workspace.");
        return;
     }
 
-    // AI Call
+    if (isExpert && (lowerText.includes("activate") || lowerText.includes("open") || lowerText.includes("expert"))) {
+       executeAction("expert", "Expert Mode initialized. Connecting to secure servers.");
+       return;
+    }
+
+    // AI Brain
     try {
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: rawText, system: "You are Jarvis. Be brief." })
+        body: JSON.stringify({ prompt: rawText, system: "You are Jarvis. Be brief. Use [ACTION:settings] etc if asked to open tools." })
       });
       const response = await res.text();
-      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Yes, sir.";
+      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Task completed, sir.";
+      
+      if (response.includes("[ACTION:settings]")) onCommand("settings");
+      if (response.includes("[ACTION:image]")) onCommand("image");
+
       onMessage('assistant', cleanResponse);
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (e) {
-      const errorMsg = "Core connection error. Please retry.";
+      const errorMsg = "Core link unstable. Retrying in background.";
       setAiResponse(errorMsg);
       speak(errorMsg);
       setState('idle');
@@ -161,7 +172,17 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const isHindi = /[\u0900-\u097F]/.test(text);
-    utterance.lang = isHindi ? 'hi-IN' : 'en-US';
+    
+    // Explicit Voice Selection for Hindi
+    if (isHindi) {
+       utterance.lang = 'hi-IN';
+       const voices = synthRef.current.getVoices();
+       const hindiVoice = voices.find(v => v.lang.includes('hi'));
+       if (hindiVoice) utterance.voice = hindiVoice;
+    } else {
+       utterance.lang = 'en-US';
+    }
+    
     utterance.onstart = () => setState('speaking');
     utterance.onend = () => setState('idle');
     utterance.onerror = () => setState('idle');
@@ -172,35 +193,37 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] flex flex-col items-center gap-6">
       <AnimatePresence>
         {state !== 'idle' && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} className="bg-black/90 border border-purple-500/50 backdrop-blur-2xl rounded-3xl p-5 shadow-[0_0_60px_rgba(168,85,247,0.4)] flex flex-col items-center gap-3 min-w-[300px]">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} className="bg-black/95 border border-purple-500/60 backdrop-blur-3xl rounded-3xl p-6 shadow-[0_0_80px_rgba(168,85,247,0.5)] flex flex-col items-center gap-3 min-w-[320px]">
             <div className="flex items-center gap-4">
               {state === 'listening' && (
                 <div className="flex gap-1.5 items-center h-6">
                    {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-purple-500 rounded-full" animate={{ height: h }} />))}
-                   <span className="text-sm font-bold text-purple-400 animate-pulse ml-2">JARVIS LISTENING...</span>
+                   <span className="text-sm font-black text-purple-400 tracking-tighter ml-2">JARVIS LISTENING...</span>
                 </div>
               )}
-              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-bold text-purple-400">ANALYZING...</span></>)}
+              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-black text-purple-400 tracking-tighter">PROCESSING...</span></>)}
               {state === 'speaking' && (
                  <div className="flex gap-1.5 items-center h-6">
                    {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-indigo-500 rounded-full" animate={{ height: h * 1.5 }} />))}
-                   <span className="text-sm font-bold text-indigo-400 ml-2">REPLYING...</span>
+                   <span className="text-sm font-black text-indigo-400 tracking-tighter ml-2">REPLYING...</span>
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || "Processing..."}</p>
+            <p className="text-xs text-slate-300 font-medium italic text-center max-w-[280px] line-clamp-2">
+               {transcript || "I am processing your voice signature..."}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-28 h-28 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${state === 'idle' ? 'bg-[#0a0a0f] border-purple-500/50 text-purple-500' : state === 'listening' ? 'bg-purple-600 border-white text-white' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
+      <motion.button whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-32 h-32 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${state === 'idle' ? 'bg-[#0a0a0f]/90 border-purple-500/60 text-purple-500' : state === 'listening' ? 'bg-purple-600 border-white text-white scale-110 shadow-[0_0_60px_rgba(168,85,247,0.8)]' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
         <div className="relative z-10">
-          {state === 'idle' && <Mic className="w-12 h-12" />}
-          {state === 'listening' && <Mic className="w-12 h-12" />}
-          {state === 'thinking' && <Loader2 className="w-12 h-12 animate-spin" />}
-          {state === 'speaking' && <Volume2 className="w-12 h-12" />}
+          {state === 'idle' && <Mic className="w-14 h-14" />}
+          {state === 'listening' && <Mic className="w-14 h-14" />}
+          {state === 'thinking' && <Loader2 className="w-14 h-14 animate-spin" />}
+          {state === 'speaking' && <Volume2 className="w-14 h-14" />}
         </div>
-        {state === 'listening' && <div className="absolute inset-0 rounded-full bg-purple-400/20 animate-pulse" />}
+        {state !== 'idle' && <div className="absolute inset-0 bg-gradient-radial from-purple-500/20 to-transparent animate-pulse" />}
       </motion.button>
     </div>
   );
