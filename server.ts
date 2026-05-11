@@ -110,7 +110,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "meta/llama-3.3-70b-instruct", // Most stable and fast on NVIDIA NIM
+          model: "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
           messages: [
             { role: "system", content: system || "You are SmartAI Pro Jarvis assistant." },
             { role: "user", content: prompt }
