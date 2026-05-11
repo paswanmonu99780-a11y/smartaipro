@@ -27,32 +27,34 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
-        recognitionRef.current.lang = 'hi-IN';
+        recognitionRef.current.lang = 'hi-IN'; // Default to Hindi-India for better bilingual support
 
         recognitionRef.current.onstart = () => {
           setState('listening');
           setTranscript('');
           transcriptRef.current = '';
+          console.log("Neural ears active...");
         };
 
         recognitionRef.current.onresult = (event: any) => {
-          let interimTranscript = '';
+          let interimText = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
-            const resultText = event.results[i][0].transcript;
+            const part = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              transcriptRef.current += resultText;
+              transcriptRef.current += part;
             } else {
-              interimTranscript += resultText;
+              interimText += part;
             }
           }
-          setTranscript(transcriptRef.current || interimTranscript);
+          setTranscript(transcriptRef.current || interimText);
           
+          // Ultra-sensitive silence detection (900ms for instant feel)
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
-            if (transcriptRef.current || interimTranscript) {
+            if (transcriptRef.current || interimText) {
                recognitionRef.current?.stop();
             }
-          }, 1000); // Super fast 1s silence detection
+          }, 900);
         };
 
         recognitionRef.current.onend = () => {
@@ -62,8 +64,11 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error("Mic Error:", event.error);
-          if (event.error !== 'no-speech') setState('idle');
+          console.error("Mic Fault:", event.error);
+          if (event.error === 'network') {
+            onMessage('assistant', "Neural link unstable. Check your connection, sir.");
+          }
+          setState('idle');
         };
       }
       synthRef.current = window.speechSynthesis;
@@ -90,13 +95,18 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   }, [state]);
 
   const toggleListening = () => {
+    // Cancel any current speech before listening
+    if (synthRef.current?.speaking) {
+      synthRef.current.cancel();
+    }
+
     if (state === 'idle' || state === 'speaking') {
-      if (state === 'speaking') synthRef.current?.cancel();
       try {
+        // Fast start
         recognitionRef.current?.start();
       } catch (e) {
         recognitionRef.current?.stop();
-        setTimeout(() => recognitionRef.current?.start(), 100);
+        setTimeout(() => recognitionRef.current?.start(), 50);
       }
     } else {
       recognitionRef.current?.stop();
@@ -113,46 +123,37 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     
     const lowerText = rawText.toLowerCase();
     
-    // Improved Command Keywords (Loose Match)
-    const isSettings = lowerText.includes("setting") || lowerText.includes("sating") || lowerText.includes("kholo");
-    const isImage = lowerText.includes("image") || lowerText.includes("photo") || lowerText.includes("generator") || lowerText.includes("tab");
-    const isExpert = lowerText.includes("expert") || lowerText.includes("mode") || lowerText.includes("neural");
+    // Agentic Actions
+    const matchesSettings = /setting|kholo|sating|open/i.test(lowerText) && /setting|sating/i.test(lowerText);
+    const matchesImage = /image|photo|generator|tab|banao/i.test(lowerText) && /image|photo|generator/i.test(lowerText);
 
-    if (isSettings && (lowerText.includes("kholo") || lowerText.includes("open") || lowerText.includes("setting"))) {
-       executeAction("settings", "Sir, I am opening the settings panel for you.");
+    if (matchesSettings) {
+       executeAction("settings", "Accessing system settings. Interfaces engaged.");
        return;
     }
     
-    if (isImage && (lowerText.includes("tab") || lowerText.includes("generator") || lowerText.includes("banao"))) {
-       executeAction("image", "Switching to the Image Generation workspace.");
+    if (matchesImage) {
+       executeAction("image", "Switching to primary image generation matrix.");
        return;
     }
 
-    if (isExpert && (lowerText.includes("activate") || lowerText.includes("open") || lowerText.includes("expert"))) {
-       executeAction("expert", "Expert Mode initialized. Connecting to secure servers.");
-       return;
-    }
-
-    // AI Brain
+    // AI Intelligence Call
     try {
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: rawText, system: "You are Jarvis. Be brief. Use [ACTION:settings] etc if asked to open tools." })
+        body: JSON.stringify({ prompt: rawText, system: "You are SmartAI Pro Jarvis. Be very brief." })
       });
       const response = await res.text();
-      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Task completed, sir.";
+      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Executing, sir.";
       
-      if (response.includes("[ACTION:settings]")) onCommand("settings");
-      if (response.includes("[ACTION:image]")) onCommand("image");
-
       onMessage('assistant', cleanResponse);
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (e) {
-      const errorMsg = "Core link unstable. Retrying in background.";
-      setAiResponse(errorMsg);
-      speak(errorMsg);
+      const fallback = "I'm having trouble with the neural core. Standing by.";
+      setAiResponse(fallback);
+      speak(fallback);
       setState('idle');
     }
   };
@@ -173,11 +174,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     const utterance = new SpeechSynthesisUtterance(text);
     const isHindi = /[\u0900-\u097F]/.test(text);
     
-    // Explicit Voice Selection for Hindi
     if (isHindi) {
        utterance.lang = 'hi-IN';
-       const voices = synthRef.current.getVoices();
-       const hindiVoice = voices.find(v => v.lang.includes('hi'));
+       const hindiVoice = synthRef.current.getVoices().find(v => v.lang.includes('hi'));
        if (hindiVoice) utterance.voice = hindiVoice;
     } else {
        utterance.lang = 'en-US';
@@ -190,41 +189,51 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[999] flex flex-col items-center gap-6">
+    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-6">
       <AnimatePresence>
         {state !== 'idle' && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} className="bg-black/95 border border-purple-500/60 backdrop-blur-3xl rounded-3xl p-6 shadow-[0_0_80px_rgba(168,85,247,0.5)] flex flex-col items-center gap-3 min-w-[320px]">
+          <motion.div initial={{ opacity: 0, y: 30, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 30, scale: 0.9 }} className="mb-6 px-8 py-4 rounded-[2rem] bg-[#050508]/90 border border-purple-500/40 backdrop-blur-3xl flex flex-col items-center gap-3 min-w-[340px] shadow-[0_0_100px_rgba(168,85,247,0.4)] ring-1 ring-white/10">
             <div className="flex items-center gap-4">
               {state === 'listening' && (
-                <div className="flex gap-1.5 items-center h-6">
-                   {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-purple-500 rounded-full" animate={{ height: h }} />))}
-                   <span className="text-sm font-black text-purple-400 tracking-tighter ml-2">JARVIS LISTENING...</span>
+                <div className="flex gap-1.5 items-center h-8">
+                   {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-purple-500 rounded-full" animate={{ height: h }} transition={{ type: 'spring', stiffness: 400 }} />))}
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 ml-3">Neural Ears Active</span>
                 </div>
               )}
-              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-black text-purple-400 tracking-tighter">PROCESSING...</span></>)}
+              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">Processing Stream</span></>)}
               {state === 'speaking' && (
-                 <div className="flex gap-1.5 items-center h-6">
-                   {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-indigo-500 rounded-full" animate={{ height: h * 1.5 }} />))}
-                   <span className="text-sm font-black text-indigo-400 tracking-tighter ml-2">REPLYING...</span>
+                 <div className="flex gap-1.5 items-center h-8">
+                   {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-cyan-400 rounded-full" animate={{ height: h * 1.6 }} />))}
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 ml-3">Jarvis Transmitting</span>
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-300 font-medium italic text-center max-w-[280px] line-clamp-2">
-               {transcript || "I am processing your voice signature..."}
+            <p className="text-[11px] text-slate-300 font-bold italic text-center max-w-[300px] line-clamp-2 opacity-80 uppercase tracking-wider">
+               {transcript || "Sir, I'm analyzing your request..."}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <motion.button whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-32 h-32 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${state === 'idle' ? 'bg-[#0a0a0f]/90 border-purple-500/60 text-purple-500' : state === 'listening' ? 'bg-purple-600 border-white text-white scale-110 shadow-[0_0_60px_rgba(168,85,247,0.8)]' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
-        <div className="relative z-10">
-          {state === 'idle' && <Mic className="w-14 h-14" />}
-          {state === 'listening' && <Mic className="w-14 h-14" />}
-          {state === 'thinking' && <Loader2 className="w-14 h-14 animate-spin" />}
-          {state === 'speaking' && <Volume2 className="w-14 h-14" />}
+      <div className="relative group">
+        <AnimatePresence>{state === 'listening' && (<motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1.2 }} exit={{ opacity: 0 }} className="absolute -inset-8 rounded-full bg-purple-500/10 blur-2xl animate-neural-pulse" />)}</AnimatePresence>
+        
+        {/* Orbital Ring */}
+        <div className={`absolute -inset-6 border border-purple-500/20 rounded-full transition-all duration-1000 ${state !== 'idle' ? 'opacity-100 rotate-180 scale-110' : 'opacity-0'}`}>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_20px_#a855f7]" />
         </div>
-        {state !== 'idle' && <div className="absolute inset-0 bg-gradient-radial from-purple-500/20 to-transparent animate-pulse" />}
-      </motion.button>
+
+        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.85 }} onClick={toggleListening} className={`relative w-36 h-36 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl overflow-hidden ${state === 'idle' ? 'bg-black/80 border-purple-500/40 text-purple-500 hover:border-purple-500' : state === 'listening' ? 'bg-purple-600 border-white text-white' : 'bg-[#0d111c] border-cyan-500 text-cyan-400 shadow-[0_0_50px_rgba(34,211,238,0.3)]'}`}>
+          <div className="relative z-10 flex flex-col items-center">
+            {state === 'idle' && <Mic className="w-16 h-16 animate-pulse" />}
+            {state === 'listening' && <Mic className="w-16 h-16" />}
+            {state === 'thinking' && <Loader2 className="w-16 h-16 animate-spin" />}
+            {state === 'speaking' && <Volume2 className="w-16 h-16" />}
+            <span className="text-[8px] font-black uppercase tracking-widest mt-2 opacity-60">System Core</span>
+          </div>
+          {state !== 'idle' && <div className="absolute inset-0 bg-gradient-conic from-purple-500/20 via-transparent to-purple-500/20 animate-spin-slow opacity-30" />}
+        </motion.button>
+      </div>
     </div>
   );
 };
