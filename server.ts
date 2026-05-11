@@ -15,6 +15,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   const PORT = Number(process.env.PORT) || 5000;
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   const groqApiKey = process.env.GROQ_API_KEY;
+  const nvidiaApiKey = process.env.NVIDIA_API_KEY;
   const razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_SheglkgbIFBx3Q';
   const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '12EgvmXHWf4djX7CGtH3iNuV';
   const genAI = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
@@ -97,6 +98,32 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       return data.choices?.[0]?.message?.content || null;
     } catch (err) {
       console.error('[Groq] Error:', err);
+      return null;
+    }
+  const generateNvidiaChatText = async (prompt: string, system?: string) => {
+    if (!nvidiaApiKey) return null;
+    try {
+      const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${nvidiaApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "deepseek-ai/deepseek-v3",
+          messages: [
+            { role: "system", content: system || "You are SmartAI Pro Jarvis assistant." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.6,
+          max_tokens: 1024,
+          stream: false
+        })
+      });
+      const data: any = await response.json();
+      return data.choices?.[0]?.message?.content || null;
+    } catch (err) {
+      console.error('[NVIDIA] Error:', err);
       return null;
     }
   };
@@ -283,11 +310,13 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      // 1. Try Ollama (Local) First
-      const ollamaText = await generateOllamaChatText(String(prompt), String(system || ''));
-      if (ollamaText) {
-        return res.type('text/plain; charset=utf-8').send(ollamaText);
+      // 1. Try NVIDIA NIM (Primary Brain)
+      const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
+      if (nvidiaText) {
+        return res.type('text/plain; charset=utf-8').send(nvidiaText);
       }
+
+      // 2. Try Ollama (Local) Second
 
       // 2. Try Groq Second
       const groqText = await generateGroqChatText(String(prompt), String(system || ''));
