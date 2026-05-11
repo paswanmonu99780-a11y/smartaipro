@@ -2,9 +2,13 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
+
+const upload = multer({ dest: 'uploads/' });
 
 // In-memory user storage
 const users: any[] = [];
@@ -386,6 +390,34 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       res.send(buffer);
     } catch (err: any) {
       return res.status(500).json({ error: 'Image proxy failed' });
+    }
+  });
+
+  app.post("/api/voice/transcribe", upload.single('audio'), async (req, res) => {
+    try {
+      if (!req.file || !groqApiKey) {
+        return res.status(400).json({ error: "Missing file or API key" });
+      }
+
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const blob = new Blob([fileBuffer], { type: 'audio/wav' });
+      
+      const formData = new FormData();
+      formData.append('file', blob, 'audio.wav');
+      formData.append('model', 'whisper-large-v3');
+
+      const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${groqApiKey}` },
+        body: formData
+      });
+
+      const data: any = await response.json();
+      fs.unlinkSync(req.file.path); // Cleanup
+      res.json({ text: data.text || "" });
+    } catch (err) {
+      console.error('[Whisper] Error:', err);
+      res.status(500).json({ error: "Transcription failed" });
     }
   });
 
