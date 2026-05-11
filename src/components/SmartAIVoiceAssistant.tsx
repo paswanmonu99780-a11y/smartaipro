@@ -17,15 +17,15 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const transcriptRef = useRef('');
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [waveform, setWaveform] = useState<number[]>(new Array(10).fill(5));
 
-  // Speech Recognition Setup with Auto-Recovery
   const initRecognition = () => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
+        recognitionRef.current.continuous = true; // Use continuous for better transcription
         recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = 'hi-IN';
 
@@ -33,26 +33,37 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
           setState('listening');
           setTranscript('');
           transcriptRef.current = '';
-          console.log("Jarvis Listening System Active...");
         };
 
         recognitionRef.current.onresult = (event: any) => {
-          const text = event.results[event.resultIndex][0].transcript;
-          setTranscript(text);
-          transcriptRef.current = text;
+          let interimTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              transcriptRef.current += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          setTranscript(transcriptRef.current || interimTranscript);
+          
+          // Reset silence timer whenever we get a result
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            if (transcriptRef.current || interimTranscript) {
+              recognitionRef.current?.stop();
+            }
+          }, 1500); // 1.5 seconds of silence and we process
         };
 
         recognitionRef.current.onend = () => {
-          if (state === 'listening') {
-            setTimeout(() => processVoiceCommand(), 300);
+          if (state === 'listening' || transcriptRef.current) {
+            processVoiceCommand();
           }
         };
 
         recognitionRef.current.onerror = (event: any) => {
           console.error("Mic Error:", event.error);
-          setState('idle');
-          // Silently restart if needed
-          if (event.error === 'no-speech') initRecognition();
+          if (event.error !== 'no-speech') setState('idle');
         };
       }
     }
@@ -61,6 +72,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   useEffect(() => {
     initRecognition();
     synthRef.current = window.speechSynthesis;
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -83,7 +97,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       try {
         recognitionRef.current?.start();
       } catch (e) {
-        // Force restart on error
         recognitionRef.current?.stop();
         setTimeout(() => recognitionRef.current?.start(), 100);
       }
@@ -94,54 +107,41 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   const processVoiceCommand = async () => {
-    const rawText = transcriptRef.current.trim();
-    if (!rawText) {
-      setState('idle');
-      return;
-    }
+    const rawText = (transcriptRef.current || transcript).trim();
+    if (!rawText || state === 'thinking') return;
 
-    const lowerText = rawText.toLowerCase();
+    setState('thinking');
     onMessage('user', rawText);
     
-    // Priority 1: Navigation
-    if (lowerText.includes("settings") || lowerText.includes("setting kholo") || lowerText.includes("setting dikhao")) {
-       executeAction("settings", "Opening settings panel for you, sir.");
+    const lowerText = rawText.toLowerCase();
+    
+    // Command Logic
+    if (lowerText.includes("settings") || lowerText.includes("setting kholo")) {
+       executeAction("settings", "Opening settings panel.");
        return;
     }
     
-    if (lowerText.includes("image") || lowerText.includes("photo") || lowerText.includes("generator") || lowerText.includes("tab par jao")) {
+    if (lowerText.includes("image") || lowerText.includes("generator") || lowerText.includes("tab")) {
        executeAction("image", "Switching to Image Generator.");
        return;
     }
 
-    if (lowerText.includes("expert mode")) {
-       executeAction("expert", "Activating Expert Mode.");
-       return;
-    }
-
-    // Priority 2: AI Brain (Always use NVIDIA NIM via Server)
-    setState('thinking');
+    // AI Call
     try {
-      const system = "You are SmartAI Pro Jarvis. Use NVIDIA NIM. Be very brief. Use [ACTION:settings] if needed.";
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: rawText, system })
+        body: JSON.stringify({ prompt: rawText, system: "You are Jarvis. Be brief." })
       });
-      
       const response = await res.text();
-      
-      if (response.includes("[ACTION:settings]")) onCommand("settings");
-      if (response.includes("[ACTION:image]")) onCommand("image");
-      
       const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Yes, sir.";
       onMessage('assistant', cleanResponse);
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (e) {
-      const fallback = "I am processing your request through my backup core, sir.";
-      setAiResponse(fallback);
-      speak(fallback);
+      const errorMsg = "Core connection error. Please retry.";
+      setAiResponse(errorMsg);
+      speak(errorMsg);
       setState('idle');
     }
   };
@@ -162,11 +162,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     const utterance = new SpeechSynthesisUtterance(text);
     const isHindi = /[\u0900-\u097F]/.test(text);
     utterance.lang = isHindi ? 'hi-IN' : 'en-US';
-    
     utterance.onstart = () => setState('speaking');
     utterance.onend = () => setState('idle');
     utterance.onerror = () => setState('idle');
-    
     synthRef.current.speak(utterance);
   };
 
@@ -190,23 +188,20 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || (state === 'speaking' ? aiResponse : "I'm processing your speech...")}</p>
+            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || "Processing..."}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="relative group">
-        <AnimatePresence>{state === 'listening' && (<div className="absolute -inset-4 rounded-full bg-purple-600/30 animate-pulse-ring" />)}</AnimatePresence>
-        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-28 h-28 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${state === 'idle' ? 'bg-[#0a0a0f] border-purple-500/50 text-purple-500' : state === 'listening' ? 'bg-purple-600 border-white text-white scale-110 shadow-[0_0_50px_rgba(168,85,247,0.8)]' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
-          <div className="relative z-10">
-            {state === 'idle' && <Mic className="w-12 h-12" />}
-            {state === 'listening' && <Mic className="w-12 h-12" />}
-            {state === 'thinking' && <Loader2 className="w-12 h-12 animate-spin" />}
-            {state === 'speaking' && <Volume2 className="w-12 h-12" />}
-          </div>
-          {state !== 'idle' && <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent animate-pulse" />}
-        </motion.button>
-      </div>
+      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-28 h-28 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${state === 'idle' ? 'bg-[#0a0a0f] border-purple-500/50 text-purple-500' : state === 'listening' ? 'bg-purple-600 border-white text-white' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
+        <div className="relative z-10">
+          {state === 'idle' && <Mic className="w-12 h-12" />}
+          {state === 'listening' && <Mic className="w-12 h-12" />}
+          {state === 'thinking' && <Loader2 className="w-12 h-12 animate-spin" />}
+          {state === 'speaking' && <Volume2 className="w-12 h-12" />}
+        </div>
+        {state === 'listening' && <div className="absolute inset-0 rounded-full bg-purple-400/20 animate-pulse" />}
+      </motion.button>
     </div>
   );
 };
