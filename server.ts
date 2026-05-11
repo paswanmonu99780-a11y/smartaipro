@@ -314,18 +314,17 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      // 1. Try NVIDIA NIM (Primary Brain)
-      const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
-      if (nvidiaText && !nvidiaText.includes("Pollinations")) {
-        return res.type('text/plain; charset=utf-8').send(nvidiaText);
-      }
 
-      // 2. Try Ollama (Local) Second
-
-      // 2. Try Groq Second
+      // 1. Try Groq (Ultra Fast Primary)
       const groqText = await generateGroqChatText(String(prompt), String(system || ''));
       if (groqText) {
         return res.type('text/plain; charset=utf-8').send(groqText);
+      }
+
+      // 2. Try NVIDIA NIM (High Quality Secondary)
+      const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
+      if (nvidiaText && !nvidiaText.includes("Pollinations")) {
+        return res.type('text/plain; charset=utf-8').send(nvidiaText);
       }
 
       // 3. Fallback to Pollinations
@@ -352,7 +351,13 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     try {
       const { prompt, system } = req.query;
       
-      // 1. Try NVIDIA NIM (New Primary for Main Chat)
+      // 1. Try Groq (Ultra Fast)
+      const groqText = await generateGroqChatText(String(prompt), String(system || ''));
+      if (groqText) {
+        return res.type('text/plain; charset=utf-8').send(groqText);
+      }
+
+      // 2. Try NVIDIA NIM
       const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
       if (nvidiaText && !nvidiaText.includes("Pollinations")) {
         return res.type('text/plain; charset=utf-8').send(nvidiaText);
