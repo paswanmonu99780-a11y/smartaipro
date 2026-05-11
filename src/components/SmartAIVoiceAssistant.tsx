@@ -16,7 +16,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
-  const transcriptRef = useRef(''); // Use ref to avoid race conditions with state
+  const transcriptRef = useRef('');
   const [waveform, setWaveform] = useState<number[]>(new Array(10).fill(5));
 
   useEffect(() => {
@@ -41,7 +41,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         };
 
         recognitionRef.current.onend = () => {
-          // Add a small delay to ensure the last result is captured
           setTimeout(() => {
             processVoiceCommand();
           }, 300);
@@ -91,60 +90,62 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       setState('idle');
       return;
     }
-    setState('thinking');
+
+    const lowerText = rawText.toLowerCase();
     onMessage('user', rawText); // Sync user transcript to main chat
     
-    const lowerText = rawText.toLowerCase();
-    console.log("Voice Command Target:", lowerText);
-    
-    // 1. Direct Command Check (No API needed)
-    if (lowerText.includes("setting") || lowerText.includes("sating") || lowerText.includes("kholo")) {
-       if (lowerText.includes("setting")) {
-          executeAction("settings", "Opening settings panel.");
-          return;
-       }
+    // 1. Direct Command Check (Navigation)
+    if (lowerText.includes("settings") || lowerText.includes("setting kholo") || lowerText.includes("setting dikhao")) {
+       executeAction("settings", "Opening settings panel for you, sir.");
+       return;
     }
     
-    if (lowerText.includes("image") || lowerText.includes("photo") || lowerText.includes("generator") || lowerText.includes("tab")) {
+    if (lowerText.includes("image") || lowerText.includes("photo") || lowerText.includes("generator") || lowerText.includes("tab par jao")) {
        executeAction("image", "Switching to Image Generator.");
        return;
     }
 
-    if (lowerText.includes("expert") || lowerText.includes("neural")) {
+    if (lowerText.includes("expert mode") || lowerText.includes("neural link")) {
        executeAction("expert", "Activating Expert Mode.");
        return;
     }
 
     if (lowerText.includes("banao") || lowerText.includes("generate") || lowerText.includes("create")) {
-       const subject = rawText.replace(/generate|banao|create|image|photo|an|a/gi, "").trim();
-       executeAction("generate_image", `Generating ${subject || 'image'}.`, subject);
-       return;
+       if (lowerText.includes("image") || lowerText.includes("photo")) {
+          const subject = rawText.replace(/generate|banao|create|image|photo|an|a/gi, "").trim();
+          executeAction("generate_image", `Generating image for ${subject || 'you'}.`, subject);
+          return;
+       }
     }
 
-    // 2. Chat Brain (Call API directly from frontend for speed)
+    // 2. Chat Brain (Always use NVIDIA via Server)
+    setState('thinking');
     try {
-      const system = "You are SmartAI Pro Jarvis. Be very brief. Use [ACTION:settings] or [ACTION:image] if needed.";
-      const url = `https://text.pollinations.ai/${encodeURIComponent(rawText)}?system=${encodeURIComponent(system)}`;
+      const system = "You are SmartAI Pro Jarvis. Use NVIDIA NIM brain. Be brief. Use tags like [ACTION:settings] if needed.";
+      const res = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: rawText, system })
+      });
       
-      const res = await fetch(url);
       const response = await res.text();
       
       if (response.includes("[ACTION:settings]")) onCommand("settings");
       if (response.includes("[ACTION:image]")) onCommand("image");
       
-      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Task completed, sir.";
+      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Action completed, sir.";
       onMessage('assistant', cleanResponse); // Sync AI response to main chat
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (e) {
-      const fallback = "I'm online and ready, sir. What's next?";
+      const fallback = "Connecting to backup neural core...";
       setAiResponse(fallback);
       speak(fallback);
+      setState('idle');
     }
   };
 
   const executeAction = (action: string, response: string, data?: any) => {
-    console.log("Executing Action:", action);
     onCommand(action, data);
     onMessage('assistant', response); // Sync action confirmation to main chat
     setAiResponse(response);
@@ -180,7 +181,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
                    <span className="text-sm font-bold text-purple-400 animate-pulse ml-2">LISTENING...</span>
                 </div>
               )}
-              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-bold text-purple-400">ANALYZING...</span></>)}
+              {state === 'thinking' && (<><Loader2 className="w-6 h-6 text-purple-500 animate-spin" /><span className="text-sm font-bold text-purple-400">NVIDIA BRAIN...</span></>)}
               {state === 'speaking' && (
                  <div className="flex gap-1.5 items-center h-6">
                    {waveform.map((h, i) => (<motion.div key={i} className="w-1.5 bg-indigo-500 rounded-full" animate={{ height: h * 1.5 }} />))}
@@ -188,7 +189,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || (state === 'speaking' ? aiResponse : "Sir, I'm waiting for your command...")}</p>
+            <p className="text-xs text-slate-300 italic text-center max-w-[280px]">{transcript || (state === 'speaking' ? aiResponse : "Sir, NVIDIA core is ready...")}</p>
           </motion.div>
         )}
       </AnimatePresence>
