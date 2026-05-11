@@ -8,7 +8,7 @@ import crypto from 'crypto';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // In-memory user storage
 const users: any[] = [];
@@ -114,7 +114,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+          model: "meta/llama-3.1-8b-instruct",
           messages: [
             { role: "system", content: system || "You are SmartAI Pro Jarvis assistant." },
             { role: "user", content: prompt }
@@ -399,11 +399,10 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         return res.status(400).json({ error: "Missing file or API key" });
       }
 
-      const fileBuffer = fs.readFileSync(req.file.path);
-      const blob = new Blob([fileBuffer], { type: 'audio/wav' });
+      const blob = new Blob([req.file.buffer], { type: 'audio/webm' });
       
       const formData = new FormData();
-      formData.append('file', blob, 'audio.wav');
+      formData.append('file', blob, 'voice.webm');
       formData.append('model', 'whisper-large-v3');
 
       const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
@@ -413,7 +412,6 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       });
 
       const data: any = await response.json();
-      fs.unlinkSync(req.file.path); // Cleanup
       res.json({ text: data.text || "" });
     } catch (err) {
       console.error('[Whisper] Error:', err);

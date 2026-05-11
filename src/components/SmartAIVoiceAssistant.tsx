@@ -205,15 +205,14 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       <div className="relative group">
         <AnimatePresence>{state === 'listening' && (<motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1.4 }} exit={{ opacity: 0 }} className="absolute -inset-12 rounded-full bg-purple-500/20 blur-[50px] animate-pulse" />)}</AnimatePresence>
         
-        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-48 h-48 rounded-full flex items-center justify-center border-[3px] transition-all duration-1000 shadow-[0_0_80px_rgba(168,85,247,0.3)] overflow-hidden ${state === 'idle' ? 'bg-[#050508] border-purple-500/40 text-purple-500' : state === 'listening' ? 'bg-red-600 border-white text-white' : 'bg-[#0a0c14] border-cyan-500 text-cyan-400 shadow-[0_0_100px_rgba(34,211,238,0.5)]'}`}>
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            {state === 'idle' && <Mic className="w-24 h-24 animate-pulse" />}
-            {state === 'listening' && <MicOff className="w-24 h-24" />}
-            {state === 'thinking' && <Loader2 className="w-24 h-24 animate-spin" />}
-            {state === 'speaking' && <Volume2 className="w-24 h-24" />}
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Neural Core</span>
+        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.85 }} onClick={toggleListening} className={`relative w-24 h-24 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${state === 'idle' ? 'bg-[#0a0a0f] border-purple-500/50 text-purple-500' : state === 'listening' ? 'bg-red-600 border-white text-white' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
+          <div className="relative z-10 flex flex-col items-center">
+            {state === 'idle' && <Mic className="w-10 h-10 animate-pulse" />}
+            {state === 'listening' && <MicOff className="w-10 h-10" />}
+            {state === 'thinking' && <Loader2 className="w-10 h-10 animate-spin" />}
+            {state === 'speaking' && <Volume2 className="w-10 h-10" />}
           </div>
-          {state !== 'idle' && <div className="absolute inset-0 bg-[conic-gradient(from_0deg,_var(--tw-gradient-stops))] from-purple-500/30 via-transparent to-purple-500/30 animate-spin-slow opacity-40" />}
+          {state !== 'idle' && <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent animate-pulse" />}
         </motion.button>
       </div>
     </div>
