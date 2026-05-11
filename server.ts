@@ -350,19 +350,23 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
 
   app.get("/api/chat", async (req, res) => {
     try {
-      const { prompt, seed, system, json } = req.query;
-      const url = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed}&system=${encodeURIComponent(String(system))}&json=${json}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        const fallbackText = await generateGeminiChatText(String(prompt || ''), String(system || ''));
-        if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
+      const { prompt, system } = req.query;
+      
+      // 1. Try NVIDIA NIM (New Primary for Main Chat)
+      const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
+      if (nvidiaText && !nvidiaText.includes("Pollinations")) {
+        return res.type('text/plain; charset=utf-8').send(nvidiaText);
       }
+
+      // 2. Fallback to Pollinations
+      const url = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?system=${encodeURIComponent(String(system))}`;
+      const response = await fetch(url);
       const text = await response.text();
       res.setHeader('Content-Type', 'text/plain').send(text);
     } catch (err: any) {
       const fallbackText = await generateGeminiChatText(String(req.query?.prompt || ''), String(req.query?.system || ''));
       if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
-      res.status(500).json({ error: "Chat proxy failed" });
+      res.status(500).json({ error: "Chat relay failed" });
     }
   });
 

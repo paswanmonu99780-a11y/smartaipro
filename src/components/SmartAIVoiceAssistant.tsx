@@ -55,7 +55,11 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       startVolumeMeter(stream);
       
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+        ? 'audio/webm;codecs=opus' 
+        : 'audio/webm';
+        
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
