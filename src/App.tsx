@@ -2745,44 +2745,28 @@ export default function App() {
   };
 
   const handleVoiceCommandAction = (action: string, data?: any) => {
-    console.log("Executing Voice Command:", action, data);
-    switch (action) {
-      case 'settings':
-        setIsSettingsOpen(true);
-        break;
-      case 'image':
-        setActiveTab('image');
-        break;
-      case 'generate_image':
-        setActiveTab('image');
-        setImgPrompt(data || '');
-        // Give time for tab switch and state update
-        setTimeout(() => {
-          const genBtn = document.querySelector('button[title="Generate Image"]') as HTMLButtonElement;
-          if (genBtn && !genBtn.disabled) genBtn.click();
-        }, 800);
-        break;
-      case 'set_prompt':
-        setActiveTab('image');
-        setImgPrompt(data || '');
-        break;
-      case 'expert':
-        setSmartMode('expert');
-        setActiveTab('home');
-        break;
-      case 'admin':
-        setActiveTab('admin');
-        break;
-      case 'workflow':
-        setActiveTab('home');
-        setSmartMode('expert');
-        setExpertSubTab('builder');
-        break;
-      case 'tools':
-        setActiveTab('home');
-        break;
-      default:
-        console.warn("Unknown voice action:", action);
+    console.log("Executing Voice Command Action:", action, data);
+    if (action === 'settings') {
+      setIsSettingsOpen(true);
+    } else if (action === 'image') {
+      setActiveTab('image');
+    } else if (action === 'generate_image') {
+      setActiveTab('image');
+      setImgPrompt(data || '');
+      setTimeout(() => {
+        const genBtn = document.querySelector('button[title="Generate Image"]') as HTMLButtonElement;
+        if (genBtn) genBtn.click();
+      }, 500);
+    } else if (action === 'expert') {
+      setSmartMode('expert');
+      setActiveTab('home');
+    } else if (action === 'admin') {
+      setActiveTab('admin');
+    } else if (action === 'home') {
+      setActiveTab('home');
+    } else if (action === 'set_prompt') {
+      setActiveTab('image');
+      setImgPrompt(data || '');
     }
   };
 

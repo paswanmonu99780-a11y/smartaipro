@@ -30,7 +30,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         recognitionRef.current.onstart = () => {
           setState('listening');
           setTranscript('');
-          console.log("Mic Started...");
         };
 
         recognitionRef.current.onresult = (event: any) => {
@@ -40,15 +39,10 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         };
 
         recognitionRef.current.onend = () => {
-          console.log("Mic Ended automatically.");
-          // Use a small delay before processing to ensure transcript state is updated
           setTimeout(() => {
-            setState(prev => {
-               if (prev === 'listening') return 'thinking';
-               return prev;
-            });
+            setState(prev => (prev === 'listening' ? 'thinking' : prev));
             processVoiceCommand();
-          }, 500);
+          }, 300);
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -60,7 +54,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     }
   }, [language]);
 
-  // Handle waveform animation
   useEffect(() => {
     let animationId: number;
     if (state === 'speaking' || state === 'listening') {
@@ -81,8 +74,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       try {
         recognitionRef.current?.start();
       } catch (e) {
-        console.error("Failed to start recognition:", e);
-        // If it's already started or fails, try to reset
         recognitionRef.current?.stop();
         setTimeout(() => recognitionRef.current?.start(), 200);
       }
@@ -96,50 +87,62 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   const processVoiceCommand = async () => {
-    // Note: This is called after onend or manual stop
-    // We use the transcript from the state
-    setTranscript(prev => {
-      const rawText = prev.trim();
-      if (!rawText) {
-        setState('idle');
-        return prev;
+    const rawText = transcript.trim();
+    if (!rawText) {
+      setState('idle');
+      return;
+    }
+
+    const lowerTranscript = rawText.toLowerCase();
+    console.log("Voice Command Detected:", lowerTranscript);
+    
+    // Direct Navigation Mappings
+    if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo") || lowerTranscript.includes("setting dikhao")) {
+      executeAction("settings", "Opening settings for you, sir.");
+      return;
+    } 
+    
+    if (lowerTranscript.includes("image") || lowerTranscript.includes("photo banao") || lowerTranscript.includes("image generator") || lowerTranscript.includes("tab par jao") || lowerTranscript.includes("generator kholo")) {
+      executeAction("image", "Switching to Image Generator tab.");
+      return;
+    } 
+    
+    if (lowerTranscript.includes("expert mode") || lowerTranscript.includes("expert mode activate")) {
+      executeAction("expert", "Activating Expert Mode.");
+      return;
+    } 
+    
+    if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
+      executeAction("admin", "Accessing Admin Panel.");
+      return;
+    } 
+
+    if (lowerTranscript.includes("generate") || lowerTranscript.includes("banao") || lowerTranscript.includes("create")) {
+      if (lowerTranscript.includes("image") || lowerTranscript.includes("photo") || lowerTranscript.includes("picture")) {
+        const subject = rawText.replace(/generate|banao|create|image|photo|picture|an|a/gi, "").trim();
+        executeAction("generate_image", `Generating an image of ${subject}.`, subject);
+        return;
       }
-      
-      const lowerTranscript = rawText.toLowerCase();
-      
-      // Handle actions
-      if (lowerTranscript.includes("settings") || lowerTranscript.includes("setting kholo") || lowerTranscript.includes("setting dikhao")) {
-        executeAction("settings", "Opening settings for you, sir.");
-      } else if (lowerTranscript.includes("image") || lowerTranscript.includes("photo banao") || lowerTranscript.includes("image generator") || lowerTranscript.includes("tab par jao")) {
-        executeAction("image", "Switching to Image Generator tab.");
-      } else if (lowerTranscript.includes("expert mode") || lowerTranscript.includes("expert mode activate")) {
-        executeAction("expert", "Activating Expert Mode.");
-      } else if (lowerTranscript.includes("admin") || lowerTranscript.includes("admin panel")) {
-        executeAction("admin", "Accessing Admin Panel.");
-      } else if (lowerTranscript.includes("generate") || lowerTranscript.includes("banao") || lowerTranscript.includes("create")) {
-          const subject = rawText.replace(/generate|banao|create|image|photo|picture|an|a/gi, "").trim();
-          executeAction("generate_image", `Generating an image of ${subject || 'what you requested'}.`, subject);
-      } else {
-        // AI Brain Fallback
-        handleAiBrainRequest(rawText);
-      }
-      
-      return prev;
-    });
+    }
+
+    // AI Brain Fallback
+    handleAiBrainRequest(rawText);
   };
 
   const handleAiBrainRequest = async (text: string) => {
     setState('thinking');
     try {
       const systemPrompt = `You are SmartAI Pro, a futuristic Jarvis-like assistant. 
-      Tags: [ACTION:settings], [ACTION:image], [ACTION:expert], [ACTION:admin].
-      Respond in the user's language. Keep it short.`;
+      Tags: [ACTION:settings], [ACTION:image], [ACTION:expert], [ACTION:admin], [ACTION:home].
+      Respond in the user's language. Keep it short. If user wants a tool, use the tag.`;
 
       const response = await fetchGroqResponse(text, systemPrompt);
       
       if (response.includes("[ACTION:settings]")) onCommand("settings");
       if (response.includes("[ACTION:image]")) onCommand("image");
       if (response.includes("[ACTION:expert]")) onCommand("expert");
+      if (response.includes("[ACTION:admin]")) onCommand("admin");
+      if (response.includes("[ACTION:home]")) onCommand("home");
       
       const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
       setAiResponse(cleanResponse);
@@ -150,6 +153,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   const executeAction = (action: string, response: string, data?: any) => {
+    console.log("Executing Action:", action);
     onCommand(action, data);
     setAiResponse(response);
     speak(response);
@@ -195,32 +199,18 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4">
       <AnimatePresence>
         {state !== 'idle' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20, scale: 0.8 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.8 }}
-            className="mb-4 px-6 py-3 rounded-2xl bg-black/60 backdrop-blur-xl border border-purple-500/30 flex flex-col items-center gap-2 min-w-[200px] shadow-[0_0_30px_rgba(168,85,247,0.2)]"
-          >
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.8 }} className="mb-4 px-6 py-3 rounded-2xl bg-black/60 backdrop-blur-xl border border-purple-500/30 flex flex-col items-center gap-2 min-w-[200px] shadow-[0_0_30px_rgba(168,85,247,0.2)]">
             <div className="flex items-center gap-3">
               {state === 'listening' && (
                 <div className="flex gap-1">
-                  {waveform.map((h, i) => (
-                    <motion.div key={i} className="w-1 bg-purple-500 rounded-full" animate={{ height: h }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} />
-                  ))}
+                  {waveform.map((h, i) => (<motion.div key={i} className="w-1 bg-purple-500 rounded-full" animate={{ height: h }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} />))}
                   <span className="ml-2 text-xs font-black uppercase tracking-widest text-purple-400 animate-pulse">Listening...</span>
                 </div>
               )}
-              {state === 'thinking' && (
-                <>
-                  <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
-                  <span className="text-xs font-black uppercase tracking-widest text-purple-400">Thinking...</span>
-                </>
-              )}
+              {state === 'thinking' && (<><Loader2 className="w-4 h-4 text-purple-500 animate-spin" /><span className="text-xs font-black uppercase tracking-widest text-purple-400">Thinking...</span></>)}
               {state === 'speaking' && (
                 <div className="flex gap-1 items-center h-4">
-                  {waveform.map((h, i) => (
-                    <motion.div key={i} className="w-1 bg-indigo-400 rounded-full" animate={{ height: h * 1.5 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }} />
-                  ))}
+                  {waveform.map((h, i) => (<motion.div key={i} className="w-1 bg-indigo-400 rounded-full" animate={{ height: h * 1.5 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }} />))}
                   <span className="ml-2 text-xs font-black uppercase tracking-widest text-indigo-400">Speaking...</span>
                 </div>
               )}
@@ -231,30 +221,11 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       </AnimatePresence>
 
       <div className="relative group">
-        <AnimatePresence>
-          {state === 'listening' && (
-            <div className="absolute inset-0 rounded-full bg-purple-500/20 animate-pulse-ring" />
-          )}
-        </AnimatePresence>
-
+        <AnimatePresence>{state === 'listening' && (<div className="absolute inset-0 rounded-full bg-purple-500/20 animate-pulse-ring" />)}</AnimatePresence>
         <div className={`absolute -inset-4 border border-purple-500/20 rounded-full transition-opacity duration-500 ${state !== 'idle' ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="absolute inset-0 animate-neural-spin">
-             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]" />
-             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]" />
-          </div>
+          <div className="absolute inset-0 animate-neural-spin"><div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]" /><div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]" /></div>
         </div>
-
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={toggleListening}
-          className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 border shadow-2xl overflow-hidden
-            ${state === 'idle' ? 'bg-[#0a0a0f]/80 border-purple-500/30 text-purple-500 neural-glow' : 
-              state === 'listening' ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_40px_rgba(168,85,247,0.6)]' :
-              state === 'thinking' ? 'bg-[#0a0a0f]/90 border-purple-500 text-purple-400' :
-              'bg-[#0d111c] border-indigo-500 text-indigo-400'}
-          `}
-        >
+        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={toggleListening} className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 border shadow-2xl overflow-hidden ${state === 'idle' ? 'bg-[#0a0a0f]/80 border-purple-500/30 text-purple-500 neural-glow' : state === 'listening' ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_40px_rgba(168,85,247,0.6)]' : state === 'thinking' ? 'bg-[#0a0a0f]/90 border-purple-500 text-purple-400' : 'bg-[#0d111c] border-indigo-500 text-indigo-400'}`}>
           <div className="relative z-10">
             {state === 'idle' && <Mic className="w-8 h-8 animate-float" />}
             {state === 'listening' && <Mic className="w-8 h-8" />}
@@ -263,10 +234,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
           </div>
           {state !== 'idle' && <div className="absolute inset-0 hologram-effect opacity-30" />}
         </motion.button>
-      </div>
-      <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-white/5 backdrop-blur-md">
-        <div className={`w-1.5 h-1.5 rounded-full ${state === 'idle' ? 'bg-purple-500' : 'bg-emerald-500 animate-pulse'}`} />
-        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Neural Link Stable</span>
       </div>
     </div>
   );
