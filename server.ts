@@ -114,7 +114,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "meta/llama-3.1-8b-instruct",
+          model: "step-3.5-flash",
           messages: [
             { role: "system", content: system || "You are SmartAI Pro Jarvis assistant." },
             { role: "user", content: prompt }
