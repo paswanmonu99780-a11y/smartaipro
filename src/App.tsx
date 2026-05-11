@@ -5814,7 +5814,17 @@ export default function App() {
       )}
 
       {/* Futuristic AI Voice Assistant System */}
-      <SmartAIVoiceAssistant onCommand={handleVoiceCommandAction} />
+      <SmartAIVoiceAssistant 
+        onCommand={handleVoiceCommandAction} 
+        onMessage={(role, content) => {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role,
+            content,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }]);
+        }}
+      />
     </div>
   );
 }

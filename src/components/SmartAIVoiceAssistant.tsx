@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface SmartAIVoiceAssistantProps {
   onCommand: (action: string, data?: any) => void;
+  onMessage: (role: 'user' | 'assistant', content: string) => void;
 }
 
 type AssistantState = 'idle' | 'listening' | 'thinking' | 'speaking';
 
-const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand }) => {
+const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand, onMessage }) => {
   const [state, setState] = useState<AssistantState>('idle');
   const [transcript, setTranscript] = useState('');
   const [aiResponse, setAiResponse] = useState('');
@@ -90,7 +91,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       setState('idle');
       return;
     }
-
+    setState('thinking');
+    onMessage('user', rawText); // Sync user transcript to main chat
+    
     const lowerText = rawText.toLowerCase();
     console.log("Voice Command Target:", lowerText);
     
@@ -119,7 +122,6 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     }
 
     // 2. Chat Brain (Call API directly from frontend for speed)
-    setState('thinking');
     try {
       const system = "You are SmartAI Pro Jarvis. Be very brief. Use [ACTION:settings] or [ACTION:image] if needed.";
       const url = `https://text.pollinations.ai/${encodeURIComponent(rawText)}?system=${encodeURIComponent(system)}`;
@@ -131,6 +133,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       if (response.includes("[ACTION:image]")) onCommand("image");
       
       const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim() || "Task completed, sir.";
+      onMessage('assistant', cleanResponse); // Sync AI response to main chat
       setAiResponse(cleanResponse);
       speak(cleanResponse);
     } catch (e) {
@@ -141,7 +144,9 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
   };
 
   const executeAction = (action: string, response: string, data?: any) => {
+    console.log("Executing Action:", action);
     onCommand(action, data);
+    onMessage('assistant', response); // Sync action confirmation to main chat
     setAiResponse(response);
     speak(response);
   };
