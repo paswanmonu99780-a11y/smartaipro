@@ -49,18 +49,23 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
 
   const generateOllamaChatText = async (prompt: string, system?: string) => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s strict timeout
+
       const response = await fetch('http://localhost:11434/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: "llama3",
           messages: [
-            { role: "system", content: system || "You are SmartAI Pro." },
+            { role: "system", content: system || "You are SmartAI Pro assistant." },
             { role: "user", content: prompt }
           ],
           stream: false
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       const data: any = await response.json();
       return data.message?.content || null;
     } catch {
