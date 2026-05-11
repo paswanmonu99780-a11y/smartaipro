@@ -145,11 +145,32 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
       return;
     }
 
-    // If not a direct command, ask AI Brain (Groq)
+    // If not a direct hardcoded command, ask AI Brain
     try {
-      const response = await fetchGroqResponse(transcript);
-      setAiResponse(response);
-      speak(response);
+      const systemPrompt = `You are SmartAI Pro, a futuristic Jarvis-like assistant. 
+      You can control the website using these tags:
+      - [ACTION:settings] to open settings
+      - [ACTION:image] to open image generator
+      - [ACTION:expert] to activate expert mode
+      - [ACTION:admin] to open admin panel
+      - [ACTION:home] to go to home/chat
+      
+      If the user asks to do something, include the tag and a brief confirmation. 
+      Respond in the user's language (Hindi/English). Keep it short and premium.`;
+
+      const response = await fetchGroqResponse(transcript, systemPrompt);
+      
+      // Parse Actions from AI Response
+      if (response.includes("[ACTION:settings]")) onCommand("settings");
+      if (response.includes("[ACTION:image]")) onCommand("image");
+      if (response.includes("[ACTION:expert]")) onCommand("expert");
+      if (response.includes("[ACTION:admin]")) onCommand("admin");
+      if (response.includes("[ACTION:home]")) onCommand("home");
+      
+      // Clean the response for speaking
+      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
+      setAiResponse(cleanResponse);
+      speak(cleanResponse);
     } catch (error) {
       console.error("AI Brain Error:", error);
       const errorMsg = "I'm having trouble connecting to my brain right now.";
@@ -164,16 +185,14 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
     speak(response);
   };
 
-  const fetchGroqResponse = async (text: string) => {
-    // In a real app, this would be a secure backend call. 
-    // Here we'll simulate the call to a server endpoint that handles Groq
+  const fetchGroqResponse = async (text: string, system?: string) => {
     try {
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt: text,
-          system: "You are SmartAI Pro, a futuristic Jarvis-inspired AI. Respond concisely and professionally. If the user asks to do something on the website, explain that you are doing it. Support Hindi, English and Hinglish naturally."
+          system: system || "You are SmartAI Pro, a futuristic AI. Respond concisely."
         })
       });
       
