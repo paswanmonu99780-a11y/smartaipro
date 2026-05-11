@@ -126,12 +126,20 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt: rawText, 
-          system: "You are Jarvis. Respond in the same language. Be extremely brief (max 15 words)." 
+          system: "You are Jarvis. Respond in the same language as the user. NEVER output HTML, CSS, or Code. ONLY speak naturally as an assistant. Be extremely brief (max 15 words)." 
         })
       });
       
       const response = await res.text();
-      const cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
+      let cleanResponse = response.replace(/\[ACTION:.*?\]/g, "").trim();
+      
+      // Confusion Check: If response contains code-like characters or is empty
+      if (!cleanResponse || /<|>|\{|\}|\[|\]/.test(cleanResponse) || cleanResponse.length < 2) {
+        const isHindi = /[\u0900-\u097F]/.test(rawText);
+        cleanResponse = isHindi 
+          ? "Maaf kijiye sir, main samajh nahi paya. Kya aap dobara bol sakte hain?" 
+          : "I'm sorry sir, I couldn't understand that. Could you please repeat?";
+      }
       
       onMessage('assistant', cleanResponse);
       speak(cleanResponse);
