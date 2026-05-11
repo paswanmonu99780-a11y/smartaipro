@@ -6,6 +6,7 @@ import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from '
 import { supabase } from './lib/supabase';
 import AIVoiceAvatar from './AIVoiceAvatar';
 import SettingsComponent from './Settings';
+import SmartAIVoiceAssistant from './components/SmartAIVoiceAssistant';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
@@ -481,7 +482,6 @@ export default function App() {
         setIsLoggedIn(true);
         setCredits(999999999);
         setPlan('Expert Mode');
-        setSmartMode('expert');
       }
     };
     checkInitialVip();
@@ -531,7 +531,6 @@ export default function App() {
         console.log('Supreme VIP Guard: Reinforcing Lifetime Privileges for MASTER ACCOUNT...');
         if (plan !== 'Expert Mode') setPlan('Expert Mode');
         if (credits < 99999999) setCredits(999999999);
-        if (smartMode !== 'expert') setSmartMode('expert');
         if (!isAdmin) {
            setIsAdmin(true);
            localStorage.setItem('smartai_admin_session', 'active');
@@ -1654,21 +1653,21 @@ export default function App() {
 
   const renderPolyglot = () => {
     return (
-      <div className="h-full bg-[#050816] text-white flex flex-col overflow-hidden relative">
+      <div className="h-full flex flex-col overflow-hidden premium-bg relative">
         <AnimatePresence>
           {polyIsGenerating && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-[#050816]/90 backdrop-blur-md flex flex-col items-center justify-center p-10">
-              <div className="w-full max-w-md space-y-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+              <div className="w-full max-w-md space-y-8">
                 <div className="flex items-center gap-4 text-cyan-400">
-                  <Terminal className="w-8 h-8 animate-pulse" />
+                  <Terminal className="w-10 h-10 animate-pulse drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
                   <div className="h-px flex-1 bg-gradient-to-r from-cyan-500/50 to-transparent" />
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500 animate-pulse">Initializing Polyglot Engine...</p>
+                <div className="space-y-3">
+                  <p className="text-xs font-black uppercase tracking-[0.4em] text-cyan-500 animate-pulse">Initializing Polyglot Engine...</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500 delay-75 animate-pulse">Loading Multi-Language Compiler...</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white delay-150 animate-pulse">Connecting AI Development Core...</p>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
                   <motion.div 
                     className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-indigo-500" 
                     initial={{ x: '-100%' }} 
@@ -1676,98 +1675,106 @@ export default function App() {
                     transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 text-center font-mono italic animate-pulse">Compiling high-end architecture...</p>
+                <p className="text-[10px] text-slate-500 text-center font-black uppercase tracking-[0.3em] italic animate-pulse">Compiling high-end architecture...</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Top Header */}
-        <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#0B1023]/40 backdrop-blur-xl shrink-0">
+        {/* Premium Header */}
+        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
           <div className="flex items-center gap-6">
-            <button onClick={() => setExpertSubTab('dashboard')} className="p-2.5 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
-              <ArrowLeft className="w-5 h-5" />
+            <button onClick={() => setExpertSubTab('dashboard')} className="p-3 bg-white/5 hover:bg-cyan-500/10 border border-white/5 hover:border-cyan-500/30 rounded-2xl text-slate-400 hover:text-cyan-400 transition-all group shadow-lg">
+              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
             </button>
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-xl font-black uppercase tracking-tighter italic flex items-center gap-2">Polyglot <span className="text-[10px] px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-md not-italic font-black tracking-widest">V2.0 PRO</span></h2>
+              <div className="flex items-center gap-4 mb-1">
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg border border-cyan-500/20">
+                  <Terminal className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-2xl font-black uppercase tracking-tighter italic text-white">Polyglot <span className="text-cyan-500">Core</span></h2>
               </div>
-              <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">AI Multi-Language Dev Core</p>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-14">Neural Multi-Language Environment v2.0</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => generatePolyglotCode()}
               disabled={polyIsGenerating}
-              className="px-6 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+              className="px-8 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 border border-cyan-500/30 flex items-center gap-2"
             >
-              <Zap className="w-4 h-4" /> Generate Code
+              <Zap className="w-4 h-4" /> Generate Module
             </button>
             <button 
               onClick={() => setPolyShowPreview(!polyShowPreview)}
-              className={`px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${polyShowPreview ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:text-white'}`}
+              className={`px-6 py-2.5 border rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${polyShowPreview ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
             >
-              <Eye className="w-4 h-4" /> {polyShowPreview ? 'View Code' : 'Run Preview'}
+              <Eye className="w-4 h-4" /> {polyShowPreview ? 'Code Interface' : 'Real-time Preview'}
             </button>
           </div>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel: Inputs */}
-          <div className="w-80 border-r border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
-            <div className="p-6 space-y-8">
-              <div className="space-y-3">
-                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Environment</label>
-                <select value={polyLang} onChange={e => setPolyLang(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-cyan-500/50 appearance-none cursor-pointer">
-                  {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin', 'HTML/CSS', 'SQL', 'Bash', 'Node.js', 'React', 'Next.js'].map(l => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
+          {/* Left Panel: Configuration */}
+          <div className="w-80 border-r border-white/5 bg-black/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar backdrop-blur-3xl">
+            <div className="p-8 space-y-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Logic Environment</label>
+                <div className="relative group">
+                  <select value={polyLang} onChange={e => setPolyLang(e.target.value)} className="w-full bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-4 text-xs font-black outline-none focus:border-cyan-500/50 appearance-none cursor-pointer text-slate-200 transition-all group-hover:bg-slate-900">
+                    {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin', 'HTML/CSS', 'SQL', 'Bash', 'Node.js', 'React', 'Next.js'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600">
+                    <ChevronRight className="w-4 h-4 rotate-90" />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Task Description</label>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Architectural Task</label>
                 <textarea 
                   value={polyTask}
                   onChange={e => setPolyTask(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                      generatePolyglotCode();
-                    }
-                  }}
                   placeholder="e.g. Build a secure Auth system with JWT..."
-                  className="w-full h-32 bg-slate-900 border border-white/5 rounded-xl p-4 text-xs font-medium outline-none focus:border-cyan-500/50 resize-none placeholder:text-slate-700 transition-all"
+                  className="w-full h-48 bg-slate-900/50 border border-white/5 rounded-[2rem] p-6 text-xs font-medium outline-none focus:border-cyan-500/50 resize-none placeholder:text-slate-800 transition-all text-slate-300 leading-relaxed shadow-inner"
                 />
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Architecture Complexity</label>
-                  <span className="text-[9px] font-black text-cyan-400">{polyComplexity}%</span>
+              <div className="space-y-6 pt-4 border-t border-white/5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Neural Complexity</label>
+                  <span className="text-[10px] font-black text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">{polyComplexity}%</span>
                 </div>
                 <input 
                   type="range" min="0" max="100" 
                   value={polyComplexity}
                   onChange={e => setPolyComplexity(parseInt(e.target.value))}
-                  className="w-full accent-cyan-500 h-1 bg-slate-800 rounded-full cursor-pointer"
+                  className="w-full accent-cyan-500 h-1.5 bg-slate-800/50 rounded-full cursor-pointer appearance-none"
                 />
               </div>
 
-              <div className="space-y-4 pt-4 border-t border-white/5">
-                <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-4 pt-6 border-t border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 ml-1">Advanced Protocols</p>
+                <div className="grid grid-cols-1 gap-3">
                   {[
-                    { id: 'comments', label: 'Add Comments' },
-                    { id: 'docs', label: 'Generate Documentation' },
-                    { id: 'errorHandling', label: 'Error Handling' },
-                    { id: 'security', label: 'Security Best Practices' }
+                    { id: 'comments', label: 'Linguistic Comments', icon: MessageSquare },
+                    { id: 'docs', label: 'Structure Docs', icon: FileText },
+                    { id: 'errorHandling', label: 'Panic Recovery', icon: Zap },
+                    { id: 'security', label: 'Security Hardening', icon: Shield }
                   ].map(opt => (
                     <button 
                       key={opt.id}
                       onClick={() => setPolyAdvanced(prev => ({ ...prev, [opt.id]: !prev[opt.id as keyof typeof polyAdvanced] }))}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${polyAdvanced[opt.id as keyof typeof polyAdvanced] ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-slate-900/50 border-white/5 text-slate-600 hover:text-slate-400'}`}
+                      className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${polyAdvanced[opt.id as keyof typeof polyAdvanced] ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-lg shadow-cyan-500/5' : 'bg-white/[0.02] border-white/5 text-slate-600 hover:text-slate-400 hover:bg-white/[0.04]'}`}
                     >
-                      <span className="text-[10px] font-bold">{opt.label}</span>
-                      {polyAdvanced[opt.id as keyof typeof polyAdvanced] ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                      <div className="flex items-center gap-3">
+                        <opt.icon className="w-4 h-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{opt.label}</span>
+                      </div>
+                      {polyAdvanced[opt.id as keyof typeof polyAdvanced] ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                     </button>
                   ))}
                 </div>
@@ -1775,40 +1782,40 @@ export default function App() {
             </div>
           </div>
 
-          {/* Center Panel: Code Editor */}
-          <div className="flex-1 flex flex-col bg-[#050816] relative">
-            <div className="h-10 border-b border-white/5 bg-[#0B1023]/60 flex items-center px-4 justify-between">
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {/* Center Panel: IDE Interface */}
+          <div className="flex-1 flex flex-col relative z-10">
+            <div className="h-14 border-b border-white/5 bg-black/40 backdrop-blur-2xl flex items-center px-6 justify-between shrink-0">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar h-full">
                 {polyResult?.files?.map((f: any) => (
                   <button 
                     key={f.name}
                     onClick={() => { setPolyActiveFile(f.name); setPolyPreviewCode(f.code); }}
-                    className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 shrink-0 ${polyActiveFile === f.name ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                    className={`px-6 h-full text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-3 shrink-0 ${polyActiveFile === f.name ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
                   >
-                    <FileJson className="w-3 h-3" /> {f.name}
+                    <FileJson className="w-4 h-4" /> {f.name}
                   </button>
                 ))}
               </div>
-              <button onClick={() => copyToClipboard(polyPreviewCode, 'code')} className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-cyan-400 transition-colors">
-                <Copy className="w-3.5 h-3.5" />
+              <button onClick={() => copyToClipboard(polyPreviewCode, 'code')} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-500 hover:text-cyan-400 transition-all border border-white/5">
+                <Copy className="w-4 h-4" />
               </button>
             </div>
 
             <div className="flex-1 overflow-hidden relative">
               {!polyResult ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center">
-                  <div className="w-24 h-24 border-2 border-dashed border-slate-800 rounded-3xl flex items-center justify-center mb-6">
-                    <Code className="w-10 h-10 opacity-20" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center bg-[#050816]/20">
+                  <div className="w-32 h-32 border-2 border-dashed border-white/5 rounded-[2.5rem] flex items-center justify-center mb-8 bg-white/[0.01] animate-pulse">
+                    <Code className="w-12 h-12 opacity-10" />
                   </div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Dev Core Idle</h3>
-                  <p className="text-[10px] font-medium max-w-xs leading-relaxed uppercase tracking-widest opacity-50">Select environment and describe task to initialize polyglot engine.</p>
+                  <h3 className="text-sm font-black uppercase tracking-[0.5em] mb-3 text-slate-700 italic">Neural Engine Idle</h3>
+                  <p className="text-[10px] font-bold max-w-xs leading-relaxed uppercase tracking-[0.2em] opacity-30">Define architectural requirements to initialize the synthesis protocol.</p>
                 </div>
               ) : (
-                <div className="flex-1 min-h-0 bg-black/20 relative w-full h-full">
+                <div className="flex-1 min-h-0 bg-black/40 relative w-full h-full shadow-inner">
                   {polyShowPreview ? (
                     <iframe 
                       srcDoc={getPolyPreviewDoc()}
-                      className="w-full h-full border-none bg-white"
+                      className="w-full h-full border-none bg-white rounded-none"
                       title="Polyglot Preview"
                       sandbox="allow-scripts"
                     />
@@ -1816,7 +1823,7 @@ export default function App() {
                     <textarea 
                       value={polyPreviewCode}
                       onChange={e => setPolyPreviewCode(e.target.value)}
-                      className="w-full h-full bg-[#050816] p-8 font-mono text-[13px] text-cyan-50/80 outline-none resize-none no-scrollbar leading-relaxed"
+                      className="w-full h-full bg-[#050816]/60 p-10 font-mono text-sm text-cyan-100/90 outline-none resize-none no-scrollbar leading-relaxed backdrop-blur-md"
                       spellCheck={false}
                     />
                   )}
@@ -1824,85 +1831,94 @@ export default function App() {
               )}
             </div>
 
-            {/* Bottom: Logs */}
-            <div className="h-60 border-t border-white/5 bg-black/40 flex flex-col">
-              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar">
-                <div className="flex items-center gap-2 text-cyan-500 mb-2">
-                  <Terminal className="w-3 h-3" />
-                  <span className="font-black uppercase tracking-widest">Neural Console</span>
+            {/* Console Output */}
+            <div className="h-64 border-t border-white/5 bg-black/60 flex flex-col shrink-0 backdrop-blur-3xl">
+              <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto no-scrollbar">
+                <div className="flex items-center gap-3 text-cyan-500 mb-4 pb-3 border-b border-white/5">
+                  <Terminal className="w-4 h-4" />
+                  <span className="font-black uppercase tracking-[0.3em]">Neural System Console</span>
+                  <div className="flex-1" />
+                  <span className="text-[9px] text-slate-600 uppercase tracking-widest">v2.8.0-stable</span>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-slate-500 opacity-50">[SYSTEM] Polyglot Runtime v2.8.0</p>
+                <div className="space-y-2">
+                  <p className="text-slate-600 italic">Connecting to high-speed inference cluster...</p>
                   {polyIsGenerating ? (
                     <>
-                      <p className="text-cyan-400 animate-pulse">&gt; ANALYZING REQUIREMENTS...</p>
-                      <p className="text-cyan-400 animate-pulse">&gt; STRUCTURING MODULES...</p>
-                      <p className="text-purple-400 animate-pulse">&gt; GENERATING OPTIMIZED CODE...</p>
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-cyan-400/80">&gt; ANALYZING NEURAL ARCHITECTURE...</motion.p>
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-cyan-400/80">&gt; STRUCTURING MODULE LOGIC...</motion.p>
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-purple-400/80">&gt; SYNTHESIZING OPTIMIZED SOURCE...</motion.p>
                     </>
                   ) : polyResult ? (
                     <>
-                      <p className="text-emerald-500">&gt; COMPILATION SUCCESSFUL.</p>
-                      <p className="text-slate-400">&gt; {polyResult.title} ready for deployment.</p>
+                      <p className="text-emerald-500 font-bold">&gt; SYNTHESIS COMPLETE. ARCHITECTURE VALIDATED.</p>
+                      <p className="text-slate-400 italic">&gt; {polyResult.title} deployed to internal buffer.</p>
                     </>
                   ) : (
-                    <p className="text-slate-600">&gt; Ready for input.</p>
+                    <p className="text-slate-700">&gt; Awaiting neural instructions...</p>
                   )}
                   {polyConsoleLogs.map((log, idx) => (
-                    <p key={idx} className={log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-emerald-400' : 'text-slate-400'}>
+                    <p key={idx} className={`leading-relaxed ${log.type === 'error' ? 'text-rose-400' : log.type === 'success' ? 'text-emerald-400' : 'text-slate-500'}`}>
                       &gt; {log.msg}
                     </p>
                   ))}
                 </div>
               </div>
 
-              {/* Refinement Area */}
-              <div className="h-16 border-t border-white/5 bg-[#050816] flex items-center px-4 gap-4">
-                <div className="flex-1 relative">
+              {/* Terminal Input */}
+              <div className="h-20 border-t border-white/5 bg-black/40 flex items-center px-6 gap-6">
+                <div className="flex-1 relative group">
                   <input 
                     type="text"
-                    placeholder="Ask AI to add features, fix bugs..."
+                    placeholder="Ask AI to refine, optimize or add features to the current module..."
                     value={polyRefinement}
                     onChange={e => setPolyRefinement(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && generatePolyglotCode(polyRefinement)}
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500/50 transition-all pr-12"
+                    className="w-full bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-3.5 text-xs text-white outline-none focus:border-cyan-500/50 transition-all pr-14 shadow-inner"
                   />
-                  <button onClick={() => generatePolyglotCode(polyRefinement)} className="absolute right-1 top-1 bottom-1 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all">
-                    <Send className="w-3.5 h-3.5" />
+                  <button onClick={() => generatePolyglotCode(polyRefinement)} className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:scale-105 rounded-xl text-white transition-all shadow-lg active:scale-95 flex items-center justify-center">
+                    <Send className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Panel: Project Intel */}
-          <div className="w-80 border-l border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar p-6 space-y-8">
+          {/* Right Panel: Module Analysis */}
+          <div className="w-80 border-l border-white/5 bg-black/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar p-8 space-y-10 backdrop-blur-3xl">
             {polyResult ? (
               <>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><Layout className="w-3.5 h-3.5" /> Overview</h4>
-                  <div className="p-4 bg-slate-900/50 border border-white/5 rounded-2xl">
-                    <p className="text-[10px] text-slate-400 leading-relaxed font-medium">{polyResult.overview}</p>
+                <div className="space-y-5">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500 flex items-center gap-3 italic"><Layout className="w-4 h-4" /> Intellectual Summary</h4>
+                  <div className="p-6 bg-slate-900/40 border border-white/5 rounded-[2rem] shadow-inner">
+                    <p className="text-xs text-slate-400 leading-relaxed font-medium">{polyResult.overview}</p>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-500 flex items-center gap-2"><Folder className="w-3.5 h-3.5" /> Structure</h4>
-                  <pre className="p-4 bg-black/40 border border-white/5 rounded-xl font-mono text-[9px] text-slate-400 leading-relaxed">{polyResult.folderStructure}</pre>
+                <div className="space-y-5">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500 flex items-center gap-3 italic"><Folder className="w-4 h-4" /> Source Hierarchy</h4>
+                  <pre className="p-6 bg-black/60 border border-white/5 rounded-3xl font-mono text-[10px] text-purple-300/70 leading-loose overflow-x-hidden">{polyResult.folderStructure}</pre>
                 </div>
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Actions</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => setExpertSubTab('debugger')} className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-cyan-400 transition-all flex flex-col items-center gap-2"><Bug className="w-4 h-4"/> Debug</button>
-                    <button className="p-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all flex flex-col items-center gap-2"><Zap className="w-4 h-4"/> Optimize</button>
+                <div className="space-y-5">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 flex items-center gap-3 italic"><Zap className="w-4 h-4" /> Neural Actions</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <button onClick={() => setExpertSubTab('debugger')} className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-cyan-400 transition-all flex items-center justify-between group shadow-lg">
+                       Initialize Debug <Bug className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                    </button>
+                    <button className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-emerald-400 transition-all flex items-center justify-between group shadow-lg">
+                       Optimize Runtime <Zap className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                    </button>
+                    <button className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-purple-400 transition-all flex items-center justify-between group shadow-lg">
+                       Export Module <Download className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+                    </button>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center opacity-30 grayscale">
-                <TrendingUp className="w-12 h-12 mb-4" />
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em]">Trending Templates</h4>
-                <div className="mt-6 w-full space-y-2">
-                  {['SaaS Dashboard', 'AI Chatbot', 'Portfolio'].map(t => (
-                    <button key={t} onClick={() => setPolyTask(`Build a ${t}`)} className="w-full p-3 bg-slate-900/50 border border-white/5 rounded-xl text-[9px] font-bold text-slate-500 hover:text-cyan-400 transition-all">{t}</button>
+              <div className="h-full flex flex-col items-center justify-center text-center opacity-20 grayscale py-20">
+                <TrendingUp className="w-16 h-16 mb-6 text-slate-700" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-800">Inference Templates</h4>
+                <div className="mt-8 w-full space-y-3">
+                  {['SaaS Enterprise Dashboard', 'Neural Chat Interface', 'Auth Protocol v2', 'Predictive API Hub'].map(t => (
+                    <button key={t} onClick={() => setPolyTask(`Architect a high-performance ${t}`)} className="w-full p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-[10px] font-black text-slate-600 hover:text-cyan-400 transition-all uppercase tracking-widest">{t}</button>
                   ))}
                 </div>
               </div>
@@ -2013,21 +2029,23 @@ export default function App() {
 
   const renderDebugger = () => {
     return (
-      <div className="h-full bg-[#050816] text-white flex flex-col overflow-hidden relative">
+      <div className="h-full flex flex-col overflow-hidden premium-bg relative">
         <AnimatePresence>
           {debugIsAnalyzing && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-[#050816]/95 backdrop-blur-xl flex flex-col items-center justify-center p-10">
-              <div className="w-full max-w-md space-y-8">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+              <div className="w-full max-w-md space-y-10 text-center">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-red-500/20 blur-[50px] animate-pulse rounded-full" />
-                  <Bug className="w-16 h-16 text-red-500 mx-auto relative animate-bounce" />
+                  <div className="absolute inset-0 bg-red-500/30 blur-[60px] animate-pulse rounded-full" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-red-600 to-rose-700 rounded-[2.5rem] flex items-center justify-center mx-auto relative shadow-2xl border border-red-500/30 animate-bounce">
+                    <Bug className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                  </div>
                 </div>
-                <div className="space-y-3 text-center">
-                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-red-500 animate-pulse">Initializing Debug Engine...</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-cyan-500 delay-75 animate-pulse">Scanning Code Structure...</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white delay-150 animate-pulse">Detecting Errors & Vulnerabilities...</p>
+                <div className="space-y-4">
+                  <p className="text-sm font-black uppercase tracking-[0.5em] text-red-500 animate-pulse">Initializing Sentinel Scan...</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500 delay-75 animate-pulse">Scanning AST Tree Integrity...</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white delay-150 animate-pulse">Detecting Neural Anomalies...</p>
                 </div>
-                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden relative">
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative border border-white/5 shadow-inner">
                    <motion.div 
                      initial={{ left: '-100%' }} 
                      animate={{ left: '100%' }} 
@@ -2035,56 +2053,63 @@ export default function App() {
                      className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-red-500 to-transparent" 
                    />
                 </div>
-                <div className="flex justify-between font-mono text-[9px] text-slate-500 uppercase tracking-widest">
-                  <span>Semantic Grid Active</span>
-                  <span>Scanning Line 409...</span>
+                <div className="flex justify-between font-black text-[9px] text-slate-600 uppercase tracking-widest italic">
+                  <span>Semantic Grid: Online</span>
+                  <span>Scanning Line {Math.floor(Math.random() * 500) + 1}...</span>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* TOP SECTION */}
-        <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#0B1023]/60 backdrop-blur-2xl shrink-0">
+        {/* Premium Header */}
+        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
           <div className="flex items-center gap-6">
-            <button onClick={() => setExpertSubTab('')} className="p-3 bg-slate-900 border border-white/5 rounded-2xl text-slate-400 hover:text-red-400 transition-all group">
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <button onClick={() => setExpertSubTab('')} className="p-3 bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-2xl text-slate-400 hover:text-red-400 transition-all group shadow-lg">
+              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
             </button>
             <div className="space-y-1">
-              <h1 className="text-2xl font-black uppercase tracking-tighter italic flex items-center gap-3">
-                Debugger
-                <span className="text-[9px] not-italic text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 font-black tracking-widest">SENTINEL AI V2</span>
+              <h1 className="text-2xl font-black uppercase tracking-tighter italic flex items-center gap-4 text-white">
+                <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-rose-700 rounded-xl flex items-center justify-center shadow-lg border border-red-500/20">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                Debugger <span className="text-red-500">Sentinel</span>
               </h1>
-              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">AI-powered semantic debugging, error fixing & code optimization system.</p>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] ml-14">Neural Security & Semantic Audit v2.4-pro</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => generateDebuggerAnalysis()} disabled={debugIsAnalyzing} className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-red-500/20 flex items-center gap-2">
-              <Search className="w-4 h-4" /> Analyze
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => generateDebuggerAnalysis()} 
+              disabled={debugIsAnalyzing} 
+              className="px-8 py-2.5 bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] active:scale-95 border border-red-500/30 flex items-center gap-2"
+            >
+              <Search className="w-4 h-4" /> Initialize Analysis
             </button>
-            <button className="px-6 py-2.5 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600/20 transition-all">Fix Errors</button>
-            <button className="px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Save className="w-4 h-4" /> Save Report</button>
-            <button className="px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
+            <button className="px-6 py-2.5 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600/20 transition-all active:scale-95">Apply Neural Fix</button>
+            <div className="flex gap-2">
+              <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all shadow-lg"><Save className="w-5 h-5" /></button>
+              <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all shadow-lg"><Download className="w-5 h-5" /></button>
+            </div>
           </div>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel: Inputs */}
-          <div className="w-80 border-r border-white/5 bg-[#0B1023]/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
-            <div className="p-6 space-y-8">
-              {/* Language & Complexity */}
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Environment</label>
-                  <select value={debugLang} onChange={e => setDebugLang(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-red-500/50 appearance-none cursor-pointer">
+          {/* Left Panel: Ingestor */}
+          <div className="w-80 border-r border-white/5 bg-black/20 flex flex-col shrink-0 overflow-y-auto no-scrollbar backdrop-blur-3xl">
+            <div className="p-8 space-y-10">
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Logic Stack</label>
+                  <select value={debugLang} onChange={e => setDebugLang(e.target.value)} className="w-full bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-4 text-xs font-black outline-none focus:border-red-500/50 appearance-none cursor-pointer text-slate-200 transition-all hover:bg-slate-900">
                     {['JavaScript', 'Python', 'TypeScript', 'PHP', 'Java', 'C++', 'C#', 'Go', 'Rust', 'React', 'Next.js', 'Node.js', 'SQL', 'HTML/CSS'].map(l => (
                       <option key={l} value={l}>{l}</option>
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Debug Type</label>
-                  <select value={debugType} onChange={e => setDebugType(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-red-500/50 appearance-none cursor-pointer">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Scan Intensity</label>
+                  <select value={debugType} onChange={e => setDebugType(e.target.value)} className="w-full bg-slate-900/50 border border-white/5 rounded-2xl px-6 py-4 text-xs font-black outline-none focus:border-red-500/50 appearance-none cursor-pointer text-slate-200 transition-all hover:bg-slate-900">
                     {['Syntax Errors', 'Runtime Errors', 'Logic Errors', 'Performance Issues', 'Security Vulnerabilities', 'API Errors', 'Database Errors', 'UI Bugs', 'Full Code Audit'].map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
@@ -2092,37 +2117,38 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Error Logs */}
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Error Logs (Optional)</label>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Diagnostic Input (Optional)</label>
                 <textarea 
                   value={debugInputLogs}
                   onChange={e => setDebugInputLogs(e.target.value)}
                   placeholder="Paste terminal errors or console logs..."
-                  className="w-full h-32 bg-slate-950 border border-white/5 rounded-2xl p-4 text-[11px] font-mono text-red-400/80 outline-none focus:border-red-500/30 resize-none no-scrollbar placeholder:text-slate-800"
+                  className="w-full h-40 bg-slate-950/40 border border-white/5 rounded-[2rem] p-6 text-[11px] font-mono text-red-400/70 outline-none focus:border-red-500/30 resize-none no-scrollbar placeholder:text-slate-800 transition-all shadow-inner leading-relaxed"
                 />
               </div>
 
-              {/* Advanced Controls */}
-              <div className="space-y-4">
+              <div className="space-y-4 pt-4 border-t border-white/5">
                 <button 
                   onClick={() => setDebugShowAdvanced(!debugShowAdvanced)}
-                  className="w-full py-3 bg-slate-900 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-white/[0.02] border border-white/5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all flex items-center justify-center gap-3 group shadow-lg"
                 >
-                  <Settings className="w-3.5 h-3.5" /> Advanced Debug Controls
+                  <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform" /> Advanced Parameters
                 </button>
                 <AnimatePresence>
                   {debugShowAdvanced && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-black/20 rounded-2xl p-4 space-y-3">
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-black/30 rounded-[1.5rem] p-5 space-y-4 shadow-2xl border border-white/5">
                       {Object.entries(debugAdvanced).map(([key, val]) => (
-                        <label key={key} className="flex items-center justify-between cursor-pointer group">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-300 transition-colors">{key.replace(/([A-Z])/g, ' $1')}</span>
-                          <input 
-                            type="checkbox" 
-                            checked={val} 
-                            onChange={() => setDebugAdvanced(prev => ({ ...prev, [key]: !val }))}
-                            className="w-4 h-4 rounded border-white/10 bg-slate-900 text-red-500 focus:ring-red-500/20"
-                          />
+                        <label key={key} className="flex items-center justify-between cursor-pointer group/opt">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover/opt:text-slate-300 transition-colors">{key.replace(/([A-Z])/g, ' $1')}</span>
+                          <div 
+                            onClick={() => setDebugAdvanced(prev => ({ ...prev, [key]: !val }))}
+                            className={`w-8 h-4 rounded-full transition-all relative ${val ? 'bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'bg-slate-800'}`}
+                          >
+                            <motion.div 
+                              animate={{ x: val ? 16 : 0 }}
+                              className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-lg"
+                            />
+                          </div>
                         </label>
                       ))}
                     </motion.div>
@@ -2130,43 +2156,42 @@ export default function App() {
                 </AnimatePresence>
               </div>
 
-              {/* Quick Templates */}
-              <div className="space-y-4 pt-4 border-t border-white/5">
-                <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">Quick Templates</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {['Fix React Errors', 'Optimize API', 'Secure Backend', 'Database Crash'].map(t => (
-                    <button key={t} className="w-full p-3 bg-slate-900/40 border border-white/5 rounded-xl text-[9px] font-bold text-slate-500 hover:text-red-400 text-left transition-all">{t}</button>
+              <div className="space-y-5 pt-6 border-t border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600 ml-1 italic">Active Templates</p>
+                <div className="grid grid-cols-1 gap-3">
+                  {['Fix React State Errors', 'API Logic Optimization', 'Neural Security Audit', 'Database Memory Leak'].map(t => (
+                    <button key={t} className="w-full p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-[10px] font-black text-slate-500 hover:text-red-400 text-left transition-all uppercase tracking-widest shadow-sm">{t}</button>
                   ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Center Panel: Workspace */}
-          <div className="flex-1 flex flex-col bg-[#050816] relative">
-            <div className="h-10 border-b border-white/5 bg-[#0B1023]/60 flex items-center px-4 justify-between">
-              <div className="flex items-center gap-1">
+          {/* Center Panel: Workspace Hub */}
+          <div className="flex-1 flex flex-col relative z-10">
+            <div className="h-14 border-b border-white/5 bg-black/40 backdrop-blur-2xl flex items-center px-6 justify-between shrink-0">
+              <div className="flex items-center gap-1 h-full">
                 <button 
                   onClick={() => setDebugActiveTab('code')}
-                  className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${debugActiveTab === 'code' ? 'border-red-500 text-red-400 bg-red-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                  className={`px-8 h-full text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-3 ${debugActiveTab === 'code' ? 'border-red-500 text-red-400 bg-red-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
                 >
-                  <Code className="w-3.5 h-3.5" /> Source Code
+                  <Code className="w-4 h-4" /> Primary Source
                 </button>
                 {debugResult && (
                   <button 
                     onClick={() => setDebugActiveTab('comparison')}
-                    className={`px-4 h-10 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 ${debugActiveTab === 'comparison' ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
+                    className={`px-8 h-full text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-3 ${debugActiveTab === 'comparison' ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
                   >
-                    <Layers className="w-3.5 h-3.5" /> Compare & Fix
+                    <Layers className="w-4 h-4" /> Fix Comparison
                   </button>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-red-400 transition-colors">
-                  <RefreshCcw className="w-3.5 h-3.5" />
+                <button className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-600 hover:text-red-400 transition-all">
+                  <RefreshCcw className="w-4 h-4" />
                 </button>
-                <button className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-red-400 transition-colors">
-                  <Copy className="w-3.5 h-3.5" />
+                <button className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-600 hover:text-red-400 transition-all">
+                  <Copy className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -2176,175 +2201,186 @@ export default function App() {
                 <textarea 
                   value={debugCode}
                   onChange={e => setDebugCode(e.target.value)}
-                  placeholder="Paste your code here for semantic AI analysis..."
-                  className="w-full h-full bg-[#050816] p-8 font-mono text-[13px] text-slate-300 outline-none resize-none no-scrollbar leading-relaxed"
+                  placeholder="Stream source code here for high-fidelity semantic analysis..."
+                  className="w-full h-full bg-[#050816]/60 p-10 font-mono text-[13px] text-slate-300 outline-none resize-none no-scrollbar leading-relaxed backdrop-blur-md"
                   spellCheck={false}
                 />
               ) : (
                 <div className="h-full flex overflow-hidden">
-                  <div className="flex-1 border-r border-white/5 flex flex-col">
-                    <div className="p-2 bg-red-500/5 border-b border-white/5 text-[9px] font-black uppercase text-red-400 px-4">Original Code</div>
-                    <textarea value={debugCode} readOnly className="flex-1 bg-black/20 p-6 font-mono text-xs text-slate-500 outline-none resize-none no-scrollbar opacity-50" />
+                  <div className="flex-1 border-r border-white/5 flex flex-col relative">
+                    <div className="p-3 bg-red-500/10 border-b border-red-500/20 text-[10px] font-black uppercase tracking-widest text-red-400 px-6 flex items-center justify-between">
+                       <span>Legacy Architecture</span>
+                       <Bug className="w-3.5 h-3.5" />
+                    </div>
+                    <textarea value={debugCode} readOnly className="flex-1 bg-black/40 p-8 font-mono text-xs text-slate-600 outline-none resize-none no-scrollbar opacity-50 backdrop-blur-md" />
                   </div>
-                  <div className="flex-1 flex flex-col">
-                    <div className="p-2 bg-emerald-500/5 border-b border-white/5 text-[9px] font-black uppercase text-emerald-400 px-4">Corrected & Optimized</div>
-                    <textarea value={debugResult?.fixedCode} readOnly className="flex-1 bg-[#050816] p-6 font-mono text-xs text-emerald-50/80 outline-none resize-none no-scrollbar" />
+                  <div className="flex-1 flex flex-col relative">
+                    <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/20 text-[10px] font-black uppercase tracking-widest text-emerald-400 px-6 flex items-center justify-between">
+                       <span>Optimized Module</span>
+                       <Shield className="w-3.5 h-3.5" />
+                    </div>
+                    <textarea value={debugResult?.fixedCode} readOnly className="flex-1 bg-[#050816]/80 p-8 font-mono text-xs text-emerald-50/80 outline-none resize-none no-scrollbar backdrop-blur-3xl" />
                   </div>
                 </div>
               )}
 
-              {/* Glowing Analyze Button Overlay */}
               {!debugResult && !debugCode && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center pointer-events-none">
-                  <div className="w-24 h-24 border-2 border-dashed border-slate-800 rounded-3xl flex items-center justify-center mb-6">
-                    <Search className="w-10 h-10 opacity-20" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-800 p-20 text-center pointer-events-none bg-[#050816]/20">
+                  <div className="w-32 h-32 border-2 border-dashed border-white/5 rounded-[2.5rem] flex items-center justify-center mb-8 bg-white/[0.01] animate-pulse">
+                    <Search className="w-12 h-12 opacity-10" />
                   </div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Diagnosis Core Idle</h3>
-                  <p className="text-[10px] font-medium max-w-xs leading-relaxed uppercase tracking-widest opacity-50">Paste code to begin semantic error detection and architectural audit.</p>
+                  <h3 className="text-sm font-black uppercase tracking-[0.5em] mb-3 text-slate-700 italic">Sentinel Passive</h3>
+                  <p className="text-[10px] font-bold max-w-xs leading-relaxed uppercase tracking-[0.2em] opacity-30">Stream source code for semantic error detection and security auditing.</p>
                 </div>
               )}
             </div>
 
-            {/* Bottom: Diagnostics Log */}
-            <div className="h-48 border-t border-white/5 bg-black/40 flex flex-col overflow-hidden">
-              <div className="p-4 flex items-center justify-between border-b border-white/5">
-                <div className="flex items-center gap-2 text-red-500">
-                  <Terminal className="w-3 h-3" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Diagnostic Console</span>
+            {/* Diagnostic Logs Overlay */}
+            <div className="h-56 border-t border-white/5 bg-black/60 flex flex-col shrink-0 backdrop-blur-3xl overflow-hidden">
+              <div className="p-4 px-8 flex items-center justify-between border-b border-white/5 bg-black/20">
+                <div className="flex items-center gap-3 text-red-500">
+                  <Terminal className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Neural Diagnostic Pulse</span>
                 </div>
                 {debugResult && (
-                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
-                     debugResult.severity === 'Critical' ? 'bg-red-500 text-white' : 
-                     debugResult.severity === 'High' ? 'bg-orange-500 text-white' : 
-                     'bg-cyan-500 text-black'
+                   <div className={`flex items-center gap-3 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg ${
+                     debugResult.severity === 'Critical' ? 'bg-red-600 text-white shadow-red-600/20' : 
+                     debugResult.severity === 'High' ? 'bg-orange-600 text-white shadow-orange-600/20' : 
+                     'bg-cyan-500 text-black shadow-cyan-500/20'
                    }`}>
-                     {debugResult.severity} Risk Detected
-                   </span>
+                     <AlertTriangle className="w-3.5 h-3.5" /> {debugResult.severity} Risk Potential Detected
+                   </div>
                 )}
               </div>
-              <div className="flex-1 p-4 font-mono text-[10px] overflow-y-auto no-scrollbar space-y-1 bg-black/60">
+              <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto no-scrollbar space-y-2 bg-[#050816]/40">
                 {debugConsoleLogs.map((log, idx) => (
-                  <div key={idx} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-emerald-400' : log.type === 'warn' ? 'text-amber-400' : 'text-slate-400'}`}>
-                    <span className="opacity-30">[{new Date().toLocaleTimeString()}]</span>
-                    <span className="font-bold">&gt; {log.msg}</span>
+                  <div key={idx} className={`flex items-start gap-3 leading-relaxed ${log.type === 'error' ? 'text-rose-400' : log.type === 'success' ? 'text-emerald-400' : log.type === 'warn' ? 'text-amber-400' : 'text-slate-500'}`}>
+                    <span className="opacity-20 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+                    <span className="font-bold flex-1">&gt; {log.msg}</span>
                   </div>
                 ))}
                 {debugIsAnalyzing && (
-                  <div className="space-y-1">
-                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1 }} className="text-cyan-400">&gt; ANALYZING NEURAL AST TREE...</motion.p>
-                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1, delay: 0.3 }} className="text-red-400/50">&gt; SCANNING FOR SECURITY EXPLOITS...</motion.p>
-                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1, delay: 0.6 }} className="text-amber-400/50">&gt; CALCULATING PERFORMANCE OVERHEAD...</motion.p>
+                  <div className="space-y-2">
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1 }} className="text-cyan-400">&gt; SCANNING NEURAL SYNTAX TREE...</motion.p>
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1, delay: 0.3 }} className="text-red-400/50">&gt; AUDITING SECURITY VULNERABILITIES...</motion.p>
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ repeat: Infinity, duration: 1, delay: 0.6 }} className="text-amber-400/50">&gt; MEASURING ARCHITECTURAL DEBT...</motion.p>
                   </div>
                 )}
                 {!debugIsAnalyzing && debugConsoleLogs.length === 0 && (
-                  <p className="text-slate-700 italic">&gt; Sentinel passive. Neural link established. Awaiting source code stream...</p>
+                  <p className="text-slate-700 italic">&gt; Sentinel Core operational. Neural link established. Stream source code...</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right Panel: Report Cards & Insights */}
-          <div className="w-[400px] border-l border-white/5 bg-[#0B1023]/40 flex flex-col shrink-0 overflow-hidden">
-            <div className="p-6 border-b border-white/5 bg-[#0B1023]/60">
-               <div className="flex items-center justify-between mb-2">
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 flex items-center gap-2"><Bug className="w-3.5 h-3.5" /> Diagnostic Report</h4>
-                 <div className="flex gap-1">
+          {/* Right Panel: Diagnostic Intelligence Hub */}
+          <div className="w-[450px] border-l border-white/5 bg-black/20 flex flex-col shrink-0 overflow-hidden backdrop-blur-3xl">
+            <div className="p-8 border-b border-white/5 bg-black/40">
+               <div className="flex justify-between items-center mb-4">
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-red-500 flex items-center gap-3 italic"><Bug className="w-5 h-5 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" /> Neural Intel Report</h4>
+                 <div className="flex gap-1.5 bg-black/40 p-1.5 rounded-full border border-white/5">
                    {['Low', 'Medium', 'High', 'Critical'].map(s => (
-                     <div key={s} className={`w-2 h-2 rounded-full ${debugResult?.severity === s ? (s === 'Critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : s === 'High' ? 'bg-orange-500' : s === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-white/5'}`} />
+                     <div key={s} className={`w-3 h-3 rounded-full transition-all duration-500 ${debugResult?.severity === s ? (s === 'Critical' ? 'bg-red-600 shadow-[0_0_12px_#dc2626]' : s === 'High' ? 'bg-orange-600' : s === 'Medium' ? 'bg-amber-500' : 'bg-emerald-600') : 'bg-white/5'}`} />
                    ))}
                  </div>
                </div>
-               <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest leading-relaxed">Detailed analysis of detected anomalies and architectural weaknesses.</p>
+               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] leading-relaxed italic opacity-60">High-fidelity analysis of detected anomalies and architectural weaknesses.</p>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 space-y-10 no-scrollbar relative">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.03)_0%,transparent_70%)] pointer-events-none" />
+              
               {debugResult ? (
                 <>
-                  {/* Summary Card */}
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-black border border-white/5 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <Shield className="w-12 h-12 text-red-500" />
+                  {/* Executive Summary */}
+                  <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900/60 to-black/60 border border-white/10 relative overflow-hidden group shadow-2xl backdrop-blur-xl">
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Shield className="w-20 h-20 text-red-500" />
                     </div>
-                    <h5 className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-3">Executive Summary</h5>
-                    <p className="text-xs text-slate-300 leading-relaxed font-medium">{debugResult.summary}</p>
+                    <h5 className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em] mb-4 italic">Core Executive Summary</h5>
+                    <p className="text-xs text-slate-300 leading-relaxed font-medium group-hover:text-white transition-colors">{debugResult.summary}</p>
                   </div>
 
-                  {/* Issue Cards */}
-                  <div className="space-y-4">
-                    <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">Detected Issues ({debugResult.issues?.length || 0})</h5>
+                  {/* Issues Stack */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Anomalies Detected ({debugResult.issues?.length || 0})</h5>
+                      <div className="flex-1 h-px bg-white/5" />
+                    </div>
                     {debugResult.issues?.map((issue: any, idx: number) => (
                       <motion.div 
                         key={idx}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className={`p-4 rounded-xl border ${issue.severity === 'Critical' || issue.severity === 'High' ? 'bg-red-500/5 border-red-500/20' : 'bg-slate-900/50 border-white/5'} space-y-3 group hover:border-red-500/30 transition-all`}
+                        className={`p-6 rounded-[2rem] border transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${issue.severity === 'Critical' || issue.severity === 'High' ? 'bg-red-500/5 border-red-500/20 shadow-xl shadow-red-900/5' : 'bg-white/[0.02] border-white/5'} space-y-4 group/issue`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${issue.severity === 'Critical' ? 'bg-red-600 text-white' : issue.severity === 'High' ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                            {issue.severity}
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-600">Line {issue.line}</span>
+                          <div className={`text-[9px] font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-lg ${issue.severity === 'Critical' ? 'bg-red-600 text-white' : issue.severity === 'High' ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                            {issue.severity} Risk
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-700 bg-black/40 px-3 py-1 rounded-lg border border-white/5">LINE {issue.line}</span>
                         </div>
                         <div>
-                          <h6 className="text-[11px] font-black text-white mb-1">{issue.type}</h6>
-                          <p className="text-[10px] text-slate-400 leading-relaxed">{issue.desc}</p>
+                          <h6 className="text-sm font-black text-white mb-2 italic group-hover/issue:text-red-400 transition-colors">{issue.type}</h6>
+                          <p className="text-[11px] text-slate-500 leading-relaxed font-medium group-hover/issue:text-slate-400 transition-colors">{issue.desc}</p>
                         </div>
-                        <div className="pt-2 border-t border-white/5 space-y-2">
-                           <div className="flex items-start gap-2">
-                             <div className="w-1 h-1 rounded-full bg-red-500 mt-1.5 shrink-0" />
-                             <p className="text-[9px] text-slate-500 italic"><span className="text-red-500/80 font-black uppercase not-italic mr-1">Cause:</span> {issue.cause}</p>
+                        <div className="pt-4 border-t border-white/5 space-y-4">
+                           <div className="flex items-start gap-4">
+                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 shadow-[0_0_8px_#ef4444]" />
+                             <p className="text-[10px] text-slate-500 leading-relaxed"><span className="text-red-500/80 font-black uppercase italic mr-2">Neural Cause:</span> {issue.cause}</p>
                            </div>
-                           <div className="flex items-start gap-2">
-                             <div className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                             <p className="text-[9px] text-slate-500 italic"><span className="text-emerald-500/80 font-black uppercase not-italic mr-1">Fix:</span> {issue.fix}</p>
+                           <div className="flex items-start gap-4">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-[0_0_8px_#10b981]" />
+                             <p className="text-[10px] text-slate-500 leading-relaxed"><span className="text-emerald-500/80 font-black uppercase italic mr-2">Resolved Link:</span> {issue.fix}</p>
                            </div>
                         </div>
-                        <div className="flex gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <button className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all">Explain</button>
-                           <button className="flex-1 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all">Apply Fix</button>
+                        <div className="flex gap-3 pt-2 opacity-0 group-hover/issue:opacity-100 transition-all transform translate-y-2 group-hover/issue:translate-y-0">
+                           <button className="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all border border-red-500/20">Synthesize Explain</button>
+                           <button className="flex-1 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all border border-emerald-500/20">Apply Neural Patch</button>
                         </div>
                       </motion.div>
                     ))}
                   </div>
 
-                  {/* Audit Sections */}
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10 space-y-2">
-                      <h5 className="text-[9px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2"><Shield className="w-3 h-3" /> Security Audit</h5>
-                      <p className="text-[10px] text-slate-400 leading-relaxed italic">"{debugResult.securityAudit}"</p>
+                  {/* Deep Insight Sections */}
+                  <div className="grid grid-cols-1 gap-6 pb-20">
+                    <div className="p-8 rounded-[2.5rem] bg-cyan-500/5 border border-cyan-500/10 space-y-4 shadow-2xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-all">
+                        <Shield className="w-16 h-16 text-cyan-400" />
+                      </div>
+                      <h5 className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] flex items-center gap-3 italic">Security Protocol Audit</h5>
+                      <p className="text-xs text-slate-400 leading-relaxed font-medium italic">"{debugResult.securityAudit}"</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/10 space-y-2">
-                      <h5 className="text-[9px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-2"><Zap className="w-3 h-3" /> Performance Tips</h5>
-                      <p className="text-[10px] text-slate-400 leading-relaxed italic">"{debugResult.performanceTips}"</p>
+                    <div className="p-8 rounded-[2.5rem] bg-purple-500/5 border border-purple-500/10 space-y-4 shadow-2xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-all">
+                        <Zap className="w-16 h-16 text-purple-400" />
+                      </div>
+                      <h5 className="text-[10px] font-black text-purple-400 uppercase tracking-[0.4em] flex items-center gap-3 italic">Neural Optimization Tips</h5>
+                      <p className="text-xs text-slate-400 leading-relaxed font-medium italic">"{debugResult.performanceTips}"</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-2">
-                      <h5 className="text-[9px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-2"><BarChart className="w-3 h-3" /> Architecture Advice</h5>
-                      <p className="text-[10px] text-slate-400 leading-relaxed italic">"{debugResult.architectureAdvice}"</p>
+                    <div className="p-8 rounded-[2.5rem] bg-amber-500/5 border border-amber-500/10 space-y-4 shadow-2xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-all">
+                        <BarChart className="w-16 h-16 text-amber-400" />
+                      </div>
+                      <h5 className="text-[10px] font-black text-amber-400 uppercase tracking-[0.4em] flex items-center gap-3 italic">Architectural Core Advice</h5>
+                      <p className="text-xs text-slate-400 leading-relaxed font-medium italic">"{debugResult.architectureAdvice}"</p>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center p-10 text-center space-y-6 grayscale opacity-20">
+                <div className="h-full flex flex-col items-center justify-center p-10 text-center space-y-10 grayscale opacity-10 py-32">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full" />
-                    <Database className="w-16 h-16 text-white relative" />
+                    <div className="absolute inset-0 bg-white/20 blur-[50px] rounded-full animate-pulse" />
+                    <Database className="w-24 h-24 text-white relative drop-shadow-2xl" />
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em]">Analysis Queue Empty</h4>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 leading-relaxed">Initiate a semantic scan to populate the diagnostic report cards.</p>
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-black uppercase tracking-[0.5em] text-white">Diagnostic Intel Locked</h4>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 leading-relaxed max-w-[250px] mx-auto">Initiate a primary semantic scan to populate the high-fidelity diagnostic report cards.</p>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Bottom: Export Sidebar Actions */}
-            {debugResult && (
-              <div className="p-4 bg-[#0B1023]/60 border-t border-white/5 grid grid-cols-2 gap-2">
-                <button className="py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/5 transition-all">Copy Report</button>
-                <button className="py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/5 transition-all">Download PDF</button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -2360,8 +2396,8 @@ export default function App() {
         id: 'ailab',
         title: 'Intelligence Lab',
         icon: Mic2,
-        color: '#818cf8',
-        gradient: 'from-indigo-500/20 to-purple-500/20',
+        color: '#a855f7',
+        gradient: 'from-purple-500/20 to-indigo-500/20',
         tools: [
           { name: 'Prompt Builder', desc: 'Neural prompt engineering.', icon: MessageSquare },
           { name: 'Cognitive Memory', desc: 'Long-term context.', icon: Database },
@@ -2373,8 +2409,8 @@ export default function App() {
         id: 'workflows',
         title: 'Automation',
         icon: Workflow,
-        color: '#a78bfa',
-        gradient: 'from-purple-500/20 to-fuchsia-500/20',
+        color: '#a855f7',
+        gradient: 'from-purple-500/20 to-pink-500/20',
         tools: [
           { name: 'Architect', desc: 'Workflow design.', icon: Network },
           { name: 'Logic Engine', desc: 'Branching & logic.', icon: GitBranch },
@@ -2385,7 +2421,7 @@ export default function App() {
         id: 'integrations',
         title: 'Integrations',
         icon: Link,
-        color: '#60a5fa',
+        color: '#3b82f6',
         gradient: 'from-blue-500/20 to-cyan-500/20',
         tools: [
           { name: 'API Manager', desc: 'Key rotation.', icon: Key },
@@ -2398,7 +2434,7 @@ export default function App() {
         id: 'devtools',
         title: 'Dev Environment',
         icon: Code,
-        color: '#34d399',
+        color: '#10b981',
         gradient: 'from-emerald-500/20 to-teal-500/20',
         tools: [
           { name: 'Polyglot', desc: 'Multi-lang code.', icon: Code },
@@ -2410,7 +2446,7 @@ export default function App() {
         id: 'datastudio',
         title: 'Data Studio',
         icon: BarChart3,
-        color: '#fbbf24',
+        color: '#f59e0b',
         gradient: 'from-amber-500/20 to-orange-500/20',
         tools: [
           { name: 'Ingestor', desc: 'Dataset processing.', icon: FileSpreadsheet },
@@ -2421,69 +2457,68 @@ export default function App() {
     ];
 
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-slate-950 relative">
+      <div className="h-full flex flex-col overflow-hidden premium-bg relative">
         {/* Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.05)_0%,transparent_50%)]" />
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay" />
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-purple-900/10 blur-[150px] rounded-full translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-900/10 blur-[120px] rounded-full -translate-x-1/2 translate-y-1/2" />
         </div>
 
-        {/* Compact Header */}
-        <div className="px-4 py-3 flex items-center justify-between bg-slate-900/60 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/20">
-              <Crown className="w-4 h-4 text-white" />
+        {/* Premium Header */}
+        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.3)] border border-purple-500/30">
+              <Crown className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-white uppercase tracking-tighter">Expert Console</h2>
-              <div className="flex items-center gap-1.5">
-                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-ping" />
-                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Neural Link</p>
+              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Expert Console</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]" />
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Neural Link Status: Active</p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsPricingOpen(true)}
-              className="px-4 py-1.5 bg-white text-black rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+              className="px-8 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] active:scale-95 border border-purple-500/30"
             >
               Upgrade
             </button>
-            <button onClick={() => setSmartMode('normal')} className="p-1.5 bg-slate-800/50 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-all border border-white/5">
-              <LogOut className="w-3.5 h-3.5" />
+            <button onClick={() => setSmartMode('normal')} className="p-3 bg-slate-900/80 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all border border-white/5 shadow-lg group">
+              <LogOut className="w-5 h-5 group-hover:rotate-12 transition-transform" />
             </button>
           </div>
         </div>
 
-        {/* Compact Dashboard Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 relative z-10 no-scrollbar">
-          <div className="max-w-full mx-auto space-y-8 px-2 md:px-4">
+        {/* Dashboard Content */}
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 relative z-10">
+          <div className="max-w-[1600px] mx-auto space-y-12">
             {categories.map((cat, catIdx) => (
               <motion.div 
                 key={cat.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: catIdx * 0.05 }}
-                className="space-y-4"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: catIdx * 0.1 }}
+                className="space-y-6"
               >
-                {/* Compact Category Header */}
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className={`p-1.5 rounded-lg bg-gradient-to-br ${cat.gradient} border border-white/10`} style={{ color: cat.color }}>
-                      <cat.icon className="w-3.5 h-3.5" />
-                    </div>
-                    <h3 className="text-xs font-black text-white uppercase tracking-wider">{cat.title}</h3>
+                {/* Category Header */}
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl bg-slate-900/80 border border-white/10 shadow-lg`} style={{ color: cat.color }}>
+                    <cat.icon className="w-5 h-5" />
                   </div>
+                  <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.4em] italic">{cat.title}</h3>
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-2" />
                 </div>
 
-                {/* Expansive Tools Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4 sm:gap-5">
+                {/* Tools Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {cat.tools.map((tool, toolIdx) => (
                     <motion.div
                       key={tool.name}
-                      whileHover={{ scale: 1.02, y: -4 }}
-                      className="group relative bg-slate-900/40 border border-white/5 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer transition-all hover:border-indigo-500/50 overflow-hidden h-full justify-between shadow-lg"
+                      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                      className="group relative bg-[#0d111c]/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 flex flex-col gap-6 cursor-pointer transition-all hover:border-purple-500/50 hover:shadow-[0_20px_50px_rgba(139,92,246,0.1)] overflow-hidden h-full"
                       onClick={() => {
                         if (plan !== 'Expert Mode' && plan !== 'Ultra') {
                           alert('This tool requires Expert Mode or Ultra. Please upgrade to access.');
@@ -2500,33 +2535,39 @@ export default function App() {
                         }
                       }}
                     >
+                      {/* Top Bar with Icon and Chevron */}
                       <div className="flex items-start justify-between">
-                        <div className="w-12 h-12 rounded-xl bg-slate-950 border border-white/5 group-hover:border-indigo-500/30 transition-all flex items-center justify-center shadow-inner">
-                          <tool.icon className="w-6 h-6 text-slate-400 group-hover:text-indigo-400" />
+                        <div className="w-16 h-16 rounded-[1.25rem] bg-slate-900/80 border border-white/5 group-hover:border-purple-500/30 transition-all flex items-center justify-center shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+                          <tool.icon className="w-8 h-8 text-slate-400 group-hover:text-purple-400 transition-colors drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]" />
                         </div>
-                        <ChevronRight className="w-5 h-5 text-white/10 group-hover:text-white transition-colors" />
+                        <ChevronRight className="w-6 h-6 text-white/5 group-hover:text-white transition-all transform group-hover:translate-x-1" />
                       </div>
 
-                      <div className="min-w-0">
-                        <h4 className="text-sm font-black text-white group-hover:text-indigo-300 transition-colors">{tool.name}</h4>
-                        <p className="text-[11px] text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors line-clamp-2">{tool.desc}</p>
+                      {/* Content Area */}
+                      <div className="flex-1 space-y-3">
+                        <h4 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors tracking-tight italic">{tool.name}</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors">{tool.desc}</p>
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-slate-700 group-hover:text-indigo-500/50 transition-colors">
-                          <span>Module Alpha v8.2</span>
-                          <span>Active</span>
+                      {/* Bottom Status Bar */}
+                      <div className="space-y-4 pt-2">
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em]">
+                          <span className="text-slate-600 group-hover:text-slate-400 transition-colors">Module Alpha v8.2</span>
+                          <span className="text-emerald-500 group-hover:shadow-[0_0_10px_#10b981] transition-all">Active</span>
                         </div>
-                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
                             whileInView={{ width: '100%' }}
                             viewport={{ once: true }}
                             transition={{ duration: 1.5, delay: 0.2 }}
-                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                            className="h-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 shadow-[0_0_15px_rgba(139,92,246,0.5)]"
                           />
                         </div>
                       </div>
+
+                      {/* Internal Glow Effect on Hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </motion.div>
                   ))}
                 </div>
@@ -2534,7 +2575,7 @@ export default function App() {
             ))}
 
             {/* Bottom Spacing */}
-            <div className="h-12" />
+            <div className="h-20" />
           </div>
         </div>
       </div>
@@ -2703,6 +2744,47 @@ export default function App() {
     }
   };
 
+  const handleVoiceCommandAction = (action: string, data?: any) => {
+    console.log("Executing Voice Command:", action, data);
+    switch (action) {
+      case 'settings':
+        setIsSettingsOpen(true);
+        break;
+      case 'image':
+        setActiveTab('image');
+        break;
+      case 'generate_image':
+        setActiveTab('image');
+        setImgPrompt(data || '');
+        // Give time for tab switch and state update
+        setTimeout(() => {
+          const genBtn = document.querySelector('button[title="Generate Image"]') as HTMLButtonElement;
+          if (genBtn && !genBtn.disabled) genBtn.click();
+        }, 800);
+        break;
+      case 'set_prompt':
+        setActiveTab('image');
+        setImgPrompt(data || '');
+        break;
+      case 'expert':
+        setSmartMode('expert');
+        setActiveTab('home');
+        break;
+      case 'admin':
+        setActiveTab('admin');
+        break;
+      case 'workflow':
+        setActiveTab('home');
+        setSmartMode('expert');
+        setExpertSubTab('builder');
+        break;
+      case 'tools':
+        setActiveTab('home');
+        break;
+      default:
+        console.warn("Unknown voice action:", action);
+    }
+  };
 
   const getDimensions = (quality: string, aspect: string): [number, number] => {
     // Feature enforcement based on plan
@@ -3953,12 +4035,12 @@ export default function App() {
     function renderCharacterCreator() {
       const generateCharacter = async () => {
         setIsCharGenerating(true);
-        setCharLoadingText('Building AI Character...');
+        setCharLoadingText('Initializing Neural Matrix...');
         
         const loadingSteps = [
-          'Generating Personality Matrix...',
-          'Creating Digital Identity...',
-          'Writing Backstory...',
+          'Synthesizing DNA Sequence...',
+          'Establishing Digital Identity...',
+          'Calibrating Personality Forge...',
           'Finalizing Character Core...'
         ];
 
@@ -3968,7 +4050,7 @@ export default function App() {
             setCharLoadingText(loadingSteps[step]);
             step++;
           }
-        }, 1000);
+        }, 1200);
 
         const systemPrompt = `You are an elite Character Designer and World Builder AI. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
         Format: {
@@ -4047,7 +4129,7 @@ export default function App() {
       const handleGenerateDialogue = async () => {
         if (!charResult) return;
         setIsCharGenerating(true);
-        setCharLoadingText('Simulating Dialogue...');
+        setCharLoadingText('Simulating Character Voice...');
         try {
           const systemPrompt = "Return valid JSON only. Format: { \"dialogues\": [\"...\", \"...\"] }";
           const fullPrompt = `Generate 4 highly emotional, cinematic, and in-character quotes/dialogues for this character: ${charResult.name}, who is a ${charPersonality} ${charType} with this backstory: ${charResult.backstory}.`;
@@ -4068,7 +4150,7 @@ export default function App() {
       const handleExpandStory = async () => {
         if (!charResult) return;
         setIsCharGenerating(true);
-        setCharLoadingText('Building Universe & Lore...');
+        setCharLoadingText('Weaving Universe Lore...');
         try {
           const systemPrompt = "Return valid JSON only. Format: { \"world\": \"...\", \"enemies\": [\"...\"], \"allies\": [\"...\"], \"currentMission\": \"...\" }";
           const fullPrompt = `Expand the universe for ${charResult.name}, a ${charType} with backstory: ${charResult.backstory}.`;
@@ -4087,21 +4169,21 @@ export default function App() {
       };
 
       return (
-        <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
+        <div className="min-h-full premium-bg text-white overflow-y-auto no-scrollbar pb-20 relative">
           <AnimatePresence>
             {isCharGenerating && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
                 <div className="relative">
-                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="w-48 h-48 border-[1px] border-cyan-500/30 border-t-cyan-400 rounded-full" />
-                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="absolute inset-4 border-2 border-purple-500/20 border-b-purple-500 rounded-full" />
+                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="w-64 h-64 border border-purple-500/20 border-t-purple-500 rounded-full shadow-[0_0_50px_rgba(139,92,246,0.3)]" />
+                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="absolute inset-8 border border-indigo-500/10 border-b-indigo-500 rounded-full" />
                    <div className="absolute inset-0 flex items-center justify-center">
-                      <User className="w-16 h-16 text-cyan-400 animate-pulse drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]" />
+                      <User className="w-20 h-20 text-purple-400 animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
                    </div>
                 </div>
-                <motion.p key={charLoadingText} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-10 text-xl font-black italic uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">{charLoadingText}</motion.p>
-                <div className="mt-8 flex gap-3">
-                   {[...Array(7)].map((_, i) => (
-                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.15 }} className="w-1.5 h-1.5 bg-cyan-400 shadow-[0_0_10px_#22d3ee] rotate-45" />
+                <motion.p key={charLoadingText} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-12 text-2xl font-black italic uppercase tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">{charLoadingText}</motion.p>
+                <div className="mt-10 flex gap-4">
+                   {[...Array(5)].map((_, i) => (
+                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
                    ))}
                 </div>
               </motion.div>
@@ -4109,102 +4191,107 @@ export default function App() {
           </AnimatePresence>
 
           {/* Top Section */}
-          <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-cyan-500/10 bg-[#0B1023]/60 backdrop-blur-2xl sticky top-0 z-40">
-            <div className="md:ml-8">
-              <div className="flex items-center gap-4 mb-2">
-                <button onClick={() => setCreativeSubTab('')} className="p-3 mr-2 bg-[#0B1023]/80 hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-400/50 rounded-2xl text-cyan-500/60 hover:text-cyan-400 transition-all group"><ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /></button>
-                <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.2)] border border-cyan-500/20">
-                  <User className="w-6 h-6 text-white" />
+          <div className="px-8 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
+            <div className="flex items-center gap-6">
+              <button onClick={() => setCreativeSubTab('')} className="p-3 bg-white/5 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 rounded-2xl text-slate-400 hover:text-purple-400 transition-all group shadow-lg"><ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /></button>
+              <div>
+                <div className="flex items-center gap-4 mb-1">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg border border-purple-500/20">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">AI Character <span className="text-purple-500">Forge</span></h1>
                 </div>
-                <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-100">AI Character <span className="text-cyan-400">Creator</span></h1>
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] ml-14">Synthesize unique digital identities & personas.</p>
               </div>
-              <p className="text-cyan-500/60 text-xs font-black uppercase tracking-[0.2em] mt-1 ml-16">Create unique AI personalities & digital identities.</p>
             </div>
-            <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
-               <button onClick={generateCharacter} className="flex-1 md:flex-none bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]">Generate</button>
-               <button onClick={() => setShowHistorySidebar(true)} className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors" title="History"><Clock className="w-4 h-4" /></button>
-               <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"><Save className="w-4 h-4" /></button>
-               <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"><Download className="w-4 h-4" /></button>
+            <div className="flex gap-4 w-full md:w-auto">
+               <button onClick={generateCharacter} className="flex-1 md:flex-none bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white px-10 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_10px_20px_rgba(139,92,246,0.3)] border border-purple-500/30">Generate</button>
+               <div className="flex gap-2">
+                 <button onClick={() => setShowHistorySidebar(true)} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all" title="History"><Clock className="w-5 h-5" /></button>
+                 <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all"><Save className="w-5 h-5" /></button>
+                 <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all"><Download className="w-5 h-5" /></button>
+               </div>
             </div>
           </div>
 
-          <div className="max-w-[1600px] mx-auto p-6 md:p-10 grid xl:grid-cols-3 gap-10">
+          <div className="max-w-[1600px] mx-auto p-8 md:p-12 grid xl:grid-cols-12 gap-12">
             {/* Left Column: Inputs */}
-            <div className="xl:col-span-2 space-y-8">
+            <div className="xl:col-span-8 space-y-10">
               
-              <div className="grid md:grid-cols-2 gap-6 bg-[#0B1023] p-8 rounded-[2rem] border border-cyan-500/10 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
+              <div className="grid md:grid-cols-2 gap-8 bg-black/40 border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
                 
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Character Type</label>
-                  <select value={charType} onChange={e => setCharType(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Character Type</label>
+                  <select value={charType} onChange={e => setCharType(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
                     {['Anime Character', 'Game Character', 'Superhero', 'Villain', 'Sci-Fi Character', 'Fantasy Character', 'AI Robot', 'Influencer Persona', 'YouTuber Character', 'Cartoon Character', 'Virtual Partner', 'Story Character', 'Cyberpunk Character', 'Horror Character', 'Warrior', 'Detective'].map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Character Name (Optional)</label>
-                  <input value={charName} onChange={e => setCharName(e.target.value)} placeholder="e.g. ShadowX, Zara, Nova..." className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-700" />
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Digital Name</label>
+                  <input value={charName} onChange={e => setCharName(e.target.value)} placeholder="e.g. ShadowX, Zara, Nova..." className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 text-slate-200" />
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Gender</label>
-                  <select value={charGender} onChange={e => setCharGender(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Gender Identity</label>
+                  <select value={charGender} onChange={e => setCharGender(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
                     {['Male', 'Female', 'Non-Binary', 'Random'].map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Personality Matrix</label>
-                  <select value={charPersonality} onChange={e => setCharPersonality(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Personality Matrix</label>
+                  <select value={charPersonality} onChange={e => setCharPersonality(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
                     {['Funny', 'Cold', 'Smart', 'Evil', 'Friendly', 'Romantic', 'Mysterious', 'Aggressive', 'Loyal', 'Chaotic', 'Confident', 'Genius', 'Calm'].map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Visual Style</label>
-                  <select value={charStyle} onChange={e => setCharStyle(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Visual Aesthetic</label>
+                  <select value={charStyle} onChange={e => setCharStyle(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
                     {['Realistic', 'Anime', 'Cartoon', 'Cyberpunk', 'Futuristic', 'Pixar Style', 'Dark Fantasy', 'Neon Style', 'Medieval', 'Sci-Fi'].map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Backstory Theme</label>
-                  <select value={charBackstory} onChange={e => setCharBackstory(e.target.value)} className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 appearance-none text-slate-200">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Backstory Theme</label>
+                  <select value={charBackstory} onChange={e => setCharBackstory(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
                     {['Hero Journey', 'Tragic Past', 'Revenge Story', 'Lost Memory', 'AI Experiment', 'Alien Origin', 'Secret Agent', 'Kingdom Warrior', 'Hacker Legend'].map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
 
                 <div className="md:col-span-2 space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/70 ml-1">Powers & Abilities (Optional)</label>
-                  <input value={charPowers} onChange={e => setCharPowers(e.target.value)} placeholder="e.g. Time control, Hacking, Super speed..." className="w-full bg-slate-950/50 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-700" />
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Primary Abilities & Powers</label>
+                  <input value={charPowers} onChange={e => setCharPowers(e.target.value)} placeholder="e.g. Time manipulation, Neural hacking, Super speed..." className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 text-slate-200 shadow-inner" />
                 </div>
               </div>
 
               <div className="flex items-center justify-center">
-                 <button onClick={() => setCharShowAdvanced(!charShowAdvanced)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors border border-cyan-500/20 px-8 py-4 rounded-2xl w-full justify-center bg-cyan-500/5 shadow-[0_0_20px_rgba(34,211,238,0.05)]">
-                   <Settings className="w-4 h-4" /> Advanced Character Controls
+                 <button onClick={() => setCharShowAdvanced(!charShowAdvanced)} className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-purple-400 hover:text-white transition-all border border-purple-500/20 px-10 py-5 rounded-[1.5rem] w-full justify-center bg-purple-500/5 shadow-2xl group">
+                   <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform" /> 
+                   <span>Advanced Core Parameters</span>
                  </button>
               </div>
 
               <AnimatePresence>
                 {charShowAdvanced && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023] border border-cyan-500/10 rounded-[2rem] p-8 overflow-hidden">
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-black/30 border border-white/5 rounded-[2.5rem] p-10 overflow-hidden backdrop-blur-2xl shadow-2xl">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                       {[
-                        { state: charVoice, setter: setCharVoice, label: 'Voice Style' },
-                        { state: charWeaknesses, setter: setCharWeaknesses, label: 'Weaknesses' },
-                        { state: charCatchphrase, setter: setCharCatchphrase, label: 'Catchphrase' },
-                        { state: charRelationships, setter: setCharRelationships, label: 'Relationships' },
-                        { state: charRival, setter: setCharRival, label: 'Rival Character' },
-                        { state: charSecretAbility, setter: setCharSecretAbility, label: 'Secret Ability' },
-                        { state: charStats, setter: setCharStats, label: 'Character Stats' },
-                        { state: charEmotionalDepth, setter: setCharEmotionalDepth, label: 'Emotional Depth' },
+                        { state: charVoice, setter: setCharVoice, label: 'Vocal Subsystem' },
+                        { state: charWeaknesses, setter: setCharWeaknesses, label: 'Entropy Points' },
+                        { state: charCatchphrase, setter: setCharCatchphrase, label: 'Linguistic Core' },
+                        { state: charRelationships, setter: setCharRelationships, label: 'Social Matrix' },
+                        { state: charRival, setter: setCharRival, label: 'Adversary Link' },
+                        { state: charSecretAbility, setter: setCharSecretAbility, label: 'Hidden Protocol' },
+                        { state: charStats, setter: setCharStats, label: 'Neural Stats' },
+                        { state: charEmotionalDepth, setter: setCharEmotionalDepth, label: 'Sentience Level' },
                       ].map((opt, i) => (
-                         <div key={i} className="space-y-2">
-                           <label className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.2em] block ml-1">{opt.label}</label>
-                           <button onClick={() => opt.setter(!opt.state)} className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${opt.state ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'bg-slate-900 text-slate-500 border border-white/5'}`}>
-                             {opt.state ? 'ACTIVE' : 'OFF'}
+                         <div key={i} className="space-y-3">
+                           <label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] block ml-1">{opt.label}</label>
+                           <button onClick={() => opt.setter(!opt.state)} className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${opt.state ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] border border-purple-400/30' : 'bg-black/40 text-slate-600 border border-white/5'}`}>
+                             {opt.state ? 'INITIALIZED' : 'OFFLINE'}
                            </button>
                          </div>
                       ))}
@@ -4215,77 +4302,79 @@ export default function App() {
 
               <div className="flex justify-center pt-4">
                 <motion.button 
-                  whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(34,211,238,0.4)' }}
+                  whileHover={{ scale: 1.02, boxShadow: '0 20px 50px rgba(139,92,246,0.4)' }}
                   whileTap={{ scale: 0.98 }}
                   onClick={generateCharacter}
-                  className="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-purple-600 px-16 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all w-full md:w-auto"
+                  className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-700 px-20 py-7 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-2xl transition-all w-full md:w-auto border border-purple-500/30"
                 >
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative z-10 flex items-center justify-center gap-4 text-white">
-                     <User className="w-5 h-5 animate-pulse" /> GENERATE CHARACTER
+                     <User className="w-6 h-6 animate-pulse" /> INITIALIZE SYNTHESIS
                   </div>
                 </motion.button>
               </div>
 
               {charResult && (
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-8">
-                  <div className="bg-[#0B1023] border border-cyan-500/20 rounded-[2rem] p-8 md:p-10 shadow-[0_0_50px_rgba(34,211,238,0.1)] relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[150px] rounded-full pointer-events-none" />
-                     <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none" />
+                <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} className="space-y-10 pt-10">
+                  <div className="bg-black/40 border border-white/10 rounded-[3.5rem] p-8 md:p-14 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
+                     <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none" />
+                     <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
                      
-                     <div className="relative z-10 space-y-8">
-                        <div className="flex flex-col md:flex-row gap-10">
+                     <div className="relative z-10 space-y-12">
+                        <div className="flex flex-col lg:flex-row gap-12">
                            {/* Left side: Preview/Image */}
-                           <div className="w-full md:w-1/3 flex flex-col gap-4">
-                              <div className="aspect-[3/4] bg-slate-950 rounded-3xl border border-cyan-500/20 shadow-[0_0_30px_rgba(34,211,238,0.1)] relative overflow-hidden group">
+                           <div className="w-full lg:w-1/3 flex flex-col gap-6">
+                              <div className="aspect-[3/4] bg-black/60 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group/img">
                                  {charImagePreview ? (
-                                   <img src={charImagePreview} alt="Character" className="w-full h-full object-cover" />
+                                   <img src={charImagePreview} alt="Character" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
                                  ) : (
-                                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                                      <User className="w-16 h-16 text-cyan-500/20 mb-4" />
-                                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/50">Awaiting Visual Rendering</p>
+                                   <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-black/40">
+                                      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                         <User className="w-10 h-10 text-purple-500/30" />
+                                      </div>
+                                      <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-600">Awaiting Visual Core Scan</p>
                                    </div>
                                  )}
-                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                                    {charImagePreview && <button onClick={() => window.open(charImagePreview, '_blank')} className="w-full py-3 bg-cyan-500 text-black text-[10px] font-black uppercase tracking-widest rounded-xl">Download Image</button>}
+                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-all duration-500 flex items-end p-8">
+                                    {charImagePreview && <button onClick={() => window.open(charImagePreview, '_blank')} className="w-full py-4 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all">Download Visual</button>}
                                  </div>
                               </div>
-                              <button onClick={handleCharImage} className="w-full py-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_0_15px_rgba(34,211,238,0.1)] flex items-center justify-center gap-2">
-                                <ImageIcon className="w-4 h-4" /> Generate Image
+                              <button onClick={handleCharImage} className="w-full py-5 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                                <ImageIcon className="w-5 h-5" /> Initialize Visualization
                               </button>
                            </div>
 
                            {/* Right side: Details */}
-                           <div className="w-full md:w-2/3 space-y-6">
+                           <div className="w-full lg:w-2/3 space-y-10">
                               <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                  <span className="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">{charType}</span>
-                                  <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">{charPersonality}</span>
+                                <div className="flex flex-wrap gap-3 mb-6">
+                                  <span className="px-5 py-1.5 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charType}</span>
+                                  <span className="px-5 py-1.5 bg-white/5 text-slate-400 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charPersonality}</span>
                                 </div>
-                                <h2 className="text-4xl md:text-5xl font-black mt-2 mb-1 text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-tight">{charResult.name}</h2>
-                                {charResult.catchphrase && <p className="text-lg text-cyan-400 font-medium italic">"{charResult.catchphrase}"</p>}
+                                <h2 className="text-5xl md:text-7xl font-black mb-3 text-white tracking-tighter italic uppercase">{charResult.name}</h2>
+                                {charResult.catchphrase && <p className="text-xl md:text-2xl text-purple-400 font-black italic tracking-tight opacity-90">"{charResult.catchphrase}"</p>}
                               </div>
 
-                              <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5">
-                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Backstory</p>
-                                 <p className="text-sm text-slate-300 leading-relaxed font-medium">{charResult.backstory}</p>
+                              <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-4">Neural Origin / Backstory</p>
+                                 <p className="text-base text-slate-300 leading-relaxed font-medium">{charResult.backstory}</p>
                               </div>
 
-                              <div className="grid sm:grid-cols-2 gap-4">
-                                <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5">
-                                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-2">Powers & Abilities</p>
-                                   <ul className="space-y-1">
+                              <div className="grid sm:grid-cols-2 gap-6">
+                                <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 mb-4">Prime Capabilities</p>
+                                   <ul className="space-y-3">
                                      {charResult.abilities?.map((a: string, i: number) => (
-                                       <li key={i} className="text-[11px] text-slate-300 flex items-center gap-2"><div className="w-1 h-1 bg-emerald-400 rounded-full"/> {a}</li>
+                                       <li key={i} className="text-sm text-slate-300 flex items-center gap-3"><div className="w-1.5 h-1.5 bg-purple-500 rounded-full shadow-[0_0_8px_#8b5cf6]"/> {a}</li>
                                      ))}
                                    </ul>
                                 </div>
                                 {charResult.weaknesses && (
-                                  <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5">
-                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 mb-2">Weaknesses</p>
-                                     <ul className="space-y-1">
+                                  <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400 mb-4">System Vulnerabilities</p>
+                                     <ul className="space-y-3">
                                        {charResult.weaknesses?.map((w: string, i: number) => (
-                                         <li key={i} className="text-[11px] text-slate-300 flex items-center gap-2"><div className="w-1 h-1 bg-red-400 rounded-full"/> {w}</li>
+                                         <li key={i} className="text-sm text-slate-300 flex items-center gap-3"><div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"/> {w}</li>
                                        ))}
                                      </ul>
                                   </div>
@@ -4293,17 +4382,22 @@ export default function App() {
                               </div>
 
                               {charResult.stats && (
-                                <div className="bg-slate-900/60 p-5 rounded-2xl border border-white/5 space-y-4">
-                                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Combat & Trait Stats</p>
-                                   <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                                <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
+                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-2">Neural Combat Parameters</p>
+                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
                                      {Object.entries(charResult.stats).map(([stat, val]: any) => (
                                        <div key={stat}>
-                                         <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-1">
-                                           <span className="text-slate-400">{stat}</span>
-                                           <span className="text-cyan-400">{val}/100</span>
+                                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
+                                           <span className="text-slate-500">{stat}</span>
+                                           <span className="text-purple-400">{val}<span className="text-[8px] opacity-50 ml-0.5">/100</span></span>
                                          </div>
-                                         <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden">
-                                           <div className="h-full bg-gradient-to-r from-cyan-500 to-purple-500" style={{ width: `${val}%` }} />
+                                         <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                                           <motion.div 
+                                              initial={{ width: 0 }}
+                                              animate={{ width: `${val}%` }}
+                                              transition={{ duration: 1, ease: "easeOut" }}
+                                              className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 shadow-[0_0_10px_rgba(139,92,246,0.5)]" 
+                                           />
                                          </div>
                                        </div>
                                      ))}
@@ -4314,46 +4408,49 @@ export default function App() {
                         </div>
 
                         {/* Extended Features */}
-                        <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                           <div className="space-y-4">
-                             <button onClick={handleGenerateDialogue} className="w-full py-4 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2">
-                               <MessageSquare className="w-4 h-4" /> Generate Dialogue
+                        <div className="grid md:grid-cols-2 gap-8 pt-10 border-t border-white/5">
+                           <div className="space-y-6">
+                             <button onClick={handleGenerateDialogue} className="w-full py-5 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                               <MessageSquare className="w-5 h-5" /> Synthesize Dialogue Matrix
                              </button>
                              {charDialogue && (
-                               <div className="bg-purple-950/20 p-5 rounded-2xl border border-purple-500/20 space-y-3">
-                                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 mb-2">Simulated Dialogue</p>
+                               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-purple-950/20 p-8 rounded-[2.5rem] border border-purple-500/20 space-y-4 shadow-2xl">
+                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 mb-4">Neural Voice Patterns</p>
                                  {charDialogue.map((d, i) => (
-                                   <div key={i} className="bg-purple-900/10 p-3 rounded-xl border border-purple-500/10 text-xs text-slate-300 font-medium italic">"{d}"</div>
+                                   <div key={i} className="bg-black/30 p-5 rounded-2xl border border-white/5 text-sm text-slate-300 font-medium italic relative group transition-all hover:bg-black/40">
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l-2xl opacity-50 group-hover:opacity-100" />
+                                      "{d}"
+                                   </div>
                                  ))}
-                               </div>
+                               </motion.div>
                              )}
                            </div>
 
-                           <div className="space-y-4">
-                             <button onClick={handleExpandStory} className="w-full py-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2">
-                               <Globe className="w-4 h-4" /> Expand Universe Lore
+                           <div className="space-y-6">
+                             <button onClick={handleExpandStory} className="w-full py-5 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                               <Globe className="w-5 h-5" /> Expand Universe Lore
                              </button>
                              {charStoryExpansion && (
-                               <div className="bg-emerald-950/20 p-5 rounded-2xl border border-emerald-500/20 space-y-4">
+                               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-indigo-950/20 p-8 rounded-[2.5rem] border border-indigo-500/20 space-y-6 shadow-2xl">
                                  <div>
-                                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">World</p>
-                                   <p className="text-xs text-slate-300 font-medium">{charStoryExpansion.world}</p>
+                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-2">World System</p>
+                                   <p className="text-sm text-slate-300 font-medium leading-relaxed">{charStoryExpansion.world}</p>
                                  </div>
-                                 <div className="grid grid-cols-2 gap-4">
+                                 <div className="grid grid-cols-2 gap-6">
                                    <div>
-                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 mb-1">Enemies</p>
-                                     <ul className="text-xs text-slate-400">{charStoryExpansion.enemies?.map((e:string,i:number)=><li key={i}>• {e}</li>)}</ul>
+                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-3">Hostile Signals</p>
+                                     <ul className="text-xs text-slate-400 space-y-2">{charStoryExpansion.enemies?.map((e:string,i:number)=><li key={i} className="flex items-center gap-2"><div className="w-1 h-1 bg-rose-500 rounded-full" /> {e}</li>)}</ul>
                                    </div>
                                    <div>
-                                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1">Allies</p>
-                                     <ul className="text-xs text-slate-400">{charStoryExpansion.allies?.map((a:string,i:number)=><li key={i}>• {a}</li>)}</ul>
+                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-3">Allied Links</p>
+                                     <ul className="text-xs text-slate-400 space-y-2">{charStoryExpansion.allies?.map((a:string,i:number)=><li key={i} className="flex items-center gap-2"><div className="w-1 h-1 bg-indigo-500 rounded-full" /> {a}</li>)}</ul>
                                    </div>
                                  </div>
-                                 <div>
-                                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-400 mb-1">Current Mission</p>
-                                   <p className="text-xs text-slate-300 font-medium">{charStoryExpansion.currentMission}</p>
+                                 <div className="bg-white/5 p-5 rounded-2xl border border-white/5">
+                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 mb-2">Active Protocol</p>
+                                   <p className="text-xs text-slate-300 font-medium italic">"{charStoryExpansion.currentMission}"</p>
                                  </div>
-                               </div>
+                               </motion.div>
                              )}
                            </div>
                         </div>
@@ -4364,33 +4461,33 @@ export default function App() {
             </div>
 
             {/* Right Column: Trending */}
-            <div className="space-y-6">
-              <div className="bg-[#0B1023]/60 border border-cyan-500/10 rounded-[2rem] p-8 space-y-5 sticky top-32">
+            <div className="xl:col-span-4 space-y-8">
+              <div className="bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-8 sticky top-32 shadow-2xl">
                  <div className="flex justify-between items-center mb-2">
-                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 flex items-center gap-2"><Zap className="w-3 h-3"/> Trending Tropes</h4>
-                   {isTrendingLoading && <RefreshCcw className="w-3 h-3 text-cyan-400 animate-spin" />}
+                   <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-purple-400 flex items-center gap-3"><Zap className="w-4 h-4 shadow-[0_0_10px_#a855f7]"/> Viral Tropes</h4>
+                   {isTrendingLoading && <RefreshCcw className="w-4 h-4 text-purple-400 animate-spin" />}
                  </div>
-                 <div className="space-y-2">
+                 <div className="space-y-3">
                    {(dynamicTrending.length > 0 ? dynamicTrending : ['Cyberpunk Assassin', 'Anime Hero', 'AI Hacker', 'Dark Villain', 'Futuristic Soldier', 'Neon Samurai', 'Multiverse Traveler']).map(t => (
-                     <button key={t} onClick={() => setCharType(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-cyan-500/40 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-                       {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-cyan-400 transition-opacity" />
+                     <button key={t} onClick={() => setCharType(t)} className="w-full p-5 bg-white/5 hover:bg-purple-600/10 border border-white/5 hover:border-purple-500/40 rounded-2xl text-left text-xs font-black text-slate-400 hover:text-white transition-all flex items-center justify-between group uppercase tracking-widest">
+                       {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400 transition-all translate-x-[-10px] group-hover:translate-x-0" />
                      </button>
                    ))}
                  </div>
-                 <div className="mt-8 pt-6 border-t border-white/5">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500 mb-4 flex items-center gap-2"><Box className="w-3 h-3" /> 3D Export Core</h4>
-                    <div className="grid grid-cols-1 gap-2">
-                      <button onClick={() => alert('Exporting to GLB/GLTF... Model will be downloaded in a moment.')} className="w-full p-3 bg-slate-900/50 hover:bg-cyan-500/10 border border-white/5 hover:border-cyan-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-all flex items-center justify-between group">
-                        Download GLB Model <Download className="w-3 h-3" />
+                 <div className="mt-12 pt-8 border-t border-white/5">
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-6 flex items-center gap-3"><Box className="w-4 h-4" /> 3D Export Hub</h4>
+                    <div className="grid grid-cols-1 gap-3">
+                      <button onClick={() => alert('Exporting to GLB/GLTF... Model will be downloaded in a moment.')} className="w-full p-4 bg-white/5 hover:bg-purple-600/10 border border-white/5 hover:border-purple-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
+                        Universal GLB <Download className="w-4 h-4" />
                       </button>
-                      <button onClick={() => alert('Preparing FBX Export... High-fidelity rig included.')} className="w-full p-3 bg-slate-900/50 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-purple-400 transition-all flex items-center justify-between group">
-                        Download FBX Model <Download className="w-3 h-3" />
+                      <button onClick={() => alert('Preparing FBX Export... High-fidelity rig included.')} className="w-full p-4 bg-white/5 hover:bg-indigo-600/10 border border-white/5 hover:border-indigo-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
+                        Pro FBX Rig <Download className="w-4 h-4" />
                       </button>
-                      <button onClick={() => alert('Packing .BLEND file... Native Blender format ready.')} className="w-full p-3 bg-slate-900/50 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-400 transition-all flex items-center justify-between group">
-                        Download .BLEND <Download className="w-3 h-3" />
+                      <button onClick={() => alert('Packing .BLEND file... Native Blender format ready.')} className="w-full p-4 bg-white/5 hover:bg-emerald-600/10 border border-white/5 hover:border-emerald-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
+                        Blender .BLEND <Download className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest text-center pt-3 italic">Professional 3D Formats (V-Rig Ready)</p>
+                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.4em] text-center pt-6 italic">V-Rig Optimization v2.4-stable</p>
                   </div>
               </div>
             </div>
@@ -4399,52 +4496,44 @@ export default function App() {
       );
     }
 
+
     function renderCreativeDashboard() {
     const categories = [
       {
-        name: "Content Creation Tools",
+        name: "Content Creation Forge",
         tools: [
-          { name: "AI Story Generator", desc: "Generate engaging stories on any topic.", icon: PenTool, color: "text-purple-400", bg: "bg-purple-600/10" },
-          { name: "Script Writer", desc: "Write scripts for YouTube, Reels, Shorts & more.", icon: Video, color: "text-red-400", bg: "bg-red-600/10" },
-          { name: "Idea Generator", id: "idea", desc: "Get unique ideas for content, business or more.", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-600/10" },
-          { name: "Song Lyrics Generator", desc: "Create original song lyrics in any style.", icon: Radio, color: "text-pink-400", bg: "bg-pink-600/10" },
-          { name: "Joke / Meme Ideas", id: "joke", desc: "Generate funny jokes and meme ideas.", icon: MessageSquare, color: "text-emerald-400", bg: "bg-emerald-600/10" }
+          { name: "AI Story Generator", desc: "Forge engaging narratives on any topic.", icon: PenTool, color: "#a855f7", bg: "bg-purple-600/10" },
+          { name: "Script Architect", desc: "Write viral scripts for YouTube & Reels.", icon: Video, color: "#ef4444", bg: "bg-red-600/10" },
+          { name: "Idea Nexus", id: "idea", desc: "Generate unique high-growth concepts.", icon: Lightbulb, color: "#f59e0b", bg: "bg-amber-600/10" },
+          { name: "Lyric Synthesis", desc: "Create original song lyrics in any style.", icon: Radio, color: "#ec4899", bg: "bg-pink-600/10" },
+          { name: "Meme Matrix", id: "joke", desc: "Generate viral jokes and meme concepts.", icon: MessageSquare, color: "#10b981", bg: "bg-emerald-600/10" }
         ]
       },
       {
-        name: "Character & World Building",
+        name: "Identity & World Building",
         tools: [
-          { name: "AI Character Creator", id: "character", desc: "Create unique characters with backstory.", icon: User, color: "text-violet-400", bg: "bg-violet-600/10" },
-          { name: "World / Universe Builder", desc: "Build your own world, settings & lore.", icon: Globe, color: "text-blue-400", bg: "bg-blue-600/10" },
-          { name: "Fantasy Story Builder", desc: "Create fantasy stories with AI magic.", icon: Book, color: "text-emerald-400", bg: "bg-emerald-600/10" },
-          { name: "Game Story Generator", desc: "Generate storylines for your game ideas.", icon: Layout, color: "text-rose-400", bg: "bg-rose-600/10" }
+          { name: "AI Character Creator", id: "character", desc: "Create unique characters with deep lore.", icon: User, color: "#8b5cf6", bg: "bg-violet-600/10" },
+          { name: "Universe Builder", desc: "Build custom worlds, settings & lore.", icon: Globe, color: "#3b82f6", bg: "bg-blue-600/10" },
+          { name: "Fantasy Weaver", desc: "Create magical fantasy tales with AI.", icon: Book, color: "#10b981", bg: "bg-emerald-600/10" },
+          { name: "Game Lore Gen", desc: "Generate backstories for game ideas.", icon: Layout, color: "#f43f5e", bg: "bg-rose-600/10" }
         ]
       },
       {
-        name: "Social & Creator Tools",
+        name: "Social Influence Tools",
         tools: [
-          { name: "Viral Hook Generator", desc: "Create attention-grabbing hooks for your content.", icon: Zap, color: "text-orange-400", bg: "bg-orange-600/10" },
-          { name: "Caption Generator", desc: "Generate captions for Instagram, Facebook etc.", icon: MessageSquare, color: "text-indigo-400", bg: "bg-indigo-600/10" },
-          { name: "Hashtag Generator", desc: "Find trending & relevant hashtags instantly.", icon: Hash, color: "text-purple-400", bg: "bg-purple-600/10" },
-          { name: "Video Script & Planner", desc: "Plan video content with script & scene ideas.", icon: Monitor, color: "text-emerald-400", bg: "bg-emerald-600/10" }
+          { name: "Viral Hook Engine", desc: "Create attention-grabbing viral hooks.", icon: Zap, color: "#f97316", bg: "bg-orange-600/10" },
+          { name: "Caption Synthesis", desc: "Generate elite social media captions.", icon: MessageSquare, color: "#6366f1", bg: "bg-indigo-600/10" },
+          { name: "Hashtag Miner", desc: "Find trending hashtags with AI precision.", icon: Hash, color: "#a855f7", bg: "bg-purple-600/10" },
+          { name: "Video Strategist", desc: "Plan content with scene-by-scene ideas.", icon: Monitor, color: "#10b981", bg: "bg-emerald-600/10" }
         ]
       },
       {
-        name: "Experimental AI Tools",
+        name: "Experimental Research",
         tools: [
-          { name: "AI Personality Chat", desc: "Chat with custom AI characters.", icon: MessageSquare, color: "text-cyan-400", bg: "bg-cyan-600/10" },
-          { name: "Brainstorm Mode", desc: "Deep thinking AI for creative brainstorming.", icon: Zap, color: "text-indigo-400", bg: "bg-indigo-600/10" },
-          { name: "Future Predictor", desc: "Get fun & creative predictions.", icon: Eye, color: "text-amber-400", bg: "bg-amber-600/10" },
-          { name: "Random Creative Generator", desc: "Get random creative ideas & surprises.", icon: RefreshCcw, color: "text-purple-400", bg: "bg-purple-600/10" }
-        ]
-      },
-      {
-        name: "Design Thinking Tools",
-        tools: [
-          { name: "Brand Name Generator", desc: "Generate unique & catchy brand names.", icon: Settings, color: "text-cyan-400", bg: "bg-cyan-600/10" },
-          { name: "Tagline Generator", desc: "Create memorable taglines for brands.", icon: Tag, color: "text-orange-400", bg: "bg-orange-600/10" },
-          { name: "Product Idea Generator", desc: "Discover innovative product ideas.", icon: CreditCard, color: "text-emerald-400", bg: "bg-emerald-600/10" },
-          { name: "Startup Pitch Generator", desc: "Generate pitch ideas & content for startups.", icon: Rocket, color: "text-blue-400", bg: "bg-blue-600/10" }
+          { name: "AI Persona Chat", desc: "Chat with custom simulated characters.", icon: MessageSquare, color: "#22d3ee", bg: "bg-cyan-600/10" },
+          { name: "Deep Brainstorm", desc: "High-level AI for complex problem solving.", icon: Zap, color: "#6366f1", bg: "bg-indigo-600/10" },
+          { name: "Future Vision", desc: "Get fun & creative predictive insights.", icon: Eye, color: "#f59e0b", bg: "bg-amber-600/10" },
+          { name: "Random Surprise", desc: "Get random creative ideas & sparks.", icon: RefreshCcw, color: "#a855f7", bg: "bg-purple-600/10" }
         ]
       }
     ];
@@ -4535,104 +4624,95 @@ export default function App() {
     );
 
     return (
-      <div className="min-h-full bg-slate-950 p-3 md:p-6 overflow-y-auto no-scrollbar relative">
+      <div className="h-full flex flex-col overflow-hidden premium-bg relative">
         {renderHistorySidebar()}
-        {/* Compact Header Section */}
-        <div className="max-w-full mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2 md:px-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.2)] border border-white/10">
+        {/* Background Effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.05)_0%,transparent_50%)]" />
+        </div>
+
+        {/* Premium Header */}
+        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.3)] border border-purple-500/30">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-white italic tracking-tight uppercase">Creative <span className="font-light not-italic text-slate-500 tracking-normal">Mode</span></h1>
-              <p className="text-slate-500 text-[9px] font-bold uppercase tracking-[0.1em]">Imagination Engine v2.0</p>
+              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Creative Studio</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse shadow-[0_0_10px_#ec4899]" />
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Creative Link: Synchronized</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex gap-2">
-            <div className="bg-slate-900/50 border border-slate-800 p-2 px-4 rounded-xl flex items-center gap-3 backdrop-blur-md">
-              <div className="text-right">
-                <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest block">Credits</span>
-                <span className="text-lg font-black text-white">{credits.toLocaleString()}</span>
-              </div>
-            </div>
-            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-all">Upgrade</button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowHistorySidebar(true)}
+              className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all shadow-xl"
+            >
+              <Clock className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setIsPricingOpen(true)}
+              className="px-8 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-500/30"
+            >
+              Unlock Plus
+            </button>
           </div>
         </div>
 
-        {/* Compact Categories and Tools Grid */}
-        <div className="max-w-full mx-auto space-y-8 px-2 md:px-4">
-          {categories.map((cat, idx) => (
-            <div key={idx} className="space-y-4">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] whitespace-nowrap">{cat.name}</h2>
-                <div className="h-[1px] w-full bg-slate-800/30" />
-              </div>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3 sm:gap-4">
-                {cat.tools.map((tool, tIdx) => (
-                  <motion.button
-                    key={tIdx}
-                    onClick={() => handleSelectTool(tool.id || tool.name.toLowerCase().replace(/ /g, ''))}
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    className="group bg-slate-900/40 border border-slate-800/60 hover:border-indigo-500/50 p-6 rounded-2xl text-left transition-all relative overflow-hidden h-full flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className={`w-12 h-12 rounded-xl ${tool.bg} flex items-center justify-center mb-4 border border-white/5 shadow-lg`}>
-                        <tool.icon className={`w-6 h-6 ${tool.color}`} />
-                      </div>
-                      <h3 className="text-sm font-black text-white mb-1.5 group-hover:text-indigo-300 transition-colors">{tool.name}</h3>
-                      <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{tool.desc}</p>
-                    </div>
-                    
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Creative Suite</span>
-                      <ChevronRight className="w-4 h-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Dashboard Content */}
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 relative z-10">
+          <div className="max-w-[1600px] mx-auto space-y-12">
+            {categories.map((cat, catIdx) => (
+              <motion.div 
+                key={cat.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: catIdx * 0.1 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center gap-4">
+                  <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] italic">{cat.name}</h3>
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/5 to-transparent ml-2" />
+                </div>
 
-        {/* Compact Lab Section */}
-        <div className="max-w-7xl mx-auto mt-10 pt-10 border-t border-slate-900">
-           <div className="bg-gradient-to-br from-indigo-900/10 to-slate-900/20 border border-indigo-500/10 rounded-3xl p-6 md:p-8 relative overflow-hidden">
-             <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-               <div className="space-y-4">
-                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-indigo-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest">Experimental Lab</div>
-                 <h2 className="text-2xl font-black text-white italic">AI Creative Studio</h2>
-                 <p className="text-slate-500 text-xs leading-relaxed max-w-sm font-medium">Access advanced creative models for HD synthesis and procedural storytelling.</p>
-                 <div className="flex gap-3">
-                   <button className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] hover:bg-indigo-500 transition-all">Enter Studio</button>
-                   <button className="bg-slate-800 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] hover:bg-slate-700 transition-all">Docs</button>
-                 </div>
-               </div>
-               <div className="grid grid-cols-2 gap-3">
-                 {[
-                   { name: "Image Studio", icon: ImageIcon, desc: "Ultra-HD" },
-                   { name: "Video Lab", icon: Video, desc: "Motion Gen" },
-                   { name: "Voice Suite", icon: Mic2, desc: "Neural Clone" },
-                   { name: "Dev Engine", icon: Code, desc: "AI Builder" }
-                 ].map(item => (
-                   <div key={item.name} className="bg-slate-950/60 border border-slate-800 p-3 rounded-2xl hover:border-indigo-500/30 transition-all group">
-                     <item.icon className="w-4 h-4 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" />
-                     <h4 className="text-[10px] font-bold text-white mb-0.5">{item.name}</h4>
-                     <p className="text-[8px] text-slate-600">{item.desc}</p>
-                   </div>
-                 ))}
-               </div>
-             </div>
-           </div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto mt-10 text-center">
-          <p className="text-[8px] font-bold text-slate-800 uppercase tracking-[0.4em]">SmartAI Neural Engine v4.8.2</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {cat.tools.map((tool, toolIdx) => (
+                    <motion.div
+                      key={tool.name}
+                      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                      className="group relative bg-[#0d111c]/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 flex flex-col gap-6 cursor-pointer transition-all hover:border-purple-500/40 hover:shadow-[0_20px_50px_rgba(139,92,246,0.1)] overflow-hidden"
+                      onClick={() => handleSelectTool(tool.id || tool.name.toLowerCase().replace(/ /g, ''))}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="w-14 h-14 rounded-2xl bg-slate-900/80 border border-white/5 group-hover:border-purple-500/30 transition-all flex items-center justify-center">
+                          <tool.icon className="w-7 h-7 transition-colors drop-shadow-[0_0_8px_rgba(139,92,246,0.3)]" style={{ color: tool.color }} />
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <ChevronRight className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h4 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors tracking-tight italic">{tool.name}</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors">{tool.desc}</p>
+                      </div>
+
+                      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+            <div className="h-20" />
+          </div>
         </div>
       </div>
     );
   }
+
 
   function renderNormalDashboard() {
     const handleToolClick = (tool: any) => {
@@ -4648,83 +4728,130 @@ export default function App() {
     };
 
     return (
-      <div className="w-full h-full flex flex-col max-w-full mx-auto px-3 md:px-6 gap-3 py-3 relative overflow-y-auto no-scrollbar">
-        {/* Header Section */}
-        <div className="flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-indigo-600/10 rounded-xl flex items-center justify-center border border-indigo-500/20 shadow-lg shadow-indigo-600/5">
-                <Zap className="w-5 h-5 text-indigo-400" />
-             </div>
-             <div>
-                <h1 className="text-lg md:text-xl font-black text-white tracking-tight uppercase italic">Normal <span className="text-slate-500 font-light not-italic tracking-normal">Mode</span></h1>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em]">Efficiency Suite v1.0</p>
-             </div>
-          </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-2 px-4 flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Credits</p>
-              <p className="text-base font-black text-white">{credits}</p>
+      <div className="h-full flex flex-col overflow-hidden premium-bg relative">
+        {/* Background Effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[120px] rounded-full" />
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/5 blur-[120px] rounded-full" />
+        </div>
+
+        {/* Premium Header */}
+        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.3)] border border-indigo-500/30">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Normal <span className="text-slate-500 font-light not-italic tracking-normal">Mode</span></h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_10px_#6366f1]" />
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Neural Load: Balanced</p>
+              </div>
             </div>
           </div>
+          
+          <div className="flex items-center gap-6 bg-white/5 border border-white/10 px-6 py-2.5 rounded-2xl shadow-inner">
+            <div className="text-right">
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Credits</p>
+              <p className="text-lg font-black text-white leading-none mt-1">{credits.toLocaleString()}</p>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <button 
+              onClick={() => setIsPricingOpen(true)}
+              className="text-[10px] font-black text-indigo-400 hover:text-white transition-colors uppercase tracking-widest"
+            >
+              Top Up
+            </button>
+          </div>
         </div>
 
-        {/* Quick Tools */}
-        <div className="shrink-0">
-          <div className="flex items-center justify-between mb-2">
-             <h2 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Quick Access</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 sm:gap-4">
-            {[
-              { name: 'Text to Image', desc: 'Gen from text.', icon: ImageIcon, color: 'text-indigo-400' },
-              { name: 'Image to Image', desc: 'Restyle images.', icon: Copy, color: 'text-blue-400' },
-              { name: 'BG Remover', desc: 'One-click clear.', icon: Layers, color: 'text-slate-400' },
-              { name: 'Enhance', desc: 'Upscale & fix.', icon: Sparkles, color: 'text-purple-400' },
-              { name: 'Compress', desc: 'Optimize size.', icon: Download, color: 'text-emerald-400' }
-            ].map((tool, i) => (
-              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/60 hover:bg-slate-800/60 transition-all rounded-2xl p-5 text-left group h-full flex flex-col justify-between shadow-lg">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-indigo-500/30 transition-colors shadow-inner`}>
-                      <tool.icon className={`w-6 h-6 ${tool.color}`} />
+        {/* Dashboard Content */}
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 relative z-10">
+          <div className="max-w-[1600px] mx-auto space-y-12">
+            
+            {/* Quick Access Section */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-4">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] italic">Quick Access Forge</h3>
+                <div className="flex-1 h-px bg-gradient-to-r from-white/5 to-transparent ml-2" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                {[
+                  { name: 'Text to Image', desc: 'Synthesize art from neural prompts.', icon: ImageIcon, color: '#6366f1' },
+                  { name: 'Image to Image', desc: 'Restyle existing visual assets.', icon: Copy, color: '#3b82f6' },
+                  { name: 'BG Remover', desc: 'Clean neural background extraction.', icon: Layers, color: '#94a3b8' },
+                  { name: 'Enhance', desc: 'HD Upscaling & detail fixed.', icon: Sparkles, color: '#a855f7' },
+                  { name: 'Compress', desc: 'Optimize asset weight instantly.', icon: Download, color: '#10b981' }
+                ].map((tool, i) => (
+                  <motion.div
+                    key={i}
+                    whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                    onClick={() => handleToolClick(tool)}
+                    className="group relative bg-[#0d111c]/60 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 flex flex-col gap-6 cursor-pointer transition-all hover:border-indigo-500/40 hover:shadow-[0_20px_50px_rgba(99,102,241,0.1)] overflow-hidden"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-900/80 border border-white/5 group-hover:border-indigo-500/30 transition-all flex items-center justify-center">
+                        <tool.icon className="w-7 h-7 transition-colors drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" style={{ color: tool.color }} />
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <ChevronRight className="w-4 h-4 text-white" />
+                      </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-white/5 group-hover:text-white transition-colors" />
-                  </div>
-                  <h3 className="text-sm font-black text-white mb-1.5">{tool.name}</h3>
-                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{tool.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* More Tools */}
-        <div className="pb-4 flex flex-col min-h-0">
-          <h2 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">All Utilities</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2 sm:gap-3 pb-20 md:pb-10 overflow-y-auto no-scrollbar">
-            {[
-              { name: 'Resize', desc: 'Dimensions.', icon: Monitor },
-              { name: 'Crop', desc: 'Any size.', icon: Layout },
-              { name: 'Rotate', desc: 'Flip/Rotate.', icon: RefreshCcw },
-              { name: 'Convert', desc: 'Formats.', icon: FileText },
-              { name: 'Text', desc: 'Add labels.', icon: PenTool },
-              { name: 'Adjust', desc: 'Color/Light.', icon: Eye },
-              { name: 'Filters', desc: 'FX effects.', icon: Sparkles },
-              { name: 'Collage', desc: 'Multi-grid.', icon: Layout },
-              { name: 'Memes', desc: 'Humor gen.', icon: User },
-              { name: 'Stickers', desc: 'Add icons.', icon: Layers },
-              { name: 'Watermark', desc: 'Ownership.', icon: CloudSun },
-              { name: 'QR Gen', desc: 'Codes.', icon: Code }
-            ].map((tool, i) => (
-              <button key={i} onClick={() => handleToolClick(tool)} className="bg-slate-900/40 border border-slate-800/40 hover:bg-slate-800/60 transition-all rounded-2xl p-4 flex items-center gap-4 text-left group shadow-sm">
-                <div className="w-10 h-10 shrink-0 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-indigo-500/30 transition-colors shadow-inner">
-                  <tool.icon className="w-5 h-5 text-indigo-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xs font-black text-white mb-0.5 truncate">{tool.name}</h3>
-                  <p className="text-[10px] text-slate-600 truncate">{tool.desc}</p>
-                </div>
-              </button>
-            ))}
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-black text-white group-hover:text-indigo-300 transition-colors tracking-tight italic">{tool.name}</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium group-hover:text-slate-400 transition-colors">{tool.desc}</p>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* All Utilities Section */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-4">
+                <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.4em] italic">Universal Utilities</h3>
+                <div className="flex-1 h-px bg-gradient-to-r from-white/5 to-transparent ml-2" />
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {[
+                  { name: 'Resize', desc: 'Dimensions.', icon: Monitor },
+                  { name: 'Crop', desc: 'Any size.', icon: Layout },
+                  { name: 'Rotate', desc: 'Flip/Rotate.', icon: RefreshCcw },
+                  { name: 'Convert', desc: 'Formats.', icon: FileText },
+                  { name: 'Text', desc: 'Add labels.', icon: PenTool },
+                  { name: 'Adjust', desc: 'Color/Light.', icon: Eye },
+                  { name: 'Filters', desc: 'FX effects.', icon: Sparkles },
+                  { name: 'Collage', desc: 'Multi-grid.', icon: Layout },
+                  { name: 'Memes', desc: 'Humor gen.', icon: User },
+                  { name: 'Stickers', desc: 'Add icons.', icon: Layers },
+                  { name: 'Watermark', desc: 'Ownership.', icon: CloudSun },
+                  { name: 'QR Gen', desc: 'Codes.', icon: Code }
+                ].map((tool, i) => (
+                  <motion.button 
+                    key={i} 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleToolClick(tool)} 
+                    className="bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-indigo-500/20 transition-all rounded-2xl p-5 flex items-center gap-4 text-left group shadow-lg"
+                  >
+                    <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-900/50 flex items-center justify-center border border-white/5 group-hover:border-indigo-500/30 transition-colors">
+                      <tool.icon className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs font-black text-white mb-0.5 truncate uppercase tracking-widest">{tool.name}</h3>
+                      <p className="text-[10px] text-slate-600 truncate font-bold">{tool.desc}</p>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-20" />
           </div>
         </div>
 
@@ -5001,20 +5128,33 @@ export default function App() {
               </div>
 
               {/* Chat Messages Area (Scrollable) */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar scroll-smooth">
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 no-scrollbar scroll-smooth">
                 {messages.map((msg, idx) => {
                   return (
-                    <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                      <div className={`max-w-[90%] p-2.5 md:p-3 rounded-2xl relative group ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800/80 border border-slate-700/50 text-slate-200 shadow-lg rounded-tl-sm'} ${msg.isVoice ? 'border-dashed border-indigo-500/40' : ''}`}>
-                        <p className="text-[12px] leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                    <motion.div key={msg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className={`max-w-[85%] p-4 md:p-6 rounded-[1.5rem] relative group transition-all duration-300 ${msg.role === 'user' ? 'bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-tr-none shadow-[0_10px_30px_rgba(139,92,246,0.2)] border border-purple-500/30' : 'bg-white/5 backdrop-blur-xl border border-white/10 text-slate-200 shadow-2xl rounded-tl-none'} ${msg.isVoice ? 'border-dashed border-purple-500/40' : ''}`}>
+                        <div className="flex items-center gap-2 mb-2 opacity-50">
+                           {msg.role === 'user' ? (
+                             <>
+                               <span className="text-[10px] font-black uppercase tracking-widest">You</span>
+                               <User className="w-3 h-3" />
+                             </>
+                           ) : (
+                             <>
+                               <Sparkles className="w-3 h-3 text-purple-400" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">SmartAI Pro</span>
+                             </>
+                           )}
+                        </div>
+                        <p className="text-[13px] md:text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
                         {msg.role === 'assistant' && (
-                          <div className="absolute -bottom-7 left-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all bg-slate-900 border border-slate-700 px-2 py-1 rounded-md shadow-lg">
+                          <div className="absolute -bottom-8 left-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl">
                             <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
-                              <Copy className="w-3.5 h-3.5" />
+                              <Copy className="w-4 h-4" />
                             </button>
                             {idx === messages.length - 1 && (
                               <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-400 hover:text-white transition-colors">
-                                <RefreshCcw className="w-3.5 h-3.5" />
+                                <RefreshCcw className="w-4 h-4" />
                               </button>
                             )}
                           </div>
@@ -5025,10 +5165,10 @@ export default function App() {
                 })}
                 {isAiThinking && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                    <div className="bg-slate-800/80 border border-slate-700/50 p-4 rounded-2xl rounded-tl-sm flex gap-1.5 shadow-lg">
-                      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
-                      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }} className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
-                      <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.6 }} className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl rounded-tl-none flex gap-2 shadow-2xl">
+                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
+                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
+                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
                     </div>
                   </motion.div>
                 )}
@@ -5036,8 +5176,8 @@ export default function App() {
               </div>
 
               {/* Chat Input Area (Fixed at bottom of container) */}
-              <div className="p-2 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0">
-                <div className="flex gap-1.5 items-center bg-slate-950 border border-slate-800 rounded-lg p-1 shadow-inner focus-within:border-indigo-500/50 transition-colors">
+              <div className="p-4 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0">
+                <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
@@ -5047,96 +5187,103 @@ export default function App() {
                         handleSendMessage();
                       }
                     }}
-                    placeholder="Enter your prompt here..."
-                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
+                    placeholder="Ask anything to SmartAI Pro..."
+                    className="flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
                   />
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button 
                       onClick={handleNewChat}
                       title="Start New Chat"
-                      className="p-2 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all border border-indigo-500/20"
+                      className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5 hover:border-purple-500/30"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-5 h-5" />
                     </button>
                     <button 
                       onClick={() => setIsVoiceAvatarOpen(true)} 
                       title="AI Voice Assistant"
-                      className="p-2 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white rounded-lg transition-all border border-indigo-500/20"
+                      className="p-3 bg-purple-600/10 text-purple-400 hover:bg-purple-600 hover:text-white rounded-xl transition-all border border-purple-500/20"
                     >
-                      <Globe className="w-4 h-4" />
+                      <Globe className="w-5 h-5" />
                     </button>
-                    <button onClick={startListening} className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                      <Mic className="w-4 h-4" />
+                    <button onClick={startListening} className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-600 text-white animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5'}`}>
+                      <Mic className="w-5 h-5" />
                     </button>
-                    <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20 active:scale-95">
-                      <Send className="w-4 h-4" />
+                    <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-xl transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(139,92,246,0.3)] active:scale-95 border border-purple-500/30">
+                      <Send className="w-5 h-5" />
                     </button>
                   </div>
+                </div>
+                <div className="flex justify-center mt-3">
+                   <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Neural Interface v8.2.0-stable</p>
                 </div>
               </div>
             </div>
+
         )}
 
         {activeTab === 'image' && (
-          <div className="max-w-5xl mx-auto w-full pb-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-8 mb-6 md:mb-8 relative shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
+          <div className="max-w-6xl mx-auto w-full pb-20 px-4 md:px-8">
+            <div className="bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-6 md:p-12 mb-10 relative shadow-2xl overflow-hidden group">
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none group-hover:bg-purple-600/10 transition-all duration-1000" />
+              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none group-hover:bg-indigo-600/10 transition-all duration-1000" />
 
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3 md:gap-4 relative z-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 relative z-10">
                 <div>
-                  <h2 className="text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2 md:gap-3">
-                    <ImageIcon className="w-6 h-6 md:w-8 md:h-8 text-indigo-400" />
-                    Image Synthesis
+                  <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter flex items-center gap-4 italic uppercase">
+                    <div className="p-3 bg-purple-600/20 rounded-2xl border border-purple-500/30 shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+                      <ImageIcon className="w-8 h-8 text-purple-400" />
+                    </div>
+                    Image <span className="text-purple-500">Synthesis</span>
                   </h2>
-                  <p className="text-slate-400 text-xs md:text-sm mt-1">Generate high-quality visuals instantly.</p>
+                  <p className="text-slate-500 text-xs md:text-sm mt-3 font-bold uppercase tracking-[0.3em]">Generate high-fidelity neural visuals instantly.</p>
                 </div>
-                <div className="flex items-center gap-2 md:gap-3 bg-slate-950 border border-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-inner w-full md:w-auto justify-between md:justify-start">
-                  <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cost</span>
-                  <div className="flex items-center gap-1.5 text-indigo-400 font-black text-sm md:text-base">
-                    <Zap className="w-3 h-3 md:w-4 md:h-4" /> 5 Tokens
+                <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-6 py-3 rounded-2xl shadow-inner w-full md:w-auto justify-between group/cost transition-all hover:border-purple-500/30">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Cost</span>
+                  <div className="flex items-center gap-2 text-purple-400 font-black text-lg group-hover/cost:scale-110 transition-transform">
+                    <Zap className="w-5 h-5 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" /> 5 Tokens
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 relative z-10 mb-6">
-                <div className="md:col-span-8 space-y-3 md:space-y-4">
-                  <div>
-                    <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2 flex justify-between">
-                      <span>Prompt</span>
-                      <button onClick={handleEnhancePrompt} disabled={isEnhancing} className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
-                        <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Enhance'}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10 mb-10">
+                <div className="md:col-span-8 space-y-6">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2 flex justify-between items-center">
+                      <span>Visual Prompt Description</span>
+                      <button onClick={handleEnhancePrompt} disabled={isEnhancing} className="text-purple-400 hover:text-purple-300 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 font-black uppercase tracking-widest text-[9px] bg-purple-500/10 px-3 py-1 rounded-lg border border-purple-500/20">
+                        <Sparkles className="w-3 h-3" /> {isEnhancing ? 'Enhancing...' : 'Auto-Enhance'}
                       </button>
                     </label>
-                    <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the image you want to generate in detail..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 md:p-4 text-xs md:text-sm h-20 md:h-32 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                    <textarea value={imgPrompt} onChange={e => setImgPrompt(e.target.value)} placeholder="Describe the scene, style, lighting and details..." className="w-full bg-black/40 border border-white/5 rounded-[1.5rem] p-6 text-sm h-32 md:h-48 resize-none outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 shadow-inner font-medium text-slate-200" />
                   </div>
-                  <div>
-                    <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Negative Prompt (Optional)</label>
-                    <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="What should NOT be in the image..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 md:p-3 text-xs md:text-sm h-12 md:h-16 resize-none outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-inner" />
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Exclusion Parameters (Negative Prompt)</label>
+                    <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder="Avoid blur, low quality, distorted hands..." className="w-full bg-black/40 border border-white/5 rounded-[1.25rem] p-4 text-xs md:text-sm h-16 md:h-20 resize-none outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 shadow-inner font-medium text-slate-200" />
                   </div>
                 </div>
 
-                <div className="md:col-span-4 bg-slate-950/50 border border-slate-800/50 rounded-2xl p-3 md:p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
-                    <div>
-                      <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Style</label>
-                      <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
+                <div className="md:col-span-4 space-y-6">
+                  <div className="bg-black/20 border border-white/5 rounded-[2rem] p-6 space-y-6">
+                    <div className="space-y-3">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Artistic Style</label>
+                      <select value={imgStyle} onChange={e => setImgStyle(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-purple-500/50 transition-all appearance-none cursor-pointer font-bold">
                         {STYLES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Quality</label>
-                      <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-slate-200 outline-none focus:border-indigo-500/50">
-                        <option value="Standard">Standard</option>
-                        <option value="HD">HD Quality</option>
-                        <option value="4K">4K Ultra</option>
-                        <option value="8K">8K</option>
+                    <div className="space-y-3">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Visual Fidelity</label>
+                      <select value={imgQuality} onChange={e => setImgQuality(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-purple-500/50 transition-all appearance-none cursor-pointer font-bold">
+                        <option value="Standard">Standard Matrix</option>
+                        <option value="HD">HD Resolution</option>
+                        <option value="4K">4K Ultra Engine</option>
+                        <option value="8K">8K Neural Core</option>
                       </select>
                     </div>
-                    <div className="col-span-2 md:col-span-1">
-                      <label className="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Aspect Ratio</label>
-                      <div className="grid grid-cols-4 gap-1 md:gap-2">
+                    <div className="space-y-3">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Aspect Configuration</label>
+                      <div className="grid grid-cols-4 gap-2">
                         {ASPECTS.map(a => (
-                          <button key={a} onClick={() => setImgAspect(a as any)} className={`py-1.5 md:py-2 rounded-lg text-[9px] md:text-[10px] font-bold transition-all border ${imgAspect === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}>{a}</button>
+                          <button key={a} onClick={() => setImgAspect(a as any)} className={`py-3 rounded-xl text-[10px] font-black transition-all border ${imgAspect === a ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'bg-black/40 border-white/5 text-slate-500 hover:text-white hover:border-white/20'}`}>{a}</button>
                         ))}
                       </div>
                     </div>
@@ -5144,49 +5291,51 @@ export default function App() {
                 </div>
               </div>
 
-              <button onClick={() => handleGenerateImage(false)} disabled={isGenerating || !imgPrompt.trim()} className="w-full relative group overflow-hidden bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-sm transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50">
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+              <button onClick={() => handleGenerateImage(false)} disabled={isGenerating || !imgPrompt.trim()} className="w-full relative group/btn overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-700 text-white py-6 rounded-[1.5rem] font-black uppercase tracking-[0.3em] text-sm transition-all shadow-[0_20px_40px_rgba(139,92,246,0.3)] active:scale-[0.98] disabled:opacity-50 border border-purple-500/30">
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
                 {isGenerating ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-                    Synthesizing...
+                  <span className="flex items-center justify-center gap-4">
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full" />
+                    Neural Processing...
                   </span>
                 ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <Sparkles className="w-5 h-5" /> Generate Image <span className="opacity-70 font-medium ml-2">-5 Tokens</span>
+                  <span className="flex items-center justify-center gap-3">
+                    <Sparkles className="w-6 h-6 animate-pulse" /> Initialize Synthesis <span className="opacity-50 font-medium ml-3 text-xs">-5 Neural Tokens</span>
                   </span>
                 )}
               </button>
             </div>
 
             {generatedImg && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 mx-auto max-w-2xl">
-                <div className="relative group overflow-hidden rounded-[2rem] border border-slate-800 shadow-2xl bg-slate-900 p-2">
-                  <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-3xl" />
+              <motion.div initial={{ opacity: 0, y: 40, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="mb-20 mx-auto max-w-3xl">
+                <div className="relative group/img overflow-hidden rounded-[3rem] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] bg-black/40 p-3">
+                  <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-[2.5rem] shadow-2xl transition-transform duration-700 group-hover/img:scale-[1.02]" />
                   {/* Desktop Hover Overlay */}
-                  <div className="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm rounded-[2rem] flex-row items-center justify-center gap-4 p-4 z-10">
-                    <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 transition-colors shadow-xl hover:scale-105">
-                      <Download className="w-4 h-4" /> Download PNG
-                    </button>
-                    <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-500 transition-colors shadow-xl hover:scale-105 disabled:opacity-50">
-                      <RefreshCcw className="w-4 h-4" /> Regenerate (-2 Tokens)
-                    </button>
-                    <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="bg-slate-700 text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-600 transition-colors shadow-xl hover:scale-105">
-                      <Copy className="w-4 h-4" /> Share
-                    </button>
+                  <div className="hidden md:flex absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 transition-all duration-500 backdrop-blur-md rounded-[3rem] flex-col items-center justify-center gap-6 p-12 z-10">
+                    <div className="space-y-4 w-full max-w-sm">
+                      <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="w-full bg-white text-black px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-slate-200 transition-all shadow-2xl hover:scale-105 active:scale-95">
+                        <Download className="w-5 h-5" /> Download Neural Output
+                      </button>
+                      <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="w-full bg-purple-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-purple-500 transition-all shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 border border-purple-400/30">
+                        <RefreshCcw className="w-5 h-5" /> Regenerate Matrix (-2)
+                      </button>
+                      <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Neural link copied!'); }} className="w-full bg-white/10 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-white/20 transition-all border border-white/10">
+                        <Copy className="w-5 h-5" /> Share Signal
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {/* Mobile Action Buttons */}
-                <div className="flex md:hidden flex-col gap-3 mt-4 w-full">
-                  <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="w-full bg-indigo-600 text-white px-5 py-4 rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-indigo-500 transition-colors shadow-xl">
-                    <Download className="w-5 h-5" /> Download Image
+                <div className="flex md:hidden flex-col gap-4 mt-8 w-full px-4">
+                  <button onClick={() => handleDownloadImageAsPng(generatedImg)} className="w-full bg-white text-black px-6 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 active:bg-slate-200 transition-all shadow-2xl">
+                    <Download className="w-5 h-5" /> Download Output
                   </button>
-                  <div className="flex gap-3">
-                    <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="flex-1 bg-emerald-600 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-emerald-500 transition-colors shadow-xl disabled:opacity-50">
+                  <div className="flex gap-4">
+                    <button onClick={() => handleGenerateImage(true)} disabled={isGenerating} className="flex-1 bg-purple-600 text-white px-4 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] flex items-center justify-center gap-2 active:bg-purple-500 transition-all shadow-xl disabled:opacity-50">
                       <RefreshCcw className="w-4 h-4" /> Regenerate
                     </button>
-                    <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Image link copied to clipboard!'); }} className="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:bg-slate-700 transition-colors shadow-xl">
-                      <Copy className="w-4 h-4" /> Share Link
+                    <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Neural link copied!'); }} className="flex-1 bg-white/10 border border-white/10 text-white px-4 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] flex items-center justify-center gap-2 active:bg-white/20 transition-all">
+                      <Copy className="w-4 h-4" /> Share
                     </button>
                   </div>
                 </div>
@@ -5194,34 +5343,42 @@ export default function App() {
             )}
 
             {imageHistory.length > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-black text-white flex items-center gap-2 tracking-tight">
-                    <Clock className="w-5 h-5 text-indigo-400" />
-                    History
+              <div className="mt-12">
+                <div className="flex items-center justify-between mb-8 px-4">
+                  <h3 className="text-2xl font-black text-white flex items-center gap-4 italic uppercase tracking-tighter">
+                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
+                      <Clock className="w-5 h-5 text-purple-400" />
+                    </div>
+                    Neural History
                   </h3>
-                  <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
-                    {showHistory ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
+                  <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-2 rounded-xl bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all border border-white/5">
+                    {showHistory ? <><EyeOff className="w-4 h-4" /> Hide Archives</> : <><Eye className="w-4 h-4" /> View Archives</>}
                   </button>
                 </div>
 
                 {showHistory && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
                     {imageHistory.map((item, i) => (
-                      <div key={i} className="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-lg">
-                        <img src={item.url} alt={item.prompt} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
-                          <p className="text-[10px] text-white line-clamp-4 text-center font-medium leading-relaxed">{item.prompt}</p>
-                          <div className="flex gap-2">
-                            <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-indigo-600 text-white p-2.5 rounded-lg hover:bg-indigo-500 transition-colors">
+                      <motion.div 
+                        key={i} 
+                        initial={{ opacity: 0, scale: 0.9 }} 
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="relative group rounded-[2rem] overflow-hidden border border-white/5 bg-black/40 aspect-square shadow-xl hover:border-purple-500/30 transition-all duration-500"
+                      >
+                        <img src={item.url} alt={item.prompt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-500 backdrop-blur-sm flex flex-col items-center justify-center gap-4 p-6">
+                          <p className="text-[10px] text-slate-300 line-clamp-3 text-center font-bold uppercase tracking-wider leading-relaxed">{item.prompt}</p>
+                          <div className="flex gap-3">
+                            <button onClick={() => handleDownloadImageAsPng(item.url)} className="bg-white text-black p-3 rounded-xl hover:scale-110 transition-all shadow-xl">
                               <Download className="w-4 h-4" />
                             </button>
-                            <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-slate-700 text-white p-2.5 rounded-lg hover:bg-slate-600 transition-colors">
+                            <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-purple-600 text-white p-3 rounded-xl hover:scale-110 transition-all shadow-xl">
                               <Copy className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
@@ -5229,6 +5386,7 @@ export default function App() {
             )}
           </div>
         )}
+
 
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto space-y-4 pb-20">
@@ -5351,126 +5509,141 @@ export default function App() {
   return (
     <div className="h-screen w-full bg-slate-950 text-slate-200 flex font-sans overflow-hidden">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex w-72 bg-slate-950 border-r border-slate-800 flex-col p-6 overflow-hidden">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">S</div>
-          <span className="text-xl font-medium tracking-tight text-white">SmartAI <span className="font-light text-slate-400 italic">Pro</span></span>
-        </div>
-
-        <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between shadow-inner">
+      <aside className="hidden md:flex w-80 bg-black/40 backdrop-blur-3xl border-r border-white/5 flex-col p-8 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-600/5 to-transparent pointer-events-none" />
+        
+        <div className="flex items-center gap-4 mb-12 relative z-10">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] border border-purple-500/30">S</div>
           <div>
-            <span className="text-[9px] uppercase font-bold text-slate-500 tracking-[0.2em]">Credits</span>
-            <div className="text-2xl font-bold text-white mt-0.5">{credits.toLocaleString()}</div>
-          </div>
-          <div className="w-10 h-10 bg-indigo-600/20 rounded-full flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
+            <span className="text-xl font-black tracking-tight text-white uppercase italic">SmartAI <span className="text-purple-500">Pro</span></span>
+            <p className="text-[8px] text-slate-500 font-black uppercase tracking-[0.4em] -mt-1">Nexus v8.2</p>
           </div>
         </div>
 
-        <nav className="space-y-1.5 flex-1 overflow-y-auto no-scrollbar pr-2">
+        {/* Credits Card - Premium Look */}
+        <div className="mb-10 group relative">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative p-6 bg-[#0d111c] border border-white/10 rounded-2xl flex items-center justify-between shadow-2xl">
+            <div>
+              <span className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em]">Neural Credits</span>
+              <div className="text-3xl font-black text-white mt-1 tracking-tighter italic">{credits.toLocaleString()}</div>
+            </div>
+            <div className="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-inner">
+              <Sparkles className="w-6 h-6 text-purple-400 animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        <nav className="space-y-2 flex-1 overflow-y-auto no-scrollbar pr-2 relative z-10">
+          <div className="pb-4">
+             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] ml-2">Core Tools</span>
+          </div>
           {SIDEBAR_ITEMS.map(item => (
             <button
               key={item.tab}
               onClick={() => setActiveTab(item.tab)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.tab ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${activeTab === item.tab ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20 shadow-[0_0_20px_rgba(139,92,246,0.1)]' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="text-sm font-medium">{item.name}</span>
+              <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${activeTab === item.tab ? 'text-purple-400' : 'text-slate-500'}`} />
+              <span className="text-xs font-black uppercase tracking-widest">{item.name}</span>
             </button>
           ))}
           
-          <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white">
-            <Settings className="w-5 h-5" />
-            <span className="text-sm font-medium">Settings</span>
+          <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-slate-500 hover:bg-white/5 hover:text-white group">
+            <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
+            <span className="text-xs font-black uppercase tracking-widest">Settings</span>
           </button>
 
-          <div className="my-4 px-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dashboards</span>
+          <div className="my-8 h-px bg-gradient-to-r from-white/10 to-transparent" />
+
+          <div className="pb-4">
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] ml-2">Dashboards</span>
           </div>
 
-          <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); }} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-[0_0_20px_rgba(79,70,229,0.1)]' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>
             <Send className="w-5 h-5" />
-            <span className="text-sm font-medium">Normal Mode</span>
+            <span className="text-xs font-black uppercase tracking-widest">Normal Mode</span>
           </button>
-          <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); }} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>
             <Lightbulb className="w-5 h-5" />
-            <span className="text-sm font-medium">Creative Mode</span>
+            <span className="text-xs font-black uppercase tracking-widest">Creative Mode</span>
           </button>
-          <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+          <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); }} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${smartMode === 'expert' && activeTab === 'home' ? 'bg-purple-600 text-white shadow-[0_0_30px_rgba(139,92,246,0.4)] border border-purple-500/30' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>
             <Zap className="w-5 h-5" />
-            <span className="text-sm font-medium">Expert Mode</span>
+            <span className="text-xs font-black uppercase tracking-widest">Expert Mode</span>
           </button>
 
           {isAdmin && (
             <>
-              <div className="my-4 px-2">
-                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
+              <div className="my-8 h-px bg-gradient-to-r from-white/10 to-transparent" />
+              <div className="pb-4">
+                <span className="text-[10px] font-black text-rose-500/60 uppercase tracking-[0.4em] ml-2">System Admin</span>
               </div>
-              <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+              <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-[0_0_20px_rgba(225,29,72,0.1)]' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>
                 <Shield className="w-5 h-5" />
-                <span className="text-sm font-medium">Admin Panel</span>
+                <span className="text-xs font-black uppercase tracking-widest">Admin Panel</span>
               </button>
             </>
           )}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
+        <div className="mt-auto pt-8 border-t border-white/5 space-y-6 shrink-0 relative z-10">
           <button
             onClick={() => setIsPricingOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(139,92,246,0.3)] border border-purple-500/30"
           >
-            <Sparkles className="w-4 h-4" /> Upgrade Plan
+            <Crown className="w-5 h-5" /> Upgrade Plan
           </button>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm relative group">
-            {email && isVipEmail(email) && (
-              <div className="absolute -top-2 -right-2 bg-rose-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full shadow-lg animate-pulse z-50 border border-white/20">VIP MASTER</div>
-            )}
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white uppercase overflow-hidden">
-               {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : (displayName || email || 'U').charAt(0)}
+          
+          <div onClick={() => setActiveTab('profile')} className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-slate-900/50 border border-white/5 shadow-inner cursor-pointer hover:bg-slate-900 transition-all group">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-xs font-black text-white uppercase overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform">
+                 {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : (displayName || email || 'U').charAt(0)}
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0d111c] rounded-full shadow-[0_0_10px_#10b981]" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-bold text-white truncate">{displayName || email?.split('@')[0] || 'User'}</div>
-              <div className="text-[9px] text-slate-500 truncate">{email}</div>
+              <div className="text-[11px] font-black text-white truncate uppercase tracking-wider">{displayName || email?.split('@')[0] || 'User'}</div>
+              <div className="text-[9px] text-slate-500 truncate font-bold">{email}</div>
             </div>
-            <button onClick={() => setActiveTab('profile')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
+            <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-white transition-colors" />
           </div>
-
-          {!isAdmin && (
-            <button onClick={() => setActiveTab('admin')} className="w-full mt-2 flex items-center justify-center gap-1 opacity-30 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
-              <Shield className="w-2 h-2" /> Admin Access
-            </button>
-          )}
         </div>
       </aside>
 
+
       {/* Main Container */}
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-950">
+      <main className="flex-1 flex flex-col min-w-0 premium-bg relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.03)_0%,transparent_100%)] pointer-events-none" />
+        
         {/* Header */}
-        <header className="h-16 border-b border-slate-800 flex items-center justify-between px-4 sm:px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white md:hidden"><Menu className="w-6 h-6" /></button>
-            <div className="md:hidden flex items-center gap-2">
-              <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-[10px] font-bold">S</div>
-              <span className="text-sm font-bold">SmartAI</span>
+        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 -ml-3 text-slate-400 hover:text-white md:hidden bg-white/5 rounded-xl border border-white/10"><Menu className="w-6 h-6" /></button>
+            <div className="md:hidden flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-lg flex items-center justify-center font-black text-white shadow-lg">S</div>
+              <span className="text-lg font-black uppercase tracking-tight">SmartAI</span>
             </div>
-            <div onClick={() => !isAdmin && setActiveTab('admin')} className="hidden md:flex items-center gap-2 text-slate-500 text-[9px] font-black uppercase tracking-[0.3em] cursor-pointer hover:text-white transition-colors">
-              <span>System</span>
-              <ChevronRight className="w-3 h-3 opacity-30" />
-              <span className="text-white">{activeTab}</span>
+            <div onClick={() => !isAdmin && setActiveTab('admin')} className="hidden md:flex items-center gap-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] cursor-pointer hover:text-white transition-all group">
+              <span className="group-hover:text-purple-400 transition-colors">Core Engine</span>
+              <ChevronRight className="w-4 h-4 opacity-30 group-hover:translate-x-1 transition-transform" />
+              <span className="text-white bg-white/5 px-3 py-1 rounded-lg border border-white/10">{activeTab}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20' : 'bg-orange-600/10 text-orange-400 border-orange-600/20'}`}>
-              {smartMode} mode
+          <div className="flex items-center gap-4">
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all shadow-lg ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20 shadow-indigo-600/5' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20 shadow-emerald-600/5' : 'bg-purple-600/20 text-purple-400 border-purple-500/30 shadow-purple-600/10'}`}>
+              {smartMode} mode active
             </div>
-            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-lg shadow-white/5">Upgrade</button>
+            <div className="h-8 w-px bg-white/5 hidden sm:block" />
+            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95">Upgrade</button>
           </div>
         </header>
 
         {/* Dynamic Content */}
-        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 pb-16 md:pb-0">
+        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 pb-16 md:pb-0 no-scrollbar">
           {renderContent()}
         </div>
+
 
         {/* Mobile Bottom Navigation */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-800/50 flex items-center justify-around p-2 z-[45] safe-area-inset-bottom">
@@ -5655,6 +5828,9 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Futuristic AI Voice Assistant System */}
+      <SmartAIVoiceAssistant onCommand={handleVoiceCommandAction} />
     </div>
   );
 }

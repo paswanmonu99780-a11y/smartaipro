@@ -14,6 +14,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   const app = express();
   const PORT = Number(process.env.PORT) || 5000;
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const groqApiKey = process.env.GROQ_API_KEY;
   const razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_SheglkgbIFBx3Q';
   const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '12EgvmXHWf4djX7CGtH3iNuV';
   const genAI = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
@@ -44,6 +45,34 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     }
 
     return null;
+  };
+
+  const generateGroqChatText = async (prompt: string, system?: string) => {
+    if (!groqApiKey) return null;
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          messages: [
+            { role: "system", content: system || "You are a helpful assistant." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 1024
+        })
+      });
+
+      const data: any = await response.json();
+      return data.choices?.[0]?.message?.content || null;
+    } catch (err) {
+      console.error('[Groq] Error:', err);
+      return null;
+    }
   };
 
   const pickAspectRatio = (w: number, h: number) => {
@@ -231,6 +260,13 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       }
 
       const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&json=false`;
+      
+      // Try Groq first for the Voice Assistant and High-speed needs
+      const groqText = await generateGroqChatText(String(prompt), String(system || ''));
+      if (groqText) {
+        return res.type('text/plain; charset=utf-8').send(groqText);
+      }
+
       const upstream = await fetch(chatUrl, {
         headers: { 'Accept': 'text/plain' }
       });
