@@ -55,7 +55,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   const generateOllamaChatText = async (prompt: string, system?: string) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s strict timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for local AI
 
       const response = await fetch('http://localhost:11434/api/chat', {
         method: 'POST',
@@ -63,7 +63,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         body: JSON.stringify({
           model: "llama3",
           messages: [
-            { role: "system", content: system || "You are SmartAI Pro assistant." },
+            { role: "system", content: system || "You are Jarvis, a smart AI assistant. Be brief and helpful." },
             { role: "user", content: prompt }
           ],
           stream: false
@@ -72,8 +72,15 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       });
       clearTimeout(timeoutId);
       const data: any = await response.json();
-      return data.message?.content || null;
-    } catch {
+      const text = data.message?.content || null;
+      if (text) console.log('[Ollama] Response received successfully');
+      return text;
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.error('[Ollama] Request timed out after 30s');
+      } else {
+        console.error('[Ollama] Connection failed. Is Ollama running? Run: ollama serve');
+      }
       return null;
     }
   };
@@ -314,29 +321,32 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
+      // 1. Try Ollama (FREE Local AI - Primary)
+      const ollamaText = await generateOllamaChatText(String(prompt), String(system || ''));
+      if (ollamaText) {
+        return res.type('text/plain; charset=utf-8').send(ollamaText);
+      }
 
-      // 1. Try Groq (Ultra Fast Primary)
+      // 2. Try Groq (Ultra Fast Cloud Backup)
       const groqText = await generateGroqChatText(String(prompt), String(system || ''));
       if (groqText) {
         return res.type('text/plain; charset=utf-8').send(groqText);
       }
 
-      // 2. Try NVIDIA NIM (High Quality Secondary)
+      // 3. Try NVIDIA NIM
       const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
       if (nvidiaText) {
         return res.type('text/plain; charset=utf-8').send(nvidiaText);
       }
 
-      // 3. Last Fallback to Gemini
+      // 4. Last Fallback to Gemini
       const fallbackText = await generateGeminiChatText(String(prompt), String(system || ''));
       if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
       
-      res.status(500).send('Intelligence core offline. Check API keys.');
+      res.status(500).send('All AI cores offline. Make sure Ollama is running: ollama serve');
     } catch (err: any) {
-      console.error('[Chat Stream Proxy] Error:', err);
-      const fallbackText = await generateGeminiChatText(String(req.body?.prompt || ''), String(req.body?.system || ''));
-      if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
-      res.status(500).json({ error: "Chat stream proxy failed" });
+      console.error('[Chat Stream] Error:', err);
+      res.status(500).json({ error: "Chat failed. Run: ollama serve" });
     }
   });
 
@@ -344,19 +354,23 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     try {
       const { prompt, system } = req.query;
       
-      // 1. Try Groq (Ultra Fast)
+      // 1. Try Ollama (FREE Local AI - Primary)
+      const ollamaText = await generateOllamaChatText(String(prompt), String(system || ''));
+      if (ollamaText) return res.type('text/plain; charset=utf-8').send(ollamaText);
+
+      // 2. Try Groq (Fast Cloud Backup)
       const groqText = await generateGroqChatText(String(prompt), String(system || ''));
       if (groqText) return res.type('text/plain; charset=utf-8').send(groqText);
 
-      // 2. Try NVIDIA NIM
+      // 3. Try NVIDIA NIM
       const nvidiaText = await generateNvidiaChatText(String(prompt), String(system || ''));
       if (nvidiaText) return res.type('text/plain; charset=utf-8').send(nvidiaText);
 
-      // 3. Last Fallback to Gemini
+      // 4. Last Fallback to Gemini
       const geminiText = await generateGeminiChatText(String(prompt), String(system || ''));
       if (geminiText) return res.type('text/plain; charset=utf-8').send(geminiText);
 
-      res.status(500).send('Neural link failure.');
+      res.status(500).send('Neural link failure. Run: ollama serve');
     } catch (err: any) {
       res.status(500).json({ error: "Chat relay failed" });
     }
