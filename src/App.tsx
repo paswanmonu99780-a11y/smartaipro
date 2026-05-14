@@ -293,7 +293,7 @@ export default function App() {
   const [currentChatId, setCurrentChatId] = useState<string>(Date.now().toString());
   const [chatHistory, setChatHistory] = useState<Array<{ id: string, title: string, messages: Message[] }>>([]);
   const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
-  const chatFileInput = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [imgPrompt, setImgPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImg, setGeneratedImg] = useState<string | null>(null);
@@ -2657,6 +2657,19 @@ export default function App() {
         </div>
       </div>
     );
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachedFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (file.type.startsWith('image/')) {
+        setAttachedImage(event.target?.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Streaming chat response (ChatGPT-style token-by-token UI)
