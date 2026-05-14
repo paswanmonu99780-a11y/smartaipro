@@ -198,7 +198,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
 
   // 2. TEST ROUTE
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({ status: "ok", version: "2.1.0-video-patch", timestamp: new Date().toISOString() });
   });
 
   // 3. AUTH SYSTEM

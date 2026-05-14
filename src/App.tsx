@@ -2985,10 +2985,12 @@ export default function App() {
 
     const tryLoadImage = (url: string) => new Promise<boolean>((resolve) => {
       const img = new Image();
-      img.decoding = 'async';
-      img.loading = 'eager';
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
+      const timeout = setTimeout(() => {
+        img.src = '';
+        resolve(false);
+      }, 45000); // 45s timeout
+      img.onload = () => { clearTimeout(timeout); resolve(true); };
+      img.onerror = () => { clearTimeout(timeout); resolve(false); };
       img.src = url;
     });
 
@@ -3112,13 +3114,14 @@ export default function App() {
         setCredits(newCredits);
         syncUserData({ credits: newCredits });
       } else {
-        setTimeout(() => {
-          setIsGeneratingVideo(false);
-          alert('Demo: Premium video synthesis is initializing. Real video output will be available shortly.');
-        }, 2000);
+        const errorData = await res.json().catch(() => ({}));
+        setIsGeneratingVideo(false);
+        alert(`Synthesis Failed: ${errorData.error || 'The neural server responded with an error.'} Please check your connection.`);
       }
-    } catch (e) {
+    } catch (e: any) {
+      setIsGeneratingVideo(false);
       console.error('Video gen failed:', e);
+      alert(`Network Error: ${e.message || 'Could not connect to the synthesis engine.'}`);
     } finally {
       setIsGeneratingVideo(false);
     }
