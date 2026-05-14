@@ -3274,7 +3274,7 @@ export default function App() {
         <motion.div
           initial={{ opacity: 0, y: 40, rotateX: 10 }}
           animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          className="w-full sm:max-w-[420px] min-h-screen sm:min-h-0 bg-slate-900/40 sm:border border-white/10 sm:rounded-[2rem] p-8 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative z-10 flex flex-col justify-center"
+          className="w-full sm:max-w-[420px] min-h-screen sm:min-h-0 bg-slate-900/40 sm:border border-white/10 sm:rounded-[2rem] p-6 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative z-10 flex flex-col justify-center"
         >
           <div className="flex flex-col items-center text-center mb-8">
             <motion.div
@@ -4012,7 +4012,7 @@ export default function App() {
 
             {ideaResult && (
               <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
-                <div className="bg-[#0B1023] border border-purple-500/20 rounded-[2rem] p-8 md:p-10 shadow-[0_0_50px_rgba(123,97,255,0.1)] relative overflow-hidden">
+                <div className="bg-[#0B1023] border border-purple-500/20 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 shadow-[0_0_50px_rgba(123,97,255,0.1)] relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
 
@@ -4032,7 +4032,7 @@ export default function App() {
 
                     <p className="text-lg text-slate-300 leading-relaxed font-medium bg-slate-900/50 p-6 rounded-2xl border border-white/5">{ideaResult.description}</p>
 
-                    <div className="grid md:grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-white/5">
                       <div className="bg-slate-900/80 p-5 rounded-2xl border border-emerald-500/10 shadow-[inset_0_0_20px_rgba(16,185,129,0.02)]">
                         <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2"><Sparkles className="w-3 h-3" /> Why It Works</p>
                         <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.whyViral}</p>
@@ -4308,7 +4308,7 @@ export default function App() {
           {/* Left Column: Inputs */}
           <div className="xl:col-span-8 space-y-10">
 
-            <div className="grid md:grid-cols-2 gap-8 bg-black/40 border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 bg-black/40 border border-white/5 rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
               <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
 
               <div className="space-y-3">
@@ -4411,7 +4411,7 @@ export default function App() {
                   <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
 
                   <div className="relative z-10 space-y-12">
-                    <div className="flex flex-col lg:flex-row gap-12">
+                    <div className="flex flex-col gap-8 lg:gap-12">
                       {/* Left side: Preview/Image */}
                       <div className="w-full lg:w-1/3 flex flex-col gap-6">
                         <div className="aspect-[3/4] bg-black/60 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group/img">
@@ -4435,7 +4435,7 @@ export default function App() {
                       </div>
 
                       {/* Right side: Details */}
-                      <div className="w-full lg:w-2/3 space-y-10">
+                      <div className="w-full space-y-6 md:space-y-10">
                         <div>
                           <div className="flex flex-wrap gap-3 mb-6">
                             <span className="px-5 py-1.5 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charType}</span>
@@ -5200,7 +5200,7 @@ export default function App() {
     return (
       <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-2 md:p-4'}`}>
         {activeTab === 'chat' && (
-          <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 md:border md:border-slate-800 md:rounded-2xl overflow-hidden shadow-2xl">
             {/* Chat Header */}
             <div className="flex justify-between items-center p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
               <div className="flex items-center gap-2">
@@ -5266,7 +5266,7 @@ export default function App() {
             </div>
 
             {/* Chat Input Area (Fixed at bottom of container) */}
-            <div className="p-4 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0">
+            <div className="p-3 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0 mb-[60px] md:mb-0">
               <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
                 <input
                   value={chatInput}
@@ -5706,7 +5706,7 @@ export default function App() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.03)_0%,transparent_100%)] pointer-events-none" />
 
         {/* Header */}
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
+        <header className="h-16 md:h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
           <div className="flex items-center gap-6">
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 -ml-3 text-slate-400 hover:text-white md:hidden bg-white/5 rounded-xl border border-white/10"><Menu className="w-6 h-6" /></button>
             <div className="md:hidden flex items-center gap-3">
@@ -5729,7 +5729,7 @@ export default function App() {
         </header>
 
         {/* Dynamic Content */}
-        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 pb-16 md:pb-0 no-scrollbar">
+        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 pb-20 md:pb-0 no-scrollbar">
           {renderContent()}
         </div>
 
