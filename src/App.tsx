@@ -2687,6 +2687,8 @@ export default function App() {
 
     setMessages(optimisticMessages);
     if (!isVoiceMode) setChatInput('');
+    setAttachedFile(null);
+    setAttachedImage(null);
     setIsAiThinking(true);
     updateCurrentChatHistory(currentChatId, title, optimisticMessages);
 
@@ -5301,6 +5303,35 @@ export default function App() {
                 onChange={handleChatFileUpload} 
                 accept="image/*,.pdf,.doc,.docx,.txt"
               />
+
+              {/* Attachment Preview */}
+              {attachedFile && (
+                <div className="flex items-center gap-3 mb-4 p-2 bg-white/5 border border-white/10 rounded-2xl w-fit">
+                  {attachedImage ? (
+                    <div className="relative group">
+                      <img src={attachedImage} alt="preview" className="w-16 h-16 object-cover rounded-xl border border-white/10" />
+                      <button 
+                        onClick={() => { setAttachedFile(null); setAttachedImage(null); }}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-900/50 rounded-xl border border-white/5">
+                      <FileText className="w-4 h-4 text-indigo-400" />
+                      <span className="text-[10px] text-slate-300 font-medium truncate max-w-[150px]">{attachedFile.name}</span>
+                      <button 
+                        onClick={() => { setAttachedFile(null); setAttachedImage(null); }}
+                        className="p-1 hover:text-red-400 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
                 <button 
                   onClick={() => fileInputRef.current?.click()}
