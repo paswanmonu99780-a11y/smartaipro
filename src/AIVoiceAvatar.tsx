@@ -304,11 +304,11 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
         utterance.voice = voice;
         utterance.lang = voice.lang; 
       } else {
-        utterance.lang = language === 'hi-IN' ? 'hi-IN' : 'en-US';
+        utterance.lang = language; 
       }
-      utterance.rate = language === 'hi-IN' ? 1.0 : 1.1;utterance.pitch = 1.0;
+      utterance.rate = language === 'hi-IN' ? 1.0 : 1.1;
+      utterance.pitch = 1.0;
       utterance.volume = 1.0;
-      if (voice) utterance.voice = voice;
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => {

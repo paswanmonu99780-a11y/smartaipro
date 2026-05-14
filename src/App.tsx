@@ -2817,6 +2817,14 @@ export default function App() {
       const fallbackMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: fallbackText } : msg);
       setMessages(fallbackMessages);
       setLastAiMessage(fallbackText);
+      const utterance = new SpeechSynthesisUtterance(chunkText);
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang; 
+      } else {
+        utterance.lang = language === 'hi-IN' ? 'hi-IN' : 'en-US';
+      }
+      utterance.rate = language === 'hi-IN' ? 1.0 : 1.1;
       updateCurrentChatHistory(currentChatId, title, fallbackMessages);
     } finally {
       setIsAiThinking(false);
@@ -5656,11 +5664,6 @@ export default function App() {
             </button>
           ))}
 
-          <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-slate-500 hover:bg-white/5 hover:text-white group">
-            <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
-            <span className="text-xs font-black uppercase tracking-widest">Settings</span>
-          </button>
-
           <div className="my-8 h-px bg-gradient-to-r from-white/10 to-transparent" />
 
           <div className="pb-4">
@@ -5679,19 +5682,6 @@ export default function App() {
             <Zap className="w-5 h-5" />
             <span className="text-xs font-black uppercase tracking-widest">Expert Mode</span>
           </button>
-
-          {isAdmin && (
-            <>
-              <div className="my-8 h-px bg-gradient-to-r from-white/10 to-transparent" />
-              <div className="pb-4">
-                <span className="text-[10px] font-black text-rose-500/60 uppercase tracking-[0.4em] ml-2">System Admin</span>
-              </div>
-              <button onClick={() => setActiveTab('admin')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20 shadow-[0_0_20px_rgba(225,29,72,0.1)]' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}>
-                <Shield className="w-5 h-5" />
-                <span className="text-xs font-black uppercase tracking-widest">Admin Panel</span>
-              </button>
-            </>
-          )}
         </nav>
 
         <div className="mt-auto pt-8 border-t border-white/5 space-y-6 shrink-0 relative z-10">
