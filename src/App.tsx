@@ -67,9 +67,11 @@ const MessageContent = ({ content, imageUrl }: { content: string, imageUrl?: str
     <div className="space-y-4">
       {parts.map((part, index) => {
         if (part.startsWith('```')) {
-          const match = part.match(/```(\w+)?\n([\s\S]*?)```/);
-          const lang = match?.[1] || 'text';
-          const code = match?.[2] || part.slice(3, -3);
+          const match = part.match(/```(\w+)?\s*([\s\S]*?)```/);
+          const lang = (match?.[1] || 'code').trim();
+          let code = match?.[2] || part.slice(3, -3);
+          // If the match[1] was actually the start of the code (no lang), fix it
+          if (!match?.[1] && code.startsWith('\n')) code = code.trim();
           return <CodeBox key={index} code={code} language={lang} />;
         }
         const cleanPart = part.replace(/\[IMAGE_PROMPT:.*?\]/g, '').trim();
@@ -2697,8 +2699,9 @@ export default function App() {
 
     Operational Guidelines:
     - BE CONCISE AND UNIQUE. Don't be boring. Use a futuristic, premium tone.
+    - EMOJIS: Always use at least 2-3 relevant emojis in every single response to make it feel alive and unique. 🚀✨
     - Use Markdown (bold, italic, lists) for readability.
-    - CODE BLOCKS: Always use triple backticks with language identifier.
+    - CODE BLOCKS: Always use triple backticks with language identifier (e.g. ```javascript).
     - IMAGES: If a user asks for something visual, generate an image prompt by starting your response with "[IMAGE_PROMPT: description]".
     - NO PLACEHOLDERS. Be specific.
     - Maintain a ${tone} tone.`;
