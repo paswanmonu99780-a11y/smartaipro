@@ -94,9 +94,9 @@ app.get("/api/auth/me", (req: any, res: any) => {
 app.post("/api/payment/create-order", async (req: any, res: any) => {
   const { plan, email } = req.body;
   if (!plan || !email) return res.status(400).json({ error: "Plan and email are required" });
-  const amountMap: Record<string, number> = { 'Pro': 9900, 'Ultra': 19900 };
+  const amountMap: Record<string, number> = { 'Creative Mode': 9900, 'Expert Mode': 19900 };
   const amount = amountMap[plan];
-  if (!amount) return res.status(400).json({ error: "Invalid plan selected" });
+  if (!amount) return res.status(400).json({ error: `Invalid plan selected: ${plan}. Available: Creative Mode, Expert Mode` });
   try {
     const order = await razorpay.orders.create({ amount, currency: 'INR', receipt: `receipt_${Date.now()}`, notes: { plan, email } });
     res.json({ order_id: order.id, amount: order.amount, currency: order.currency, key_id: razorpayKeyId });
@@ -111,12 +111,14 @@ app.post("/api/payment/verify", (req: any, res: any) => {
   const body = razorpay_order_id + '|' + razorpay_payment_id;
   const expectedSignature = crypto.createHmac('sha256', razorpayKeySecret).update(body).digest('hex');
   if (expectedSignature === razorpay_signature) {
-    const user = users.find(u => u.email === email);
-    if (user) {
-      if (plan === 'Pro') user.credits = 10000;
-      else if (plan === 'Ultra') user.credits = 999999;
-      user.plan = plan;
+    let user = users.find(u => u.email === email);
+    if (!user) {
+      user = { id: Date.now(), email, credits: 0, plan: 'Normal Mode', history: [] };
+      users.push(user);
     }
+    if (plan === 'Creative Mode') user.credits = 10000;
+    else if (plan === 'Expert Mode') user.credits = 999999;
+    user.plan = plan;
     res.json({ success: true, message: "Payment verified", credits: user?.credits, plan: user?.plan });
   } else {
     res.status(400).json({ success: false, error: "Invalid signature" });

@@ -111,6 +111,8 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       console.error('[Groq] Error:', err);
       return null;
     }
+  };
+
   const generateNvidiaChatText = async (prompt: string, system?: string) => {
     if (!nvidiaApiKey) return null;
     try {
@@ -259,13 +261,14 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     }
 
     const amountMap: Record<string, number> = {
-      'Pro': 9900,
-      'Ultra': 19900
+      'Creative Mode': 9900,
+      'Expert Mode': 19900
     };
 
     const amount = amountMap[plan];
     if (!amount) {
-      return res.status(400).json({ error: "Invalid plan selected" });
+      console.error(`[Razorpay] Invalid plan requested: ${plan}`);
+      return res.status(400).json({ error: `Invalid plan selected: ${plan}. Available: Creative Mode, Expert Mode` });
     }
 
     try {
@@ -300,12 +303,15 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       .digest('hex');
 
     if (expectedSignature === razorpay_signature) {
-      const user = users.find(u => u.email === email);
-      if (user) {
-        if (plan === 'Pro') user.credits = 10000;
-        else if (plan === 'Ultra') user.credits = 999999;
-        user.plan = plan;
+      let user = users.find(u => u.email === email);
+      if (!user) {
+        user = { id: Date.now(), email, credits: 0, plan: 'Normal Mode', history: [] };
+        users.push(user);
       }
+      
+      if (plan === 'Creative Mode') user.credits = 10000;
+      else if (plan === 'Expert Mode') user.credits = 999999;
+      user.plan = plan;
       console.log(`[Payment] Verified for ${email}, plan: ${plan}`);
       res.json({ success: true, message: "Payment verified", credits: user?.credits, plan: user?.plan });
     } else {

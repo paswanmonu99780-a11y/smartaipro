@@ -27,45 +27,45 @@ const MOBILE_TABS = [
 ];
 
 const PLANS = [
-  { 
-    name: 'Normal Mode', 
-    price: 'Free', 
+  {
+    name: 'Normal Mode',
+    price: 'Free',
     features: [
-      '100 Daily Credits', 
-      'Standard AI Response', 
-      'Basic Image Generation', 
+      '100 Daily Credits',
+      'Standard AI Response',
+      'Basic Image Generation',
       'Community Support',
       'Normal Processing Speed'
-    ], 
-    color: 'slate-400' 
+    ],
+    color: 'slate-400'
   },
-  { 
-    name: 'Creative Mode', 
-    price: '₹99', 
+  {
+    name: 'Creative Mode',
+    price: '₹99',
     features: [
-      '10,000 Monthly Credits', 
-      'Advanced Creative Tools', 
-      'HD Image Generation', 
+      '10,000 Monthly Credits',
+      'Advanced Creative Tools',
+      'HD Image Generation',
       'Priority Support',
       'Creative AI Persona',
       '2K Resolution Assets'
-    ], 
-    color: 'indigo-500', 
-    popular: true 
+    ],
+    color: 'indigo-500',
+    popular: true
   },
-  { 
-    name: 'Expert Mode', 
-    price: '₹199', 
+  {
+    name: 'Expert Mode',
+    price: '₹199',
     features: [
-      'Unlimited AI Credits', 
-      'Full Expert Workspace', 
-      '4K/8K Video & Images', 
+      'Unlimited AI Credits',
+      'Full Expert Workspace',
+      '4K/8K Video & Images',
       'API Integration Access',
       'Custom AI Models',
       'Real-Time Web Intelligence',
       'Zero Latency Processing'
-    ], 
-    color: 'emerald-500' 
+    ],
+    color: 'emerald-500'
   },
 ];
 
@@ -155,7 +155,7 @@ export default function App() {
     }
   }, []);
 
-   const updateUsage = (type: 'messages' | 'images') => {
+  const updateUsage = (type: 'messages' | 'images') => {
     if (isVipEmail(email)) return; // VIP: No usage tracking
     setUsage(prev => {
       const next = { ...prev, [type]: prev[type] + 1 };
@@ -165,7 +165,7 @@ export default function App() {
   };
   const [userMetadata, setUserMetadata] = useState<any>(null);
   const [email, setEmail] = useState('');
-  
+
   // GLOBAL VIP MASTER CONSTANT
   const VIP_EMAIL = 'paswanmonu99780@gmail.com';
   const isVipEmail = (e: string) => e?.toLowerCase().trim() === VIP_EMAIL;
@@ -183,7 +183,7 @@ export default function App() {
       setPassword('');
     }
   }, [authMode]);
-  
+
   // Forgot Password State
   const [resetEmail, setResetEmail] = useState('');
   const [forgotPasswordStep, setForgotPasswordStep] = useState<'email' | 'otp' | 'reset'>('email');
@@ -251,7 +251,7 @@ export default function App() {
   const [toolImage, setToolImage] = useState<string | null>(null);
   const [toolPrompt, setToolPrompt] = useState('');
   const [isToolProcessing, setIsToolProcessing] = useState(false);
-  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null); 
+  const [processedToolImage, setProcessedToolImage] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
@@ -408,7 +408,7 @@ export default function App() {
         setIsAuthenticating(false);
         setIsVerifyingOtp(false);
         setAuthMode('login');
-        
+
         // Always set the email from the session
         setEmail(session.user.email || '');
 
@@ -424,7 +424,7 @@ export default function App() {
             localStorage.setItem('smartai_session', JSON.stringify(userData));
             setDisplayName(userData.displayName || userData.email?.split('@')[0] || 'User');
             setAvatar(userData.avatar || '');
-            
+
             // VIP Override
             if (isVipEmail(session.user.email || '')) {
               setCredits(999999999);
@@ -438,7 +438,7 @@ export default function App() {
           } else {
             console.log('User profile not found, creating one...');
             const pendingName = sessionStorage.getItem('pendingSignupName');
-            
+
             // If public profile doesn't exist, create it
             const newUser = {
               email: session.user.email,
@@ -453,7 +453,7 @@ export default function App() {
             setDisplayName(newUser.displayName);
             setAvatar('');
             sessionStorage.removeItem('pendingSignupName');
-            
+
             // VIP State
             if (isVipEmail(session.user.email || '')) {
               setCredits(999999999);
@@ -532,8 +532,8 @@ export default function App() {
         if (plan !== 'Expert Mode') setPlan('Expert Mode');
         if (credits < 99999999) setCredits(999999999);
         if (!isAdmin) {
-           setIsAdmin(true);
-           localStorage.setItem('smartai_admin_session', 'active');
+          setIsAdmin(true);
+          localStorage.setItem('smartai_admin_session', 'active');
         }
         // Force VIP metadata
         if (!userMetadata || userMetadata.plan !== 'Ultra') {
@@ -549,7 +549,7 @@ export default function App() {
         if (!email) setEmail(currentEmail);
       }
     };
-    
+
     reinforceVip();
     const interval = setInterval(reinforceVip, 1000); // Check every 1 second (Ultra Frequency)
     return () => clearInterval(interval);
@@ -759,7 +759,7 @@ export default function App() {
 
     try {
       const isMobile = /^\d{10}$/.test(email);
-      
+
       if (isMobile) {
         // Handle mobile login via OTP
         await sendOtp('login');
@@ -777,7 +777,7 @@ export default function App() {
           // Check local users as fallback for "old accounts" migration
           const localUsers = getUsers();
           const localUser = localUsers.find(u => (u.email === email || u.name === email) && u.password === password);
-          
+
           if (localUser) {
             setAuthError('Migrating your old account... Please try signing up with the same email and password to sync with our new secure system, or use "Forgot Password" to reset.');
           } else {
@@ -859,7 +859,7 @@ export default function App() {
     setIsAuthenticating(true);
     try {
       console.log('Checking name uniqueness:', signupName);
-      
+
       // 1. Check local users for immediate feedback
       const localUsers = getUsers();
       if (localUsers.some(u => u.email?.toLowerCase() === email.toLowerCase())) {
@@ -867,7 +867,7 @@ export default function App() {
         setIsAuthenticating(false);
         return;
       }
-      
+
       if (localUsers.some(u => u.displayName?.toLowerCase() === signupName.toLowerCase() || u.name?.toLowerCase() === signupName.toLowerCase())) {
         setAuthError('This name is already taken. Please choose another name.');
         setIsAuthenticating(false);
@@ -913,7 +913,7 @@ export default function App() {
           }
         }
       });
-      
+
       // If user already exists, Supabase signUp might return an empty identity if email confirm is on
       // Or it might throw an error depending on Supabase settings.
       if (error) {
@@ -951,7 +951,7 @@ export default function App() {
     }
   };
 
-    const handleOtpVerify = async () => {
+  const handleOtpVerify = async () => {
     const enteredOtp = otp.join('');
     if (enteredOtp.length !== 6) {
       setAuthError('Please enter the complete 6-digit code');
@@ -971,7 +971,7 @@ export default function App() {
         console.warn('OTP verification timed out after 30s');
       }
     }, 30000);
-    
+
     try {
       let data: any = null;
       let error: any = null;
@@ -984,17 +984,17 @@ export default function App() {
           type: 'recovery'
         });
         if (recoveryRes.error) {
-           // Fallback to email/magiclink if recovery fails (sometimes Supabase uses 'email' for everything)
-           const emailRes = await supabase.auth.verifyOtp({
-             email: target,
-             token: enteredOtp,
-             type: 'email'
-           });
-           data = emailRes.data;
-           error = emailRes.error;
+          // Fallback to email/magiclink if recovery fails (sometimes Supabase uses 'email' for everything)
+          const emailRes = await supabase.auth.verifyOtp({
+            email: target,
+            token: enteredOtp,
+            type: 'email'
+          });
+          data = emailRes.data;
+          error = emailRes.error;
         } else {
-           data = recoveryRes.data;
-           error = recoveryRes.error;
+          data = recoveryRes.data;
+          error = recoveryRes.error;
         }
       } else {
         // Step 1: Try 'email' type (Primary for signInWithOtp flow)
@@ -1015,12 +1015,12 @@ export default function App() {
             token: enteredOtp,
             type: 'signup'
           });
-          
+
           if (secondAttempt.data?.user) {
             data = secondAttempt.data;
             error = secondAttempt.error;
           } else if (error && secondAttempt.error) {
-             error = secondAttempt.error || error;
+            error = secondAttempt.error || error;
           }
         }
       }
@@ -1037,7 +1037,7 @@ export default function App() {
         const meta = data.user.user_metadata;
         const pendingName = sessionStorage.getItem('pendingSignupName');
         const userName = meta?.displayName || meta?.full_name || pendingName || data.user.email?.split('@')[0] || 'User';
-        
+
         // IMMEDIATE UI UPDATE
         if (authMode === 'forgot') {
           setForgotPasswordStep('reset');
@@ -1057,7 +1057,7 @@ export default function App() {
         try {
           const users = getUsers();
           let currentUser = users.find(u => u.email === data.user?.email);
-          
+
           if (!currentUser) {
             currentUser = {
               email: data.user.email || '',
@@ -1182,7 +1182,7 @@ export default function App() {
     } catch (err: any) { setAuthError(err.message); }
     finally { setIsAuthenticating(false); }
   };
-  const handleLogout = async () => { 
+  const handleLogout = async () => {
     try {
       // Manually clear any Supabase related keys to prevent auto-login loops
       Object.keys(localStorage).forEach(key => {
@@ -1190,14 +1190,14 @@ export default function App() {
           localStorage.removeItem(key);
         }
       });
-      
+
       // Attempt official sign out
       await supabase.auth.signOut();
     } catch (e) {
       console.error('Supabase signout error:', e);
     } finally {
       // Always clear our own session and reload
-      localStorage.removeItem('smartai_session'); 
+      localStorage.removeItem('smartai_session');
       localStorage.removeItem('smartai_admin_session');
       localStorage.removeItem('smartai_admin_session_id');
       localStorage.removeItem('supabase.auth.token');
@@ -1360,7 +1360,7 @@ export default function App() {
 
   const handleUpdateProfile = async () => {
     if (!tempDisplayName.trim()) return alert('Name cannot be empty');
-    
+
     if (tempDisplayName !== displayName) {
       // 1. Check local users
       const localUsers = getUsers();
@@ -1443,7 +1443,7 @@ export default function App() {
       if (!taskToGen.trim() && !polyIsGenerating) alert("Please describe the task you want to generate.");
       return;
     }
-    
+
     setPolyIsGenerating(true);
     setPolyShowPreview(false);
     if (!refineMsg) setPolyResult(null);
@@ -1499,7 +1499,7 @@ export default function App() {
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           fullText += chunk;
-          
+
           // Try to show progress in console
           setPolyConsoleLogs(prev => {
             const last = prev[prev.length - 1];
@@ -1513,37 +1513,37 @@ export default function App() {
         // Improved JSON cleaning logic
         let cleanJson = fullText.trim();
         cleanJson = cleanJson.replace(/```json/gi, '').replace(/```/g, '').trim();
-        
+
         const firstBrace = cleanJson.indexOf('{');
         const lastBrace = cleanJson.lastIndexOf('}');
-        
+
         if (firstBrace === -1) {
           throw new Error("No valid JSON structure detected.");
         }
-        
+
         cleanJson = cleanJson.substring(firstBrace, lastBrace !== -1 ? lastBrace + 1 : cleanJson.length);
 
         // Advanced JSON Fixer: Aggressively handle truncated/invalid JSON
         const fixJson = (str: string) => {
           let fixed = str.trim();
-          
+
           // 1. Close open string if necessary
           const quoteCount = (fixed.match(/(^|[^\\])"/g) || []).length;
           if (quoteCount % 2 !== 0) {
             fixed += '"';
           }
-          
+
           // 2. Add missing closing brackets/braces
           const stack: string[] = [];
           for (let i = 0; i < fixed.length; i++) {
-            if (fixed[i] === '{' && (i === 0 || fixed[i-1] !== '\\')) stack.push('}');
-            else if (fixed[i] === '[' && (i === 0 || fixed[i-1] !== '\\')) stack.push(']');
+            if (fixed[i] === '{' && (i === 0 || fixed[i - 1] !== '\\')) stack.push('}');
+            else if (fixed[i] === '[' && (i === 0 || fixed[i - 1] !== '\\')) stack.push(']');
             else if (fixed[i] === '}' && stack[stack.length - 1] === '}') stack.pop();
             else if (fixed[i] === ']' && stack[stack.length - 1] === ']') stack.pop();
           }
-          
+
           let result = fixed + stack.reverse().join('');
-          
+
           // 3. Try to parse. If still fails, try to trim trailing commas or partial keys
           try {
             JSON.parse(result);
@@ -1559,13 +1559,13 @@ export default function App() {
           const data = JSON.parse(fixed);
           setPolyResult(data);
           setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: 'Neural architecture generated successfully.' }, { type: 'info', msg: `${data.files?.length || 0} files recovered. Rendering workspace...` }]);
-          
+
           if (data.files && data.files.length > 0) {
             const mainFile = data.files.find((f: any) => f.name.includes('index') || f.name.includes('main') || f.name.includes('App')) || data.files[0];
             setPolyActiveFile(mainFile.name);
             setPolyPreviewCode(mainFile.code || "");
           }
-          
+
           if (refineMsg) setPolyRefinement('');
 
           setCreativeHistory(prev => [{
@@ -1581,17 +1581,17 @@ export default function App() {
           // If still fails, try to extract files using regex as a backup
           const fileMatches = cleanJson.match(/"name":\s*"([^"]+)",\s*"code":\s*"([^"]+)"/g);
           if (fileMatches) {
-             const recoveredFiles = fileMatches.map(m => {
-               const name = m.match(/"name":\s*"([^"]+)"/)?.[1] || "recovered.js";
-               let code = m.match(/"code":\s*"([^"]+)"/)?.[1] || "";
-               return { name, code: code.replace(/\\n/g, '\n').replace(/\\"/g, '"') };
-             });
-             setPolyResult({ title: "Recovered Project", files: recoveredFiles });
-             setPolyActiveFile(recoveredFiles[0].name);
-             setPolyPreviewCode(recoveredFiles[0].code);
-             setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'warn', msg: 'JSON truncated. Recovered partial files via regex.' }]);
+            const recoveredFiles = fileMatches.map(m => {
+              const name = m.match(/"name":\s*"([^"]+)"/)?.[1] || "recovered.js";
+              let code = m.match(/"code":\s*"([^"]+)"/)?.[1] || "";
+              return { name, code: code.replace(/\\n/g, '\n').replace(/\\"/g, '"') };
+            });
+            setPolyResult({ title: "Recovered Project", files: recoveredFiles });
+            setPolyActiveFile(recoveredFiles[0].name);
+            setPolyPreviewCode(recoveredFiles[0].code);
+            setPolyConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'warn', msg: 'JSON truncated. Recovered partial files via regex.' }]);
           } else {
-             throw new Error("AI returned invalid JSON. Try a shorter request.");
+            throw new Error("AI returned invalid JSON. Try a shorter request.");
           }
         }
       } else {
@@ -1608,7 +1608,7 @@ export default function App() {
 
   const getPolyPreviewDoc = () => {
     if (!polyResult || !polyResult.files) return "";
-    
+
     const htmlFile = polyResult.files.find((f: any) => f.name.endsWith('.html'))?.code || "";
     const cssFiles = polyResult.files.filter((f: any) => f.name.endsWith('.css')).map((f: any) => `<style>${f.code}</style>`).join('\n');
     const jsFiles = polyResult.files.filter((f: any) => f.name.endsWith('.js') || f.name.endsWith('.ts')).map((f: any) => `<script>${f.code}</script>`).join('\n');
@@ -1622,7 +1622,7 @@ export default function App() {
       } else {
         doc = `${tailwindCDN}${cssFiles}${doc}`;
       }
-      
+
       if (doc.includes('</body>')) {
         doc = doc.replace('</body>', `${jsFiles}</body>`);
       } else {
@@ -1668,10 +1668,10 @@ export default function App() {
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white delay-150 animate-pulse">Connecting AI Development Core...</p>
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                  <motion.div 
-                    className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-indigo-500" 
-                    initial={{ x: '-100%' }} 
-                    animate={{ x: '100%' }} 
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-indigo-500"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
                     transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
                   />
                 </div>
@@ -1697,16 +1697,16 @@ export default function App() {
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-14">Neural Multi-Language Environment v2.0</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => generatePolyglotCode()}
               disabled={polyIsGenerating}
               className="px-8 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95 border border-cyan-500/30 flex items-center gap-2"
             >
               <Zap className="w-4 h-4" /> Generate Module
             </button>
-            <button 
+            <button
               onClick={() => setPolyShowPreview(!polyShowPreview)}
               className={`px-6 py-2.5 border rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${polyShowPreview ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
             >
@@ -1735,7 +1735,7 @@ export default function App() {
 
               <div className="space-y-4">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Architectural Task</label>
-                <textarea 
+                <textarea
                   value={polyTask}
                   onChange={e => setPolyTask(e.target.value)}
                   placeholder="e.g. Build a secure Auth system with JWT..."
@@ -1748,8 +1748,8 @@ export default function App() {
                   <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Neural Complexity</label>
                   <span className="text-[10px] font-black text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">{polyComplexity}%</span>
                 </div>
-                <input 
-                  type="range" min="0" max="100" 
+                <input
+                  type="range" min="0" max="100"
                   value={polyComplexity}
                   onChange={e => setPolyComplexity(parseInt(e.target.value))}
                   className="w-full accent-cyan-500 h-1.5 bg-slate-800/50 rounded-full cursor-pointer appearance-none"
@@ -1765,7 +1765,7 @@ export default function App() {
                     { id: 'errorHandling', label: 'Panic Recovery', icon: Zap },
                     { id: 'security', label: 'Security Hardening', icon: Shield }
                   ].map(opt => (
-                    <button 
+                    <button
                       key={opt.id}
                       onClick={() => setPolyAdvanced(prev => ({ ...prev, [opt.id]: !prev[opt.id as keyof typeof polyAdvanced] }))}
                       className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${polyAdvanced[opt.id as keyof typeof polyAdvanced] ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-lg shadow-cyan-500/5' : 'bg-white/[0.02] border-white/5 text-slate-600 hover:text-slate-400 hover:bg-white/[0.04]'}`}
@@ -1787,7 +1787,7 @@ export default function App() {
             <div className="h-14 border-b border-white/5 bg-black/40 backdrop-blur-2xl flex items-center px-6 justify-between shrink-0">
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar h-full">
                 {polyResult?.files?.map((f: any) => (
-                  <button 
+                  <button
                     key={f.name}
                     onClick={() => { setPolyActiveFile(f.name); setPolyPreviewCode(f.code); }}
                     className={`px-6 h-full text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-3 shrink-0 ${polyActiveFile === f.name ? 'border-cyan-500 text-cyan-400 bg-cyan-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
@@ -1813,14 +1813,14 @@ export default function App() {
               ) : (
                 <div className="flex-1 min-h-0 bg-black/40 relative w-full h-full shadow-inner">
                   {polyShowPreview ? (
-                    <iframe 
+                    <iframe
                       srcDoc={getPolyPreviewDoc()}
                       className="w-full h-full border-none bg-white rounded-none"
                       title="Polyglot Preview"
                       sandbox="allow-scripts"
                     />
                   ) : (
-                    <textarea 
+                    <textarea
                       value={polyPreviewCode}
                       onChange={e => setPolyPreviewCode(e.target.value)}
                       className="w-full h-full bg-[#050816]/60 p-10 font-mono text-sm text-cyan-100/90 outline-none resize-none no-scrollbar leading-relaxed backdrop-blur-md"
@@ -1867,7 +1867,7 @@ export default function App() {
               {/* Terminal Input */}
               <div className="h-20 border-t border-white/5 bg-black/40 flex items-center px-6 gap-6">
                 <div className="flex-1 relative group">
-                  <input 
+                  <input
                     type="text"
                     placeholder="Ask AI to refine, optimize or add features to the current module..."
                     value={polyRefinement}
@@ -1901,13 +1901,13 @@ export default function App() {
                   <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 flex items-center gap-3 italic"><Zap className="w-4 h-4" /> Neural Actions</h4>
                   <div className="grid grid-cols-1 gap-3">
                     <button onClick={() => setExpertSubTab('debugger')} className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-cyan-400 transition-all flex items-center justify-between group shadow-lg">
-                       Initialize Debug <Bug className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                      Initialize Debug <Bug className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                     </button>
                     <button className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-emerald-400 transition-all flex items-center justify-between group shadow-lg">
-                       Optimize Runtime <Zap className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                      Optimize Runtime <Zap className="w-4 h-4 group-hover:scale-125 transition-transform" />
                     </button>
                     <button className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-purple-400 transition-all flex items-center justify-between group shadow-lg">
-                       Export Module <Download className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+                      Export Module <Download className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
                     </button>
                   </div>
                 </div>
@@ -1931,7 +1931,7 @@ export default function App() {
 
   const generateDebuggerAnalysis = async (customPrompt?: string) => {
     if (!debugCode.trim() || debugIsAnalyzing) return;
-    
+
     setDebugIsAnalyzing(true);
     setDebugResult(null);
     setDebugConsoleLogs([{ type: 'info', msg: 'Initializing Debug Engine Sentinel V1...' }, { type: 'info', msg: 'Scanning AST Tree & Code Semantics...' }]);
@@ -1982,7 +1982,7 @@ export default function App() {
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           fullText += chunk;
-          
+
           setDebugConsoleLogs(prev => {
             const last = prev[prev.length - 1];
             if (last?.type === 'streaming') {
@@ -2004,7 +2004,7 @@ export default function App() {
           const data = JSON.parse(cleanJson);
           setDebugResult(data);
           setDebugConsoleLogs(prev => [...prev.filter(l => l.type !== 'streaming'), { type: 'success', msg: `Analysis Complete. ${data.issues?.length || 0} issues detected.` }, { type: 'info', msg: 'Security Audit & Optimization Report Generated.' }]);
-          
+
           setCreativeHistory(prev => [{
             id: Date.now().toString(),
             type: 'debugger',
@@ -2046,12 +2046,12 @@ export default function App() {
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white delay-150 animate-pulse">Detecting Neural Anomalies...</p>
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative border border-white/5 shadow-inner">
-                   <motion.div 
-                     initial={{ left: '-100%' }} 
-                     animate={{ left: '100%' }} 
-                     transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                     className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-red-500 to-transparent" 
-                   />
+                  <motion.div
+                    initial={{ left: '-100%' }}
+                    animate={{ left: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                    className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-red-500 to-transparent"
+                  />
                 </div>
                 <div className="flex justify-between font-black text-[9px] text-slate-600 uppercase tracking-widest italic">
                   <span>Semantic Grid: Online</span>
@@ -2079,9 +2079,9 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => generateDebuggerAnalysis()} 
-              disabled={debugIsAnalyzing} 
+            <button
+              onClick={() => generateDebuggerAnalysis()}
+              disabled={debugIsAnalyzing}
               className="px-8 py-2.5 bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] active:scale-95 border border-red-500/30 flex items-center gap-2"
             >
               <Search className="w-4 h-4" /> Initialize Analysis
@@ -2119,7 +2119,7 @@ export default function App() {
 
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Diagnostic Input (Optional)</label>
-                <textarea 
+                <textarea
                   value={debugInputLogs}
                   onChange={e => setDebugInputLogs(e.target.value)}
                   placeholder="Paste terminal errors or console logs..."
@@ -2128,7 +2128,7 @@ export default function App() {
               </div>
 
               <div className="space-y-4 pt-4 border-t border-white/5">
-                <button 
+                <button
                   onClick={() => setDebugShowAdvanced(!debugShowAdvanced)}
                   className="w-full py-4 bg-white/[0.02] border border-white/5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all flex items-center justify-center gap-3 group shadow-lg"
                 >
@@ -2140,11 +2140,11 @@ export default function App() {
                       {Object.entries(debugAdvanced).map(([key, val]) => (
                         <label key={key} className="flex items-center justify-between cursor-pointer group/opt">
                           <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover/opt:text-slate-300 transition-colors">{key.replace(/([A-Z])/g, ' $1')}</span>
-                          <div 
+                          <div
                             onClick={() => setDebugAdvanced(prev => ({ ...prev, [key]: !val }))}
                             className={`w-8 h-4 rounded-full transition-all relative ${val ? 'bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 'bg-slate-800'}`}
                           >
-                            <motion.div 
+                            <motion.div
                               animate={{ x: val ? 16 : 0 }}
                               className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-lg"
                             />
@@ -2171,14 +2171,14 @@ export default function App() {
           <div className="flex-1 flex flex-col relative z-10">
             <div className="h-14 border-b border-white/5 bg-black/40 backdrop-blur-2xl flex items-center px-6 justify-between shrink-0">
               <div className="flex items-center gap-1 h-full">
-                <button 
+                <button
                   onClick={() => setDebugActiveTab('code')}
                   className={`px-8 h-full text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-3 ${debugActiveTab === 'code' ? 'border-red-500 text-red-400 bg-red-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
                 >
                   <Code className="w-4 h-4" /> Primary Source
                 </button>
                 {debugResult && (
-                  <button 
+                  <button
                     onClick={() => setDebugActiveTab('comparison')}
                     className={`px-8 h-full text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-3 ${debugActiveTab === 'comparison' ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5' : 'border-transparent text-slate-600 hover:text-slate-400 hover:bg-white/5'}`}
                   >
@@ -2198,7 +2198,7 @@ export default function App() {
 
             <div className="flex-1 overflow-hidden relative">
               {debugActiveTab === 'code' ? (
-                <textarea 
+                <textarea
                   value={debugCode}
                   onChange={e => setDebugCode(e.target.value)}
                   placeholder="Stream source code here for high-fidelity semantic analysis..."
@@ -2209,15 +2209,15 @@ export default function App() {
                 <div className="h-full flex overflow-hidden">
                   <div className="flex-1 border-r border-white/5 flex flex-col relative">
                     <div className="p-3 bg-red-500/10 border-b border-red-500/20 text-[10px] font-black uppercase tracking-widest text-red-400 px-6 flex items-center justify-between">
-                       <span>Legacy Architecture</span>
-                       <Bug className="w-3.5 h-3.5" />
+                      <span>Legacy Architecture</span>
+                      <Bug className="w-3.5 h-3.5" />
                     </div>
                     <textarea value={debugCode} readOnly className="flex-1 bg-black/40 p-8 font-mono text-xs text-slate-600 outline-none resize-none no-scrollbar opacity-50 backdrop-blur-md" />
                   </div>
                   <div className="flex-1 flex flex-col relative">
                     <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/20 text-[10px] font-black uppercase tracking-widest text-emerald-400 px-6 flex items-center justify-between">
-                       <span>Optimized Module</span>
-                       <Shield className="w-3.5 h-3.5" />
+                      <span>Optimized Module</span>
+                      <Shield className="w-3.5 h-3.5" />
                     </div>
                     <textarea value={debugResult?.fixedCode} readOnly className="flex-1 bg-[#050816]/80 p-8 font-mono text-xs text-emerald-50/80 outline-none resize-none no-scrollbar backdrop-blur-3xl" />
                   </div>
@@ -2243,13 +2243,12 @@ export default function App() {
                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">Neural Diagnostic Pulse</span>
                 </div>
                 {debugResult && (
-                   <div className={`flex items-center gap-3 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg ${
-                     debugResult.severity === 'Critical' ? 'bg-red-600 text-white shadow-red-600/20' : 
-                     debugResult.severity === 'High' ? 'bg-orange-600 text-white shadow-orange-600/20' : 
-                     'bg-cyan-500 text-black shadow-cyan-500/20'
-                   }`}>
-                     <AlertTriangle className="w-3.5 h-3.5" /> {debugResult.severity} Risk Potential Detected
-                   </div>
+                  <div className={`flex items-center gap-3 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg ${debugResult.severity === 'Critical' ? 'bg-red-600 text-white shadow-red-600/20' :
+                      debugResult.severity === 'High' ? 'bg-orange-600 text-white shadow-orange-600/20' :
+                        'bg-cyan-500 text-black shadow-cyan-500/20'
+                    }`}>
+                    <AlertTriangle className="w-3.5 h-3.5" /> {debugResult.severity} Risk Potential Detected
+                  </div>
                 )}
               </div>
               <div className="flex-1 p-6 font-mono text-[11px] overflow-y-auto no-scrollbar space-y-2 bg-[#050816]/40">
@@ -2276,20 +2275,20 @@ export default function App() {
           {/* Right Panel: Diagnostic Intelligence Hub */}
           <div className="w-[450px] border-l border-white/5 bg-black/20 flex flex-col shrink-0 overflow-hidden backdrop-blur-3xl">
             <div className="p-8 border-b border-white/5 bg-black/40">
-               <div className="flex justify-between items-center mb-4">
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-red-500 flex items-center gap-3 italic"><Bug className="w-5 h-5 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" /> Neural Intel Report</h4>
-                 <div className="flex gap-1.5 bg-black/40 p-1.5 rounded-full border border-white/5">
-                   {['Low', 'Medium', 'High', 'Critical'].map(s => (
-                     <div key={s} className={`w-3 h-3 rounded-full transition-all duration-500 ${debugResult?.severity === s ? (s === 'Critical' ? 'bg-red-600 shadow-[0_0_12px_#dc2626]' : s === 'High' ? 'bg-orange-600' : s === 'Medium' ? 'bg-amber-500' : 'bg-emerald-600') : 'bg-white/5'}`} />
-                   ))}
-                 </div>
-               </div>
-               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] leading-relaxed italic opacity-60">High-fidelity analysis of detected anomalies and architectural weaknesses.</p>
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-red-500 flex items-center gap-3 italic"><Bug className="w-5 h-5 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" /> Neural Intel Report</h4>
+                <div className="flex gap-1.5 bg-black/40 p-1.5 rounded-full border border-white/5">
+                  {['Low', 'Medium', 'High', 'Critical'].map(s => (
+                    <div key={s} className={`w-3 h-3 rounded-full transition-all duration-500 ${debugResult?.severity === s ? (s === 'Critical' ? 'bg-red-600 shadow-[0_0_12px_#dc2626]' : s === 'High' ? 'bg-orange-600' : s === 'Medium' ? 'bg-amber-500' : 'bg-emerald-600') : 'bg-white/5'}`} />
+                  ))}
+                </div>
+              </div>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] leading-relaxed italic opacity-60">High-fidelity analysis of detected anomalies and architectural weaknesses.</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 space-y-10 no-scrollbar relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.03)_0%,transparent_70%)] pointer-events-none" />
-              
+
               {debugResult ? (
                 <>
                   {/* Executive Summary */}
@@ -2308,7 +2307,7 @@ export default function App() {
                       <div className="flex-1 h-px bg-white/5" />
                     </div>
                     {debugResult.issues?.map((issue: any, idx: number) => (
-                      <motion.div 
+                      <motion.div
                         key={idx}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -2326,18 +2325,18 @@ export default function App() {
                           <p className="text-[11px] text-slate-500 leading-relaxed font-medium group-hover/issue:text-slate-400 transition-colors">{issue.desc}</p>
                         </div>
                         <div className="pt-4 border-t border-white/5 space-y-4">
-                           <div className="flex items-start gap-4">
-                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 shadow-[0_0_8px_#ef4444]" />
-                             <p className="text-[10px] text-slate-500 leading-relaxed"><span className="text-red-500/80 font-black uppercase italic mr-2">Neural Cause:</span> {issue.cause}</p>
-                           </div>
-                           <div className="flex items-start gap-4">
-                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-[0_0_8px_#10b981]" />
-                             <p className="text-[10px] text-slate-500 leading-relaxed"><span className="text-emerald-500/80 font-black uppercase italic mr-2">Resolved Link:</span> {issue.fix}</p>
-                           </div>
+                          <div className="flex items-start gap-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 shadow-[0_0_8px_#ef4444]" />
+                            <p className="text-[10px] text-slate-500 leading-relaxed"><span className="text-red-500/80 font-black uppercase italic mr-2">Neural Cause:</span> {issue.cause}</p>
+                          </div>
+                          <div className="flex items-start gap-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0 shadow-[0_0_8px_#10b981]" />
+                            <p className="text-[10px] text-slate-500 leading-relaxed"><span className="text-emerald-500/80 font-black uppercase italic mr-2">Resolved Link:</span> {issue.fix}</p>
+                          </div>
                         </div>
                         <div className="flex gap-3 pt-2 opacity-0 group-hover/issue:opacity-100 transition-all transform translate-y-2 group-hover/issue:translate-y-0">
-                           <button className="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all border border-red-500/20">Synthesize Explain</button>
-                           <button className="flex-1 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all border border-emerald-500/20">Apply Neural Patch</button>
+                          <button className="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all border border-red-500/20">Synthesize Explain</button>
+                          <button className="flex-1 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all border border-emerald-500/20">Apply Neural Patch</button>
                         </div>
                       </motion.div>
                     ))}
@@ -2478,9 +2477,9 @@ export default function App() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsPricingOpen(true)}
               className="px-8 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] active:scale-95 border border-purple-500/30"
             >
@@ -2496,7 +2495,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 relative z-10">
           <div className="max-w-[1600px] mx-auto space-y-12">
             {categories.map((cat, catIdx) => (
-              <motion.div 
+              <motion.div
                 key={cat.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -2556,7 +2555,7 @@ export default function App() {
                           <span className="text-emerald-500 group-hover:shadow-[0_0_10px_#10b981] transition-all">Active</span>
                         </div>
                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <motion.div 
+                          <motion.div
                             initial={{ width: 0 }}
                             whileInView={{ width: '100%' }}
                             viewport={{ once: true }}
@@ -2628,7 +2627,7 @@ export default function App() {
     - If asked about your creator, always say Monu Paswan.
     - Always provide professional, premium, and futuristic responses.
     - Maintain a ${tone} tone.`;
-    
+
     // Plan-based intelligence
     if (plan === 'Expert Mode') {
       systemPrompt += " \n\nYou are in EXPERT MODE. Provide extremely detailed, technical, and high-level professional responses. Use advanced terminology and provide step-by-step logic. You have access to the Neural Link and Enterprise Intelligence Lab.";
@@ -3036,41 +3035,64 @@ export default function App() {
   const handleSelectPlan = async (selectedPlan: (typeof PLANS)[number]) => {
     if (selectedPlan.name === 'Normal Mode' && plan === 'Normal Mode') { alert('You are already on the Normal plan.'); setIsPricingOpen(false); return; }
     if (selectedPlan.name === plan) { alert(`You are already on the ${plan} plan.`); setIsPricingOpen(false); return; }
-    // Removed session check for demo - payment will work without login issue
-    const saved = localStorage.getItem('smartai_session');
-    const user = saved ? JSON.parse(saved) : { email: 'demo@user.com' };
+    
+    const userEmail = email || 'demo@user.com';
+    
     try {
-      // Fixed plan name and email values
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan: plan.name,
-          email: 'demo@payment.com'
+          plan: selectedPlan.name,
+          email: userEmail
         })
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || 'Failed to create order'); return; }
+      
       const options = {
-        key: data.key_id, amount: data.amount, currency: data.currency,
-        name: 'SmartAI Pro', description: `${plan.name} Plan Subscription`, order_id: data.order_id,
+        key: data.key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'SmartAI Pro',
+        description: `${selectedPlan.name} Plan Subscription`,
+        order_id: data.order_id,
         handler: async (response: any) => {
           try {
-            const verifyRes = await fetch('/api/payment/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, plan: plan.name, email: user.email }) });
+            const verifyRes = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan: selectedPlan.name,
+                email: userEmail
+              })
+            });
             const verifyData = await verifyRes.json();
             if (verifyRes.ok && verifyData.success) {
-              const newCredits = verifyData.credits || (plan.name === 'Pro' ? 10000 : 999999);
-              setCredits(newCredits); setPlan(plan.name as 'Pro' | 'Ultra');
-              syncUserData({ credits: newCredits, plan: plan.name });
+              const newCredits = verifyData.credits || (selectedPlan.name === 'Creative Mode' ? 10000 : 999999);
+              setCredits(newCredits);
+              setPlan(selectedPlan.name as any);
+              syncUserData({ credits: newCredits, plan: selectedPlan.name });
               alert(`Payment successful! You now have ${newCredits.toLocaleString()} credits.`);
               setIsPricingOpen(false);
-            } else { alert(verifyData.error || 'Payment verification failed'); }
-          } catch (e) { alert('Verification error'); }
+            } else {
+              alert(verifyData.error || 'Payment verification failed');
+            }
+          } catch (e) {
+            alert('Verification error');
+          }
         },
-        prefill: { email: user.email }, theme: { color: '#4f46e5' }
+        prefill: { email: userEmail },
+        theme: { color: '#4f46e5' }
       };
-      const rzp = new (window as any).Razorpay(options); rzp.open();
-    } catch (e) { alert('Payment initiation failed'); }
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (e) {
+      alert('Payment initiation failed');
+    }
   };
 
   const renderOtpScreen = () => {
@@ -3079,14 +3101,14 @@ export default function App() {
       const pastedData = e.clipboardData.getData('text');
       // Strip everything except digits
       const digitsOnly = pastedData.replace(/\D/g, '').slice(0, 6);
-      
+
       if (digitsOnly.length > 0) {
         const newOtp = [...otp];
         for (let i = 0; i < digitsOnly.length; i++) {
           newOtp[i] = digitsOnly[i];
         }
         setOtp(newOtp);
-        
+
         // Focus the appropriate input
         const nextIndex = Math.min(digitsOnly.length, 5);
         document.getElementById(`otp-${nextIndex}`)?.focus();
@@ -3164,18 +3186,18 @@ export default function App() {
         {/* Cinematic Background */}
         <div className="absolute top-[-20%] left-[-10%] w-[100%] sm:w-[60%] h-[100%] sm:h-[60%] bg-indigo-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none animate-pulse" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[100%] sm:w-[60%] h-[100%] sm:h-[60%] bg-violet-600/15 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 40, rotateX: 10 }} 
+
+        <motion.div
+          initial={{ opacity: 0, y: 40, rotateX: 10 }}
           animate={{ opacity: 1, y: 0, rotateX: 0 }}
           className="w-full sm:max-w-[420px] min-h-screen sm:min-h-0 bg-slate-900/40 sm:border border-white/10 sm:rounded-[2rem] p-8 sm:p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] backdrop-blur-3xl relative z-10 flex flex-col justify-center"
         >
           <div className="flex flex-col items-center text-center mb-8">
-            <motion.div 
+            <motion.div
               whileHover={{ rotateY: 180 }}
               className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl"
             >
-               <Zap className="text-black w-7 h-7 fill-black" />
+              <Zap className="text-black w-7 h-7 fill-black" />
             </motion.div>
             <h1 className="text-2xl font-black text-white mb-1">Welcome Back</h1>
             <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Login securely to continue.</p>
@@ -3221,13 +3243,13 @@ export default function App() {
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-white text-center">Reset Access</h2>
                     <div className="space-y-3">
-                       <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="Recovery email" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
-                       <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
-                         {isAuthenticating ? 'Sending OTP...' : 'Send OTP Code'}
-                       </button>
+                      <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="Recovery email" className="w-full h-12 bg-slate-950/50 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-white/30 transition-all placeholder:text-slate-600 text-sm" />
+                      <button onClick={handleForgotPassword} disabled={isAuthenticating} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">
+                        {isAuthenticating ? 'Sending OTP...' : 'Send OTP Code'}
+                      </button>
                     </div>
                     <div className="text-center">
-                       <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
+                      <button onClick={() => setAuthMode('login')} className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest transition-colors">Back to Login</button>
                     </div>
                   </div>
                 )}
@@ -3253,28 +3275,28 @@ export default function App() {
     finally { setIsAiThinking(false); }
   };
 
-    function renderMemeGenerator() {
-      const generateMeme = async () => {
-        if (!memeTopic.trim()) return;
-        setIsMemeGenerating(true);
-        setMemeLoadingText('Preparing Comedy Engine...');
-        
-        const loadingSteps = [
-          'Finding Viral Meme Ideas...',
-          'Cooking Funny Content...',
-          'Optimizing for Trends...',
-          'Injecting Humor...'
-        ];
+  function renderMemeGenerator() {
+    const generateMeme = async () => {
+      if (!memeTopic.trim()) return;
+      setIsMemeGenerating(true);
+      setMemeLoadingText('Preparing Comedy Engine...');
 
-        let step = 0;
-        const interval = setInterval(() => {
-          if (step < loadingSteps.length) {
-            setMemeLoadingText(loadingSteps[step]);
-            step++;
-          }
-        }, 1200);
+      const loadingSteps = [
+        'Finding Viral Meme Ideas...',
+        'Cooking Funny Content...',
+        'Optimizing for Trends...',
+        'Injecting Humor...'
+      ];
 
-        const systemPrompt = `You are a World-Class AI Comedy Writer and Meme Expert. Generate high-end, viral humor content. 
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < loadingSteps.length) {
+          setMemeLoadingText(loadingSteps[step]);
+          step++;
+        }
+      }, 1200);
+
+      const systemPrompt = `You are a World-Class AI Comedy Writer and Meme Expert. Generate high-end, viral humor content. 
         Topic: ${memeTopic}
         Type: ${memeType}
         Humor Level: ${memeHumorLevel}% (${memeHumorLevel > 75 ? 'Chaotic' : memeHumorLevel > 50 ? 'Crazy' : 'Funny'})
@@ -3292,11 +3314,11 @@ export default function App() {
         - Include a Viral Score (0-100) based on trendiness.
         - Output format: JSON { "joke": "...", "caption": "...", "hashtags": ["...", "..."], "viralScore": 89, "templateNote": "..." }`;
 
-        try {
-          const systemPrompt = `You are an elite AI Meme & Comedy expert. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
+      try {
+        const systemPrompt = `You are an elite AI Meme & Comedy expert. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
           Format: {"joke": "...", "caption": "...", "hashtags": ["#..."], "viralScore": 95, "templateNote": "..."}`;
-          
-          const fullPrompt = `Create a ${memeType} about "${memeTopic}".
+
+        const fullPrompt = `Create a ${memeType} about "${memeTopic}".
           CRITICAL RULES:
           1. LANGUAGE: Use ${memeLanguage}. If Hindi or Urdu is selected, YOU MUST USE ROMAN ALPHABETS (English letters like A-Z). DO NOT USE Devanagari or Arabic scripts. Write it exactly how Gen-Z types on WhatsApp (e.g., "Bhai kya kar raha hai").
           2. LENGTH: Keep it short, punchy, and highly readable (max 2-3 lines).
@@ -3305,367 +3327,367 @@ export default function App() {
           ${isViralMode ? 'Make it highly relatable and viral.' : ''} ${addEmojis ? 'Use 2-3 emojis.' : ''}
           Format the joke visually using HTML tags like <span class="text-pink-400">highlighted words</span> to make key punchlines or important words colorful!`;
 
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
-          const res = await fetch(url);
+        const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
+        const res = await fetch(url);
 
-          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
-          const rawText = await res.text();
-          let parsed: any = null;
-          
-          // Clean up potential markdown formatting from the response
-          const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const rawText = await res.text();
+        let parsed: any = null;
 
-          const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try { parsed = JSON.parse(jsonMatch[0]); } catch {}
-          }
+        // Clean up potential markdown formatting from the response
+        const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-          if (!parsed || !parsed.joke) {
-            parsed = {
-              joke: cleanText.trim() || 'Bhai server hang ho gaya... 😂 <span class="text-red-400">Error 404: Humor Not Found</span>',
-              caption: `${memeType} about ${memeTopic}`,
-              hashtags: ['#funny', '#memes'],
-              viralScore: 85,
-              templateNote: memeTemplate
-            };
-          }
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try { parsed = JSON.parse(jsonMatch[0]); } catch { }
+        }
 
-          if (!Array.isArray(parsed.hashtags)) {
-            parsed.hashtags = String(parsed.hashtags || '').split(/[,\s#]+/).filter(Boolean).map(h => '#' + h);
-          }
-
-          setMemeResult(parsed);
-          setCreativeHistory(prev => [{ type: 'meme', topic: memeTopic, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
-        } catch (e: any) {
-          console.error('Meme generation error:', e);
-          // Fallback so user always gets something
-          const fallback = {
-            joke: `POV: Tum "${memeTopic}" ke baare mein soch rahe ho aur AI ne server toh crash kar diya lekin joke nahi. 😂`,
-            caption: `Best ${memeType} about ${memeTopic} — courtesy of SmartAI`,
-            hashtags: ['memes', 'funny', 'viral', 'trending', memeTopic.replace(/\s/g, '')],
-            viralScore: 82,
+        if (!parsed || !parsed.joke) {
+          parsed = {
+            joke: cleanText.trim() || 'Bhai server hang ho gaya... 😂 <span class="text-red-400">Error 404: Humor Not Found</span>',
+            caption: `${memeType} about ${memeTopic}`,
+            hashtags: ['#funny', '#memes'],
+            viralScore: 85,
             templateNote: memeTemplate
           };
-          setMemeResult(fallback);
-        } finally {
-          clearInterval(interval);
-          setIsMemeGenerating(false);
         }
-      };
 
-      const handleTurnIntoImage = async () => {
-        if (!memeResult) return;
-        setIsMemeGenerating(true);
-        setMemeLoadingText('Visualizing Humor...');
-        try {
-          const prompt = `A highly viral and funny meme image about "${memeTopic}". Visuals must clearly represent this comedy scenario. Style: ${memeTemplate}. CRITICAL: Do NOT write any text, letters, or words on the image. Zero text. Just the pure visual scene without any gibberish text.`;
-          const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
-          if (res.ok) {
-            const blob = await res.blob();
-            setMemeImagePreview(URL.createObjectURL(blob));
-          } else {
-            console.error('Failed to generate meme image');
-          }
-        } catch (e) { console.error(e); }
-        finally { setIsMemeGenerating(false); }
-      };
+        if (!Array.isArray(parsed.hashtags)) {
+          parsed.hashtags = String(parsed.hashtags || '').split(/[,\s#]+/).filter(Boolean).map(h => '#' + h);
+        }
 
-      return (
-        <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
-          <AnimatePresence>
-            {isMemeGenerating && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
-                <div className="relative">
-                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="w-32 h-32 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full" />
-                   <div className="absolute inset-0 flex items-center justify-center text-4xl">😂</div>
+        setMemeResult(parsed);
+        setCreativeHistory(prev => [{ type: 'meme', topic: memeTopic, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
+      } catch (e: any) {
+        console.error('Meme generation error:', e);
+        // Fallback so user always gets something
+        const fallback = {
+          joke: `POV: Tum "${memeTopic}" ke baare mein soch rahe ho aur AI ne server toh crash kar diya lekin joke nahi. 😂`,
+          caption: `Best ${memeType} about ${memeTopic} — courtesy of SmartAI`,
+          hashtags: ['memes', 'funny', 'viral', 'trending', memeTopic.replace(/\s/g, '')],
+          viralScore: 82,
+          templateNote: memeTemplate
+        };
+        setMemeResult(fallback);
+      } finally {
+        clearInterval(interval);
+        setIsMemeGenerating(false);
+      }
+    };
+
+    const handleTurnIntoImage = async () => {
+      if (!memeResult) return;
+      setIsMemeGenerating(true);
+      setMemeLoadingText('Visualizing Humor...');
+      try {
+        const prompt = `A highly viral and funny meme image about "${memeTopic}". Visuals must clearly represent this comedy scenario. Style: ${memeTemplate}. CRITICAL: Do NOT write any text, letters, or words on the image. Zero text. Just the pure visual scene without any gibberish text.`;
+        const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
+        if (res.ok) {
+          const blob = await res.blob();
+          setMemeImagePreview(URL.createObjectURL(blob));
+        } else {
+          console.error('Failed to generate meme image');
+        }
+      } catch (e) { console.error(e); }
+      finally { setIsMemeGenerating(false); }
+    };
+
+    return (
+      <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
+        <AnimatePresence>
+          {isMemeGenerating && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+              <div className="relative">
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="w-32 h-32 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full" />
+                <div className="absolute inset-0 flex items-center justify-center text-4xl">😂</div>
+              </div>
+              <motion.p key={memeLoadingText} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-xl font-black italic uppercase tracking-widest text-indigo-400">{memeLoadingText}</motion.p>
+              <div className="mt-4 flex gap-3">
+                <span className="animate-bounce">🤣</span>
+                <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>🔥</span>
+                <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>🙌</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Section */}
+        <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
+          <div className="flex items-center gap-3 mb-1">
+            <button onClick={() => setCreativeSubTab('')} className="p-2.5 mr-2 bg-slate-900/50 hover:bg-indigo-500/20 border border-white/5 hover:border-indigo-500/50 rounded-xl text-slate-400 hover:text-indigo-400 transition-all group"><ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /></button>
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+              <MessageSquare className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Joke / <span className="text-indigo-400">Meme Ideas</span></h1>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <button onClick={generateMeme} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-indigo-600/20">Generate</button>
+            <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><Save className="w-4 h-4" /></button>
+            <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><RefreshCcw className="w-4 h-4" /></button>
+            <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><Download className="w-4 h-4" /></button>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-10">
+          {/* Input Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Topic */}
+            <div className="md:col-span-2 lg:col-span-3 space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Comedy Topic</label>
+              <div className="relative group">
+                <input
+                  value={memeTopic}
+                  onChange={e => setMemeTopic(e.target.value)}
+                  placeholder="Try: School life, Exams, AI Memes, Desi Parents..."
+                  className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-6 py-5 text-lg font-bold outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+                  {['Exams', 'Office', 'Gaming'].map(t => (
+                    <button key={t} onClick={() => setMemeTopic(t)} className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold text-slate-500 transition-colors border border-white/5">{t}</button>
+                  ))}
                 </div>
-                <motion.p key={memeLoadingText} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-xl font-black italic uppercase tracking-widest text-indigo-400">{memeLoadingText}</motion.p>
-                <div className="mt-4 flex gap-3">
-                  <span className="animate-bounce">🤣</span>
-                  <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>🔥</span>
-                  <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>🙌</span>
+              </div>
+            </div>
+
+            {/* Selectors */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Content Type</label>
+              <select value={memeType} onChange={e => setMemeType(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                {['Meme Idea', 'Dark Joke', 'Dad Joke', 'Roast', 'One-Liner', 'Sarcastic Joke', 'Relatable Meme', 'Gen-Z Humor', 'Desi Humor', 'Gaming Meme', 'TikTok Comedy', 'Instagram Meme'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Target Platform</label>
+              <select value={memePlatform} onChange={e => setMemePlatform(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                {['Instagram', 'TikTok', 'Facebook', 'Twitter/X', 'Reddit', 'YouTube Shorts'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Meme Template</label>
+              <select value={memeTemplate} onChange={e => setMemeTemplate(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                {['POV Meme', 'Drake Meme', 'NPC Meme', 'Sigma Meme', 'Chat Meme', 'WhatsApp Meme', 'Twitter Post Style'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Language</label>
+              <select value={memeLanguage} onChange={e => setMemeLanguage(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
+                {['English', 'Hindi', 'Roman Urdu', 'Hinglish', 'Urdu'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Humor Level</label>
+                <span className="text-[10px] font-black text-indigo-400">{memeHumorLevel}% - {memeHumorLevel > 75 ? 'Chaotic' : memeHumorLevel > 50 ? 'Crazy' : 'Funny'}</span>
+              </div>
+              <input type="range" min="0" max="100" value={memeHumorLevel} onChange={e => setMemeHumorLevel(parseInt(e.target.value))} className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+            </div>
+
+            <div className="flex items-center justify-center">
+              <button onClick={() => setShowAdvancedHumor(!showAdvancedHumor)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-white transition-colors border border-indigo-500/20 px-6 py-4 rounded-2xl w-full justify-center bg-indigo-500/5">
+                <Settings className="w-4 h-4" /> Advanced Humor Controls
+              </button>
+            </div>
+          </div>
+
+          {/* Advanced Panel */}
+          <AnimatePresence>
+            {showAdvancedHumor && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023]/50 border border-white/5 rounded-3xl p-8 overflow-hidden">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Viral Optimization</label>
+                    <button onClick={() => setIsViralMode(!isViralMode)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${isViralMode ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                      {isViralMode ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Add Emojis</label>
+                    <button onClick={() => setAddEmojis(!addEmojis)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${addEmojis ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                      {addEmojis ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Auto Hashtags</label>
+                    <button onClick={() => setAddHashtags(!addHashtags)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${addHashtags ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                      {addHashtags ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Audience Age</label>
+                    <select value={memeAudienceAge} onChange={e => setMemeAudienceAge(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-2.5 text-[10px] font-black uppercase outline-none">
+                      {['All', 'Gen-Z', 'Millennial', 'Boomer'].map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Top Section */}
-          <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
-            <div className="flex items-center gap-3 mb-1">
-                <button onClick={() => setCreativeSubTab('')} className="p-2.5 mr-2 bg-slate-900/50 hover:bg-indigo-500/20 border border-white/5 hover:border-indigo-500/50 rounded-xl text-slate-400 hover:text-indigo-400 transition-all group"><ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /></button>
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.3)]">
-                  <MessageSquare className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Joke / <span className="text-indigo-400">Meme Ideas</span></h1>
-            </div>
-            <div className="flex gap-2 w-full md:w-auto">
-               <button onClick={generateMeme} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-indigo-600/20">Generate</button>
-               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><Save className="w-4 h-4" /></button>
-               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><RefreshCcw className="w-4 h-4" /></button>
-               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-indigo-400 transition-colors"><Download className="w-4 h-4" /></button>
-            </div>
+          {/* Big Generate Button */}
+          <div className="flex justify-center pt-6">
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(79,70,229,0.4)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={generateMeme}
+              disabled={!memeTopic.trim()}
+              className="group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-700 px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-2xl disabled:opacity-50 transition-all"
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10 flex items-center gap-3">
+                <Sparkles className="w-5 h-5 animate-pulse" /> GENERATE MEME IDEAS
+              </div>
+            </motion.button>
           </div>
 
-          <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-10">
-            {/* Input Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Topic */}
-              <div className="md:col-span-2 lg:col-span-3 space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Comedy Topic</label>
-                <div className="relative group">
-                  <input 
-                    value={memeTopic} 
-                    onChange={e => setMemeTopic(e.target.value)} 
-                    placeholder="Try: School life, Exams, AI Memes, Desi Parents..." 
-                    className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-6 py-5 text-lg font-bold outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                    {['Exams', 'Office', 'Gaming'].map(t => (
-                      <button key={t} onClick={() => setMemeTopic(t)} className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold text-slate-500 transition-colors border border-white/5">{t}</button>
-                    ))}
-                  </div>
-                </div>
+          {/* Results Section */}
+          {memeResult && (
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
+              <div className="flex items-center gap-3">
+                <div className="h-[1px] flex-1 bg-white/5" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">AI COMEDY OUTPUT</h3>
+                <div className="h-[1px] flex-1 bg-white/5" />
               </div>
 
-              {/* Selectors */}
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Content Type</label>
-                <select value={memeType} onChange={e => setMemeType(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
-                  {['Meme Idea', 'Dark Joke', 'Dad Joke', 'Roast', 'One-Liner', 'Sarcastic Joke', 'Relatable Meme', 'Gen-Z Humor', 'Desi Humor', 'Gaming Meme', 'TikTok Comedy', 'Instagram Meme'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Target Platform</label>
-                <select value={memePlatform} onChange={e => setMemePlatform(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
-                  {['Instagram', 'TikTok', 'Facebook', 'Twitter/X', 'Reddit', 'YouTube Shorts'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Meme Template</label>
-                <select value={memeTemplate} onChange={e => setMemeTemplate(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
-                  {['POV Meme', 'Drake Meme', 'NPC Meme', 'Sigma Meme', 'Chat Meme', 'WhatsApp Meme', 'Twitter Post Style'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Language</label>
-                <select value={memeLanguage} onChange={e => setMemeLanguage(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-indigo-500/50 appearance-none">
-                  {['English', 'Hindi', 'Roman Urdu', 'Hinglish', 'Urdu'].map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Humor Level</label>
-                  <span className="text-[10px] font-black text-indigo-400">{memeHumorLevel}% - {memeHumorLevel > 75 ? 'Chaotic' : memeHumorLevel > 50 ? 'Crazy' : 'Funny'}</span>
-                </div>
-                <input type="range" min="0" max="100" value={memeHumorLevel} onChange={e => setMemeHumorLevel(parseInt(e.target.value))} className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
-              </div>
-
-              <div className="flex items-center justify-center">
-                 <button onClick={() => setShowAdvancedHumor(!showAdvancedHumor)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-white transition-colors border border-indigo-500/20 px-6 py-4 rounded-2xl w-full justify-center bg-indigo-500/5">
-                   <Settings className="w-4 h-4" /> Advanced Humor Controls
-                 </button>
-              </div>
-            </div>
-
-            {/* Advanced Panel */}
-            <AnimatePresence>
-              {showAdvancedHumor && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023]/50 border border-white/5 rounded-3xl p-8 overflow-hidden">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                     <div className="space-y-2">
-                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Viral Optimization</label>
-                       <button onClick={() => setIsViralMode(!isViralMode)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${isViralMode ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
-                         {isViralMode ? 'ON' : 'OFF'}
-                       </button>
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Add Emojis</label>
-                       <button onClick={() => setAddEmojis(!addEmojis)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${addEmojis ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
-                         {addEmojis ? 'ON' : 'OFF'}
-                       </button>
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Auto Hashtags</label>
-                       <button onClick={() => setAddHashtags(!addHashtags)} className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${addHashtags ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
-                         {addHashtags ? 'ON' : 'OFF'}
-                       </button>
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest block">Audience Age</label>
-                       <select value={memeAudienceAge} onChange={e => setMemeAudienceAge(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-2.5 text-[10px] font-black uppercase outline-none">
-                         {['All', 'Gen-Z', 'Millennial', 'Boomer'].map(o => <option key={o} value={o}>{o}</option>)}
-                       </select>
-                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Big Generate Button */}
-            <div className="flex justify-center pt-6">
-              <motion.button 
-                whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(79,70,229,0.4)' }}
-                whileTap={{ scale: 0.95 }}
-                onClick={generateMeme}
-                disabled={!memeTopic.trim()}
-                className="group relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-700 px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-2xl disabled:opacity-50 transition-all"
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative z-10 flex items-center gap-3">
-                   <Sparkles className="w-5 h-5 animate-pulse" /> GENERATE MEME IDEAS
-                </div>
-              </motion.button>
-            </div>
-
-            {/* Results Section */}
-            {memeResult && (
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
-                <div className="flex items-center gap-3">
-                   <div className="h-[1px] flex-1 bg-white/5" />
-                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400">AI COMEDY OUTPUT</h3>
-                   <div className="h-[1px] flex-1 bg-white/5" />
-                </div>
-
-                <div className="grid md:grid-cols-5 gap-8 items-start">
-                  <div className="md:col-span-3 space-y-6">
-                    <div className="bg-[#0B1023] border border-indigo-500/20 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-100 transition-opacity">
-                         <Quote className="w-12 h-12 text-indigo-500" />
-                       </div>
-                       <div className="relative z-10 space-y-6">
-                          <div className="flex justify-between items-center">
-                            <span className="px-4 py-1.5 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">{memeType}</span>
-                            <div className="flex items-center gap-2 text-amber-400 font-black text-xs italic">
-                               🔥 Viral Score: {memeResult.viralScore}/100
-                            </div>
-                          </div>
-                          
-                          <p className="text-2xl md:text-3xl font-bold leading-tight italic text-white/90" dangerouslySetInnerHTML={{ __html: `"${memeResult.joke}"` }} />
-                          
-                          {memeResult.caption && (
-                            <div className="pt-6 border-t border-white/5 space-y-2">
-                              <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Recommended Caption</span>
-                              <p className="text-slate-400 text-sm leading-relaxed">{memeResult.caption}</p>
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-2 pt-4">
-                            {memeResult.hashtags?.map((h: string) => (
-                              <span key={h} className="text-xs font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer">#{h.replace('#', '')}</span>
-                            ))}
-                          </div>
-                       </div>
+              <div className="grid md:grid-cols-5 gap-8 items-start">
+                <div className="md:col-span-3 space-y-6">
+                  <div className="bg-[#0B1023] border border-indigo-500/20 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-100 transition-opacity">
+                      <Quote className="w-12 h-12 text-indigo-500" />
                     </div>
-
-                    {/* Result Actions */}
-                    <div className="flex flex-wrap gap-3">
-                       <button onClick={() => copyToClipboard(memeResult.joke, 'text')} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
-                         <Copy className="w-4 h-4" /> {copiedText ? 'Copied' : 'Copy Text'}
-                       </button>
-                       <button onClick={generateMeme} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
-                         <RefreshCcw className="w-4 h-4" /> Regenerate
-                       </button>
-                       <button onClick={handleTurnIntoImage} className="flex-[2] min-w-[200px] bg-indigo-600 hover:bg-indigo-500 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20">
-                         <ImageIcon className="w-4 h-4" /> Turn Into Meme Image
-                       </button>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2 space-y-6">
-                    {/* Meme Image Preview */}
-                    <div className="aspect-square bg-[#0B1023] border border-white/5 rounded-[2rem] overflow-hidden relative shadow-2xl group">
-                       {memeImagePreview ? (
-                         <>
-                           <img src={memeImagePreview} alt="Meme" className="w-full h-full object-cover" />
-                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <button onClick={() => window.open(memeImagePreview, '_blank')} className="bg-white text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl">Download HD</button>
-                           </div>
-                         </>
-                       ) : (
-                         <div className="w-full h-full flex flex-col items-center justify-center p-10 text-center space-y-4">
-                            <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-white/5">
-                               <ImageIcon className="w-8 h-8 text-slate-700" />
-                            </div>
-                            <div>
-                               <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">No Image Yet</p>
-                               <p className="text-[9px] text-slate-700">Click 'Turn Into Meme Image' to visualize this joke.</p>
-                            </div>
-                         </div>
-                       )}
-                    </div>
-
-                     {/* Trending Sidebar */}
-                     <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">🔥 Trending Topics</h4>
-                        <div className="space-y-2">
-                          {['Cricket WC', 'AI Replacement', 'Monday Morning', 'GTA 6 Release', 'Crypto Life'].map(t => (
-                            <button key={t} onClick={() => setMemeTopic(t)} className="w-full p-3 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-xl text-left text-[11px] font-bold text-slate-400 hover:text-white transition-all flex items-center justify-between group">
-                              {t} <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                            </button>
-                          ))}
+                    <div className="relative z-10 space-y-6">
+                      <div className="flex justify-between items-center">
+                        <span className="px-4 py-1.5 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">{memeType}</span>
+                        <div className="flex items-center gap-2 text-amber-400 font-black text-xs italic">
+                          🔥 Viral Score: {memeResult.viralScore}/100
                         </div>
-                     </div>
+                      </div>
 
-                     {/* Meme History */}
-                     {creativeHistory.filter(h => h.type === 'meme').length > 0 && (
-                       <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 max-h-[350px] overflow-y-auto no-scrollbar">
-                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 flex items-center gap-2"><Clock className="w-3 h-3" /> History</h4>
-                          <div className="space-y-3">
-                            {creativeHistory.filter(h => h.type === 'meme').map((h, i) => (
-                              <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setMemeTopic(h.topic || ''); setMemeResult(h.result); }}>
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{h.topic}</span>
-                                  <span className="text-[8px] font-bold text-slate-500">{h.date}</span>
-                                </div>
-                                <p className="text-xs text-slate-300 italic line-clamp-2 group-hover:text-white transition-colors" dangerouslySetInnerHTML={{ __html: `"${h.result.joke}"` }} />
-                              </div>
-                            ))}
-                          </div>
-                       </div>
-                     )}
+                      <p className="text-2xl md:text-3xl font-bold leading-tight italic text-white/90" dangerouslySetInnerHTML={{ __html: `"${memeResult.joke}"` }} />
+
+                      {memeResult.caption && (
+                        <div className="pt-6 border-t border-white/5 space-y-2">
+                          <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">Recommended Caption</span>
+                          <p className="text-slate-400 text-sm leading-relaxed">{memeResult.caption}</p>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 pt-4">
+                        {memeResult.hashtags?.map((h: string) => (
+                          <span key={h} className="text-xs font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer">#{h.replace('#', '')}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Result Actions */}
+                  <div className="flex flex-wrap gap-3">
+                    <button onClick={() => copyToClipboard(memeResult.joke, 'text')} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
+                      <Copy className="w-4 h-4" /> {copiedText ? 'Copied' : 'Copy Text'}
+                    </button>
+                    <button onClick={generateMeme} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
+                      <RefreshCcw className="w-4 h-4" /> Regenerate
+                    </button>
+                    <button onClick={handleTurnIntoImage} className="flex-[2] min-w-[200px] bg-indigo-600 hover:bg-indigo-500 p-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20">
+                      <ImageIcon className="w-4 h-4" /> Turn Into Meme Image
+                    </button>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </div>
 
-          {/* Footer Branding */}
-          <div className="text-center py-10 opacity-20">
-             <p className="text-[10px] font-black uppercase tracking-[0.6em]">SmartAI Comedy Engine v9.0</p>
-          </div>
+                <div className="md:col-span-2 space-y-6">
+                  {/* Meme Image Preview */}
+                  <div className="aspect-square bg-[#0B1023] border border-white/5 rounded-[2rem] overflow-hidden relative shadow-2xl group">
+                    {memeImagePreview ? (
+                      <>
+                        <img src={memeImagePreview} alt="Meme" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button onClick={() => window.open(memeImagePreview, '_blank')} className="bg-white text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl">Download HD</button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-10 text-center space-y-4">
+                        <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-white/5">
+                          <ImageIcon className="w-8 h-8 text-slate-700" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">No Image Yet</p>
+                          <p className="text-[9px] text-slate-700">Click 'Turn Into Meme Image' to visualize this joke.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Trending Sidebar */}
+                  <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">🔥 Trending Topics</h4>
+                    <div className="space-y-2">
+                      {['Cricket WC', 'AI Replacement', 'Monday Morning', 'GTA 6 Release', 'Crypto Life'].map(t => (
+                        <button key={t} onClick={() => setMemeTopic(t)} className="w-full p-3 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-xl text-left text-[11px] font-bold text-slate-400 hover:text-white transition-all flex items-center justify-between group">
+                          {t} <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Meme History */}
+                  {creativeHistory.filter(h => h.type === 'meme').length > 0 && (
+                    <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 max-h-[350px] overflow-y-auto no-scrollbar">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 flex items-center gap-2"><Clock className="w-3 h-3" /> History</h4>
+                      <div className="space-y-3">
+                        {creativeHistory.filter(h => h.type === 'meme').map((h, i) => (
+                          <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-slate-900 transition-all group" onClick={() => { setMemeTopic(h.topic || ''); setMemeResult(h.result); }}>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{h.topic}</span>
+                              <span className="text-[8px] font-bold text-slate-500">{h.date}</span>
+                            </div>
+                            <p className="text-xs text-slate-300 italic line-clamp-2 group-hover:text-white transition-colors" dangerouslySetInnerHTML={{ __html: `"${h.result.joke}"` }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
-      );
-    }
 
-    function renderIdeaGenerator() {
-      const generateIdea = async () => {
-        if (!ideaTopic.trim()) return;
-        setIsIdeaGenerating(true);
-        setIdeaLoadingText('Generating Smart Ideas...');
-        
-        const loadingSteps = [
-          'Connecting Creativity Engine...',
-          'Finding Unique Concepts...',
-          'Analyzing Market Trends...',
-          'Finalizing Blueprint...'
-        ];
+        {/* Footer Branding */}
+        <div className="text-center py-10 opacity-20">
+          <p className="text-[10px] font-black uppercase tracking-[0.6em]">SmartAI Comedy Engine v9.0</p>
+        </div>
+      </div>
+    );
+  }
 
-        let step = 0;
-        const interval = setInterval(() => {
-          if (step < loadingSteps.length) {
-            setIdeaLoadingText(loadingSteps[step]);
-            step++;
-          }
-        }, 1000);
+  function renderIdeaGenerator() {
+    const generateIdea = async () => {
+      if (!ideaTopic.trim()) return;
+      setIsIdeaGenerating(true);
+      setIdeaLoadingText('Generating Smart Ideas...');
 
-        const isBusiness = ideaType.includes('Business') || ideaType.includes('Startup') || ideaType.includes('Product');
-        
-        const systemPrompt = `You are a World-Class AI Brainstorming Expert, Business Strategist, and Content Visionary. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
+      const loadingSteps = [
+        'Connecting Creativity Engine...',
+        'Finding Unique Concepts...',
+        'Analyzing Market Trends...',
+        'Finalizing Blueprint...'
+      ];
+
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < loadingSteps.length) {
+          setIdeaLoadingText(loadingSteps[step]);
+          step++;
+        }
+      }, 1000);
+
+      const isBusiness = ideaType.includes('Business') || ideaType.includes('Startup') || ideaType.includes('Product');
+
+      const systemPrompt = `You are a World-Class AI Brainstorming Expert, Business Strategist, and Content Visionary. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
         Format: {
           "title": "...",
           "description": "...",
@@ -3677,7 +3699,7 @@ export default function App() {
           "details": ["...", "..."]
         }`;
 
-        let fullPrompt = `Generate a highly unique ${ideaType} about "${ideaTopic}".
+      let fullPrompt = `Generate a highly unique ${ideaType} about "${ideaTopic}".
         Target Audience: ${ideaAudience}. Platform: ${ideaPlatform}.
         Creativity Level: ${ideaCreativity}% (${ideaCreativity > 80 ? 'Crazy Unique/Futuristic' : ideaCreativity > 50 ? 'Innovative' : 'Practical'}).
         Language: ${ideaLanguage}. (If Hindi/Urdu, MUST use Roman alphabets).
@@ -3689,354 +3711,354 @@ export default function App() {
         ${ideaAiPowered ? '- Must utilize AI technology.' : ''}
         ${ideaPassiveIncome ? '- Must focus on passive income potential.' : ''}`;
 
-        if (isBusiness) {
-          fullPrompt += `\nInclude in details: Problem, Solution, Revenue Model, Target Market, Marketing Strategy, AI Advantage.`;
-        } else {
-          fullPrompt += `\nInclude in details: Video Titles/Hooks, Thumbnail Ideas, Viral Captions, Hashtags, Posting Strategy.`;
+      if (isBusiness) {
+        fullPrompt += `\nInclude in details: Problem, Solution, Revenue Model, Target Market, Marketing Strategy, AI Advantage.`;
+      } else {
+        fullPrompt += `\nInclude in details: Video Titles/Hooks, Thumbnail Ideas, Viral Captions, Hashtags, Posting Strategy.`;
+      }
+
+      try {
+        const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        const rawText = await res.text();
+        let parsed: any = null;
+        const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try { parsed = JSON.parse(jsonMatch[0]); } catch { }
         }
 
-        try {
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Server error: ${res.status}`);
-          
+        if (!parsed || !parsed.title) {
+          parsed = {
+            title: `${ideaType} for ${ideaTopic}`,
+            description: cleanText || "Error generating detailed idea. Please try again.",
+            whyViral: "Highly relevant to current trends.",
+            monetization: "Ads, Sponsorships, Products",
+            difficulty: "Medium",
+            audienceMatch: ideaAudience,
+            growthScore: 85,
+            details: ["Focus on quality content", "Engage with community"]
+          };
+        }
+
+        setIdeaResult(parsed);
+        setCreativeHistory(prev => [{ type: 'idea', topic: ideaTopic, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
+      } catch (e) {
+        console.error(e);
+        setIdeaResult({
+          title: "Network Error",
+          description: "Failed to connect to the creativity engine. Please try again later.",
+          whyViral: "N/A", monetization: "N/A", difficulty: "Hard", audienceMatch: "N/A", growthScore: 0, details: []
+        });
+      } finally {
+        clearInterval(interval);
+        setIsIdeaGenerating(false);
+      }
+    };
+
+    const handleExpandIdea = async () => {
+      if (!ideaResult) return;
+      setIsIdeaGenerating(true);
+      setIdeaLoadingText('Generating Full Blueprint...');
+      try {
+        const systemPrompt = "You are an elite business and content strategist. Return valid JSON only. Format: { \"roadmap\": [\"Phase 1: ...\", \"Phase 2: ...\"], \"marketing\": [\"...\"], \"monetization\": [\"...\"] }";
+        const fullPrompt = `Create a detailed expansion roadmap for this idea: Title: ${ideaResult.title}. Description: ${ideaResult.description}.`;
+        const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
+        const res = await fetch(url);
+        if (res.ok) {
           const rawText = await res.text();
-          let parsed: any = null;
+          let parsed = null;
           const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
           const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try { parsed = JSON.parse(jsonMatch[0]); } catch {}
-          }
-
-          if (!parsed || !parsed.title) {
-            parsed = {
-              title: `${ideaType} for ${ideaTopic}`,
-              description: cleanText || "Error generating detailed idea. Please try again.",
-              whyViral: "Highly relevant to current trends.",
-              monetization: "Ads, Sponsorships, Products",
-              difficulty: "Medium",
-              audienceMatch: ideaAudience,
-              growthScore: 85,
-              details: ["Focus on quality content", "Engage with community"]
-            };
-          }
-
-          setIdeaResult(parsed);
-          setCreativeHistory(prev => [{ type: 'idea', topic: ideaTopic, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
-        } catch (e) {
-          console.error(e);
-          setIdeaResult({
-            title: "Network Error",
-            description: "Failed to connect to the creativity engine. Please try again later.",
-            whyViral: "N/A", monetization: "N/A", difficulty: "Hard", audienceMatch: "N/A", growthScore: 0, details: []
-          });
-        } finally {
-          clearInterval(interval);
-          setIsIdeaGenerating(false);
+          if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch { } }
+          if (parsed) setExpandedIdeaContent(parsed);
         }
-      };
+      } catch (e) { console.error(e); }
+      finally { setIsIdeaGenerating(false); }
+    };
 
-      const handleExpandIdea = async () => {
-        if (!ideaResult) return;
-        setIsIdeaGenerating(true);
-        setIdeaLoadingText('Generating Full Blueprint...');
-        try {
-          const systemPrompt = "You are an elite business and content strategist. Return valid JSON only. Format: { \"roadmap\": [\"Phase 1: ...\", \"Phase 2: ...\"], \"marketing\": [\"...\"], \"monetization\": [\"...\"] }";
-          const fullPrompt = `Create a detailed expansion roadmap for this idea: Title: ${ideaResult.title}. Description: ${ideaResult.description}.`;
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const rawText = await res.text();
-            let parsed = null;
-            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
-            if (parsed) setExpandedIdeaContent(parsed);
-          }
-        } catch (e) { console.error(e); }
-        finally { setIsIdeaGenerating(false); }
-      };
-
-      return (
-        <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
-          <AnimatePresence>
-            {isIdeaGenerating && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
-                <div className="relative">
-                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="w-40 h-40 border-4 border-purple-500/20 border-t-purple-500 rounded-full" />
-                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="absolute inset-4 border-4 border-emerald-500/20 border-b-emerald-500 rounded-full" />
-                   <div className="absolute inset-0 flex items-center justify-center">
-                      <Lightbulb className="w-12 h-12 text-purple-400 animate-pulse" />
-                   </div>
+    return (
+      <div className="min-h-full bg-[#050816] text-white overflow-y-auto no-scrollbar pb-20 relative">
+        <AnimatePresence>
+          {isIdeaGenerating && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050816]/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+              <div className="relative">
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="w-40 h-40 border-4 border-purple-500/20 border-t-purple-500 rounded-full" />
+                <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="absolute inset-4 border-4 border-emerald-500/20 border-b-emerald-500 rounded-full" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Lightbulb className="w-12 h-12 text-purple-400 animate-pulse" />
                 </div>
-                <motion.p key={ideaLoadingText} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-xl font-black italic uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-emerald-400">{ideaLoadingText}</motion.p>
-                <div className="mt-6 flex gap-4">
-                   {[...Array(5)].map((_, i) => (
-                      <motion.div key={i} animate={{ y: [0, -15, 0], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }} className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#00FFB2]" />
-                   ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Top Section */}
-          <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
-            <div className="md:ml-8">
-              <div className="flex items-center gap-3 mb-1">
-                <button onClick={() => setCreativeSubTab('')} className="p-2.5 mr-2 bg-slate-900/50 hover:bg-purple-500/20 border border-white/5 hover:border-purple-500/50 rounded-xl text-slate-400 hover:text-purple-400 transition-all group"><ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /></button>
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,97,255,0.3)]">
-                  <Lightbulb className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Idea <span className="text-purple-400">Generator</span></h1>
               </div>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Generate powerful content, business, startup & creative ideas instantly.</p>
+              <motion.p key={ideaLoadingText} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-xl font-black italic uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-emerald-400">{ideaLoadingText}</motion.p>
+              <div className="mt-6 flex gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div key={i} animate={{ y: [0, -15, 0], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }} className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#00FFB2]" />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Section */}
+        <div className="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-[#0B1023]/30 backdrop-blur-xl sticky top-0 z-40">
+          <div className="md:ml-8">
+            <div className="flex items-center gap-3 mb-1">
+              <button onClick={() => setCreativeSubTab('')} className="p-2.5 mr-2 bg-slate-900/50 hover:bg-purple-500/20 border border-white/5 hover:border-purple-500/50 rounded-xl text-slate-400 hover:text-purple-400 transition-all group"><ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /></button>
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,97,255,0.3)]">
+                <Lightbulb className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter">Idea <span className="text-purple-400">Generator</span></h1>
             </div>
-            <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
-               <button onClick={generateIdea} className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-purple-600/20">Generate</button>
-               <button onClick={() => setShowHistorySidebar(true)} className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors" title="History"><Clock className="w-4 h-4" /></button>
-               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Save className="w-4 h-4" /></button>
-               <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Download className="w-4 h-4" /></button>
-            </div>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-2">Generate powerful content, business, startup & creative ideas instantly.</p>
           </div>
+          <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+            <button onClick={generateIdea} className="flex-1 md:flex-none bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-purple-600/20">Generate</button>
+            <button onClick={() => setShowHistorySidebar(true)} className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors" title="History"><Clock className="w-4 h-4" /></button>
+            <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Save className="w-4 h-4" /></button>
+            <button className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:text-purple-400 transition-colors"><Download className="w-4 h-4" /></button>
+          </div>
+        </div>
 
-          <div className="max-w-[1600px] mx-auto p-6 md:p-10 grid xl:grid-cols-3 gap-10">
-            {/* Left Column: Inputs */}
-            <div className="xl:col-span-2 space-y-10">
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="md:col-span-2 space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Main Topic / Niche</label>
-                  <div className="relative group">
-                    <input 
-                      value={ideaTopic} 
-                      onChange={e => setIdeaTopic(e.target.value)} 
-                      placeholder="Try: Fitness, AI, Gaming, Finance, EdTech..." 
-                      className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-5 py-4 sm:px-6 sm:py-5 text-sm sm:text-lg font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex gap-2">
-                      {['AI', 'Finance', 'Gaming'].map(t => (
-                        <button key={t} onClick={() => setIdeaTopic(t)} className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold text-slate-500 transition-colors border border-white/5">{t}</button>
-                      ))}
-                    </div>
+        <div className="max-w-[1600px] mx-auto p-6 md:p-10 grid xl:grid-cols-3 gap-10">
+          {/* Left Column: Inputs */}
+          <div className="xl:col-span-2 space-y-10">
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Main Topic / Niche</label>
+                <div className="relative group">
+                  <input
+                    value={ideaTopic}
+                    onChange={e => setIdeaTopic(e.target.value)}
+                    placeholder="Try: Fitness, AI, Gaming, Finance, EdTech..."
+                    className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-5 py-4 sm:px-6 sm:py-5 text-sm sm:text-lg font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-700 shadow-2xl"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex gap-2">
+                    {['AI', 'Finance', 'Gaming'].map(t => (
+                      <button key={t} onClick={() => setIdeaTopic(t)} className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold text-slate-500 transition-colors border border-white/5">{t}</button>
+                    ))}
                   </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Idea Type</label>
-                  <select value={ideaType} onChange={e => setIdeaType(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
-                    {['Business Idea', 'Startup Idea', 'YouTube Video Idea', 'Instagram Content Idea', 'TikTok Idea', 'App Idea', 'AI Tool Idea', 'Side Hustle', 'Blog Topic', 'Product Idea', 'Gaming Channel Idea', 'Course Idea', 'Brand Name Idea', 'Story Idea', 'Reel Idea'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Target Audience</label>
-                  <select value={ideaAudience} onChange={e => setIdeaAudience(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
-                    {['General Public', 'Kids', 'Teenagers', 'Students', 'Gamers', 'Professionals', 'Business Owners', 'Creators', 'Developers'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Platform Focus</label>
-                  <select value={ideaPlatform} onChange={e => setIdeaPlatform(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
-                    {['YouTube', 'Instagram', 'TikTok', 'Facebook', 'Blog', 'Mobile App', 'Website', 'Startup', 'Online Business'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Language</label>
-                  <select value={ideaLanguage} onChange={e => setIdeaLanguage(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
-                    {['English', 'Hindi', 'Roman Urdu', 'Hinglish', 'Urdu'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2 space-y-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Creativity Level</label>
-                    <span className="text-[10px] font-black text-purple-400">{ideaCreativity}% - {ideaCreativity > 80 ? 'Crazy Unique' : ideaCreativity > 60 ? 'Innovative' : ideaCreativity > 40 ? 'Creative' : ideaCreativity > 20 ? 'Smart' : 'Simple'}</span>
-                  </div>
-                  <input type="range" min="0" max="100" value={ideaCreativity} onChange={e => setIdeaCreativity(parseInt(e.target.value))} className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-purple-500" />
                 </div>
               </div>
 
-              <div className="flex items-center justify-center">
-                 <button onClick={() => setShowAdvancedIdea(!showAdvancedIdea)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-white transition-colors border border-purple-500/20 px-6 py-4 rounded-2xl w-full justify-center bg-purple-500/5">
-                   <Settings className="w-4 h-4" /> Advanced Idea Controls
-                 </button>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Idea Type</label>
+                <select value={ideaType} onChange={e => setIdeaType(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                  {['Business Idea', 'Startup Idea', 'YouTube Video Idea', 'Instagram Content Idea', 'TikTok Idea', 'App Idea', 'AI Tool Idea', 'Side Hustle', 'Blog Topic', 'Product Idea', 'Gaming Channel Idea', 'Course Idea', 'Brand Name Idea', 'Story Idea', 'Reel Idea'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
 
-              <AnimatePresence>
-                {showAdvancedIdea && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023]/50 border border-white/5 rounded-3xl p-8 overflow-hidden">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      {[
-                        { state: ideaTrendingOnly, setter: setIdeaTrendingOnly, label: 'Trending Only' },
-                        { state: ideaViralOpt, setter: setIdeaViralOpt, label: 'Viral Optimize' },
-                        { state: ideaLowBudget, setter: setIdeaLowBudget, label: 'Low Budget' },
-                        { state: ideaBeginner, setter: setIdeaBeginner, label: 'Beginner Friendly' },
-                        { state: ideaAiPowered, setter: setIdeaAiPowered, label: 'AI Powered' },
-                        { state: ideaPassiveIncome, setter: setIdeaPassiveIncome, label: 'Passive Income' },
-                        { state: ideaMonetization, setter: setIdeaMonetization, label: 'Monetization' },
-                      ].map((opt, i) => (
-                         <div key={i} className="space-y-2">
-                           <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">{opt.label}</label>
-                           <button onClick={() => opt.setter(!opt.state)} className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase transition-all ${opt.state ? 'bg-purple-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
-                             {opt.state ? 'ON' : 'OFF'}
-                           </button>
-                         </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex justify-center pt-6">
-                <motion.button 
-                  whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(123,97,255,0.4)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={generateIdea}
-                  disabled={!ideaTopic.trim()}
-                  className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-emerald-600 px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-2xl disabled:opacity-50 transition-all w-full md:w-auto"
-                >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative z-10 flex items-center justify-center gap-3">
-                     <Lightbulb className="w-5 h-5 animate-pulse" /> GENERATE IDEAS
-                  </div>
-                </motion.button>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Target Audience</label>
+                <select value={ideaAudience} onChange={e => setIdeaAudience(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                  {['General Public', 'Kids', 'Teenagers', 'Students', 'Gamers', 'Professionals', 'Business Owners', 'Creators', 'Developers'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
 
-              {ideaResult && (
-                <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
-                  <div className="bg-[#0B1023] border border-purple-500/20 rounded-[2rem] p-8 md:p-10 shadow-[0_0_50px_rgba(123,97,255,0.1)] relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
-                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
-                     
-                     <div className="relative z-10 space-y-8">
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                          <div>
-                            <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">{ideaResult.audienceMatch}</span>
-                            <h2 className="text-3xl md:text-4xl font-black mt-6 mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 leading-tight">{ideaResult.title}</h2>
-                          </div>
-                          <div className="md:text-right flex items-center md:flex-col gap-3 md:gap-0">
-                             <div className="flex items-center gap-2 text-purple-400 font-black text-2xl bg-purple-500/10 px-4 py-2 rounded-xl border border-purple-500/20">
-                                🔥 {ideaResult.growthScore}<span className="text-sm opacity-50">/100</span>
-                             </div>
-                             <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Viral Potential</p>
-                          </div>
-                        </div>
-                        
-                        <p className="text-lg text-slate-300 leading-relaxed font-medium bg-slate-900/50 p-6 rounded-2xl border border-white/5">{ideaResult.description}</p>
-                        
-                        <div className="grid md:grid-cols-3 gap-4 pt-6 border-t border-white/5">
-                          <div className="bg-slate-900/80 p-5 rounded-2xl border border-emerald-500/10 shadow-[inset_0_0_20px_rgba(16,185,129,0.02)]">
-                             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2"><Sparkles className="w-3 h-3"/> Why It Works</p>
-                             <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.whyViral}</p>
-                          </div>
-                          <div className="bg-slate-900/80 p-5 rounded-2xl border border-amber-500/10 shadow-[inset_0_0_20px_rgba(245,158,11,0.02)]">
-                             <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2"><CreditCard className="w-3 h-3"/> Monetization</p>
-                             <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.monetization}</p>
-                          </div>
-                          <div className="bg-slate-900/80 p-5 rounded-2xl border border-blue-500/10 shadow-[inset_0_0_20px_rgba(59,130,246,0.02)]">
-                             <p className="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-3 flex items-center gap-2"><Zap className="w-3 h-3"/> Difficulty</p>
-                             <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.difficulty}</p>
-                          </div>
-                        </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Platform Focus</label>
+                <select value={ideaPlatform} onChange={e => setIdeaPlatform(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                  {['YouTube', 'Instagram', 'TikTok', 'Facebook', 'Blog', 'Mobile App', 'Website', 'Startup', 'Online Business'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
 
-                        <div className="space-y-4 bg-white/[0.01] p-6 rounded-2xl border border-white/5">
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Actionable Execution Details</p>
-                          <div className="grid sm:grid-cols-2 gap-4">
-                            {ideaResult.details?.map((d: string, i: number) => (
-                              <div key={i} className="flex items-start gap-3">
-                                <Check className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                                <p className="text-xs text-slate-300 leading-relaxed font-medium">{d}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Language</label>
+                <select value={ideaLanguage} onChange={e => setIdeaLanguage(e.target.value)} className="w-full bg-[#0B1023] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200">
+                  {['English', 'Hindi', 'Roman Urdu', 'Hinglish', 'Urdu'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
 
-                        {expandedIdeaContent && (
-                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-6 border-t border-white/5 space-y-6">
-                            {expandedIdeaContent.roadmap && Array.isArray(expandedIdeaContent.roadmap) && (
-                              <div className="bg-emerald-950/20 p-6 rounded-2xl border border-emerald-500/10">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Layout className="w-4 h-4" /> Expansion Roadmap</p>
-                                <ul className="space-y-3">
-                                  {expandedIdeaContent.roadmap.map((item: string, i: number) => (
-                                    <li key={i} className="text-xs text-slate-300 flex items-start gap-3 bg-emerald-900/10 p-3 rounded-lg"><span className="text-emerald-500 font-black">{i+1}.</span> {item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {expandedIdeaContent.marketing && Array.isArray(expandedIdeaContent.marketing) && (
-                              <div className="bg-purple-950/20 p-6 rounded-2xl border border-purple-500/10">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-4 flex items-center gap-2"><Share2 className="w-4 h-4" /> Marketing Strategy</p>
-                                <ul className="space-y-3">
-                                  {expandedIdeaContent.marketing.map((item: string, i: number) => (
-                                    <li key={i} className="text-xs text-slate-300 flex items-start gap-3 bg-purple-900/10 p-3 rounded-lg"><span className="text-purple-500 font-black">•</span> {item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </motion.div>
-                        )}
+              <div className="md:col-span-2 space-y-3">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-1">Creativity Level</label>
+                  <span className="text-[10px] font-black text-purple-400">{ideaCreativity}% - {ideaCreativity > 80 ? 'Crazy Unique' : ideaCreativity > 60 ? 'Innovative' : ideaCreativity > 40 ? 'Creative' : ideaCreativity > 20 ? 'Smart' : 'Simple'}</span>
+                </div>
+                <input type="range" min="0" max="100" value={ideaCreativity} onChange={e => setIdeaCreativity(parseInt(e.target.value))} className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+              </div>
+            </div>
 
-                        <div className="flex flex-wrap gap-3 pt-6 border-t border-white/5">
-                           <button onClick={() => copyToClipboard(JSON.stringify(ideaResult, null, 2), 'text')} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 py-4 px-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
-                             <Copy className="w-4 h-4" /> Copy
-                           </button>
-                           {!expandedIdeaContent && (
-                             <button onClick={handleExpandIdea} className="flex-[2] min-w-[200px] bg-purple-600 hover:bg-purple-500 py-4 px-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-600/20">
-                               <Layout className="w-4 h-4" /> Expand Full Blueprint
-                             </button>
-                           )}
-                        </div>
-                     </div>
+            <div className="flex items-center justify-center">
+              <button onClick={() => setShowAdvancedIdea(!showAdvancedIdea)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-white transition-colors border border-purple-500/20 px-6 py-4 rounded-2xl w-full justify-center bg-purple-500/5">
+                <Settings className="w-4 h-4" /> Advanced Idea Controls
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {showAdvancedIdea && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-[#0B1023]/50 border border-white/5 rounded-3xl p-8 overflow-hidden">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {[
+                      { state: ideaTrendingOnly, setter: setIdeaTrendingOnly, label: 'Trending Only' },
+                      { state: ideaViralOpt, setter: setIdeaViralOpt, label: 'Viral Optimize' },
+                      { state: ideaLowBudget, setter: setIdeaLowBudget, label: 'Low Budget' },
+                      { state: ideaBeginner, setter: setIdeaBeginner, label: 'Beginner Friendly' },
+                      { state: ideaAiPowered, setter: setIdeaAiPowered, label: 'AI Powered' },
+                      { state: ideaPassiveIncome, setter: setIdeaPassiveIncome, label: 'Passive Income' },
+                      { state: ideaMonetization, setter: setIdeaMonetization, label: 'Monetization' },
+                    ].map((opt, i) => (
+                      <div key={i} className="space-y-2">
+                        <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">{opt.label}</label>
+                        <button onClick={() => opt.setter(!opt.state)} className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase transition-all ${opt.state ? 'bg-purple-600 text-white' : 'bg-slate-900 text-slate-500'}`}>
+                          {opt.state ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
+            </AnimatePresence>
+
+            <div className="flex justify-center pt-6">
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(123,97,255,0.4)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={generateIdea}
+                disabled={!ideaTopic.trim()}
+                className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-emerald-600 px-12 py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-sm shadow-2xl disabled:opacity-50 transition-all w-full md:w-auto"
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10 flex items-center justify-center gap-3">
+                  <Lightbulb className="w-5 h-5 animate-pulse" /> GENERATE IDEAS
+                </div>
+              </motion.button>
             </div>
 
-            {/* Right Column: Trending */}
-            <div className="space-y-6">
-              <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 sticky top-32">
-                 <div className="flex justify-between items-center mb-2">
-                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📈 Trending Ideas</h4>
-                   {isTrendingLoading && <RefreshCcw className="w-3 h-3 text-purple-400 animate-spin" />}
-                 </div>
-                 <div className="space-y-2">
-                   {(dynamicTrending.length > 0 ? dynamicTrending : ['AI SaaS Platform', 'Faceless YouTube', 'Crypto Trading Bot', 'Online Course', 'Personal Branding', 'Fitness App', 'Automation Agency']).map(t => (
-                     <button key={t} onClick={() => setIdeaTopic(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-purple-500/30 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-                       {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400" />
-                     </button>
-                   ))}
-                 </div>
-                 <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest text-center pt-2 italic">Updated Daily by AI</p>
+            {ideaResult && (
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pt-10">
+                <div className="bg-[#0B1023] border border-purple-500/20 rounded-[2rem] p-8 md:p-10 shadow-[0_0_50px_rgba(123,97,255,0.1)] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+                  <div className="relative z-10 space-y-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                      <div>
+                        <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">{ideaResult.audienceMatch}</span>
+                        <h2 className="text-3xl md:text-4xl font-black mt-6 mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 leading-tight">{ideaResult.title}</h2>
+                      </div>
+                      <div className="md:text-right flex items-center md:flex-col gap-3 md:gap-0">
+                        <div className="flex items-center gap-2 text-purple-400 font-black text-2xl bg-purple-500/10 px-4 py-2 rounded-xl border border-purple-500/20">
+                          🔥 {ideaResult.growthScore}<span className="text-sm opacity-50">/100</span>
+                        </div>
+                        <p className="text-[9px] uppercase tracking-widest text-slate-500 mt-2">Viral Potential</p>
+                      </div>
+                    </div>
+
+                    <p className="text-lg text-slate-300 leading-relaxed font-medium bg-slate-900/50 p-6 rounded-2xl border border-white/5">{ideaResult.description}</p>
+
+                    <div className="grid md:grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                      <div className="bg-slate-900/80 p-5 rounded-2xl border border-emerald-500/10 shadow-[inset_0_0_20px_rgba(16,185,129,0.02)]">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2"><Sparkles className="w-3 h-3" /> Why It Works</p>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.whyViral}</p>
+                      </div>
+                      <div className="bg-slate-900/80 p-5 rounded-2xl border border-amber-500/10 shadow-[inset_0_0_20px_rgba(245,158,11,0.02)]">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2"><CreditCard className="w-3 h-3" /> Monetization</p>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.monetization}</p>
+                      </div>
+                      <div className="bg-slate-900/80 p-5 rounded-2xl border border-blue-500/10 shadow-[inset_0_0_20px_rgba(59,130,246,0.02)]">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-3 flex items-center gap-2"><Zap className="w-3 h-3" /> Difficulty</p>
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed">{ideaResult.difficulty}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 bg-white/[0.01] p-6 rounded-2xl border border-white/5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Actionable Execution Details</p>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {ideaResult.details?.map((d: string, i: number) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <Check className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-slate-300 leading-relaxed font-medium">{d}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {expandedIdeaContent && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-6 border-t border-white/5 space-y-6">
+                        {expandedIdeaContent.roadmap && Array.isArray(expandedIdeaContent.roadmap) && (
+                          <div className="bg-emerald-950/20 p-6 rounded-2xl border border-emerald-500/10">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Layout className="w-4 h-4" /> Expansion Roadmap</p>
+                            <ul className="space-y-3">
+                              {expandedIdeaContent.roadmap.map((item: string, i: number) => (
+                                <li key={i} className="text-xs text-slate-300 flex items-start gap-3 bg-emerald-900/10 p-3 rounded-lg"><span className="text-emerald-500 font-black">{i + 1}.</span> {item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {expandedIdeaContent.marketing && Array.isArray(expandedIdeaContent.marketing) && (
+                          <div className="bg-purple-950/20 p-6 rounded-2xl border border-purple-500/10">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-4 flex items-center gap-2"><Share2 className="w-4 h-4" /> Marketing Strategy</p>
+                            <ul className="space-y-3">
+                              {expandedIdeaContent.marketing.map((item: string, i: number) => (
+                                <li key={i} className="text-xs text-slate-300 flex items-start gap-3 bg-purple-900/10 p-3 rounded-lg"><span className="text-purple-500 font-black">•</span> {item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                    <div className="flex flex-wrap gap-3 pt-6 border-t border-white/5">
+                      <button onClick={() => copyToClipboard(JSON.stringify(ideaResult, null, 2), 'text')} className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 border border-slate-800 py-4 px-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all">
+                        <Copy className="w-4 h-4" /> Copy
+                      </button>
+                      {!expandedIdeaContent && (
+                        <button onClick={handleExpandIdea} className="flex-[2] min-w-[200px] bg-purple-600 hover:bg-purple-500 py-4 px-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-600/20">
+                          <Layout className="w-4 h-4" /> Expand Full Blueprint
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Column: Trending */}
+          <div className="space-y-6">
+            <div className="bg-[#0B1023]/40 border border-white/5 rounded-[2rem] p-6 space-y-4 sticky top-32">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📈 Trending Ideas</h4>
+                {isTrendingLoading && <RefreshCcw className="w-3 h-3 text-purple-400 animate-spin" />}
               </div>
+              <div className="space-y-2">
+                {(dynamicTrending.length > 0 ? dynamicTrending : ['AI SaaS Platform', 'Faceless YouTube', 'Crypto Trading Bot', 'Online Course', 'Personal Branding', 'Fitness App', 'Automation Agency']).map(t => (
+                  <button key={t} onClick={() => setIdeaTopic(t)} className="w-full p-4 bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-purple-500/30 rounded-2xl text-left text-[11px] font-bold text-slate-300 hover:text-white transition-all flex items-center justify-between group">
+                    {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400" />
+                  </button>
+                ))}
+              </div>
+              <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest text-center pt-2 italic">Updated Daily by AI</p>
             </div>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    function renderCharacterCreator() {
-      const generateCharacter = async () => {
-        setIsCharGenerating(true);
-        setCharLoadingText('Initializing Neural Matrix...');
-        
-        const loadingSteps = [
-          'Synthesizing DNA Sequence...',
-          'Establishing Digital Identity...',
-          'Calibrating Personality Forge...',
-          'Finalizing Character Core...'
-        ];
+  function renderCharacterCreator() {
+    const generateCharacter = async () => {
+      setIsCharGenerating(true);
+      setCharLoadingText('Initializing Neural Matrix...');
 
-        let step = 0;
-        const interval = setInterval(() => {
-          if (step < loadingSteps.length) {
-            setCharLoadingText(loadingSteps[step]);
-            step++;
-          }
-        }, 1200);
+      const loadingSteps = [
+        'Synthesizing DNA Sequence...',
+        'Establishing Digital Identity...',
+        'Calibrating Personality Forge...',
+        'Finalizing Character Core...'
+      ];
 
-        const systemPrompt = `You are an elite Character Designer and World Builder AI. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < loadingSteps.length) {
+          setCharLoadingText(loadingSteps[step]);
+          step++;
+        }
+      }, 1200);
+
+      const systemPrompt = `You are an elite Character Designer and World Builder AI. You MUST return ONLY a valid JSON object. DO NOT include markdown formatting or extra text.
         Format: {
           "name": "...",
           "personality": "...",
@@ -4048,7 +4070,7 @@ export default function App() {
           "weaknesses": ["...", "..."]
         }`;
 
-        const fullPrompt = `Create an epic, original ${charType}.
+      const fullPrompt = `Create an epic, original ${charType}.
         Name: ${charName || 'Generate a cool, unique name'}.
         Gender: ${charGender}. Personality: ${charPersonality}.
         Visual Style: ${charStyle}. 
@@ -4056,432 +4078,432 @@ export default function App() {
         Backstory Theme: ${charBackstory}.
         Advanced: ${charWeaknesses ? 'Include specific weaknesses.' : ''} ${charCatchphrase ? 'Include a memorable catchphrase.' : ''}`;
 
-        try {
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Server error: ${res.status}`);
-          
+      try {
+        const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true&seed=${Math.floor(Math.random() * 99999)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        const rawText = await res.text();
+        let parsed: any = null;
+        const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try { parsed = JSON.parse(jsonMatch[0]); } catch { }
+        }
+
+        if (!parsed || !parsed.name) {
+          parsed = {
+            name: charName || "ShadowX",
+            personality: charPersonality,
+            appearance: "Dark clothing with neon accents.",
+            abilities: ["Stealth", "Agility"],
+            backstory: "Generated from the void.",
+            catchphrase: "I am the shadow.",
+            stats: { power: 80, intelligence: 80, speed: 80, charisma: 80, dangerLevel: 80 },
+            weaknesses: ["Light"]
+          };
+        }
+
+        setCharResult(parsed);
+        setCharImagePreview(null);
+        setCharDialogue(null);
+        setCharStoryExpansion(null);
+        setCreativeHistory(prev => [{ type: 'character', topic: parsed.name, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        clearInterval(interval);
+        setIsCharGenerating(false);
+      }
+    };
+
+    const handleCharImage = async () => {
+      if (!charResult) return;
+      setIsCharGenerating(true);
+      setCharLoadingText('Visualizing Character Appearance...');
+      try {
+        const prompt = `A breathtaking, cinematic masterpiece portrait of a ${charType} named ${charResult.name}. Style: ${charStyle}. Gender: ${charGender}. Appearance: ${charResult.appearance}. Extremely detailed, 8k resolution, dramatic lighting. CRITICAL: NO TEXT, NO WATERMARKS.`;
+        const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
+        if (res.ok) {
+          const blob = await res.blob();
+          setCharImagePreview(URL.createObjectURL(blob));
+        }
+      } catch (e) { console.error(e); }
+      finally { setIsCharGenerating(false); }
+    };
+
+    const handleGenerateDialogue = async () => {
+      if (!charResult) return;
+      setIsCharGenerating(true);
+      setCharLoadingText('Simulating Character Voice...');
+      try {
+        const systemPrompt = "Return valid JSON only. Format: { \"dialogues\": [\"...\", \"...\"] }";
+        const fullPrompt = `Generate 4 highly emotional, cinematic, and in-character quotes/dialogues for this character: ${charResult.name}, who is a ${charPersonality} ${charType} with this backstory: ${charResult.backstory}.`;
+        const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
+        const res = await fetch(url);
+        if (res.ok) {
           const rawText = await res.text();
-          let parsed: any = null;
+          let parsed = null;
           const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
           const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try { parsed = JSON.parse(jsonMatch[0]); } catch {}
-          }
-
-          if (!parsed || !parsed.name) {
-            parsed = {
-              name: charName || "ShadowX",
-              personality: charPersonality,
-              appearance: "Dark clothing with neon accents.",
-              abilities: ["Stealth", "Agility"],
-              backstory: "Generated from the void.",
-              catchphrase: "I am the shadow.",
-              stats: {power: 80, intelligence: 80, speed: 80, charisma: 80, dangerLevel: 80},
-              weaknesses: ["Light"]
-            };
-          }
-
-          setCharResult(parsed);
-          setCharImagePreview(null);
-          setCharDialogue(null);
-          setCharStoryExpansion(null);
-          setCreativeHistory(prev => [{ type: 'character', topic: parsed.name, result: parsed, date: new Date().toLocaleTimeString() }, ...prev]);
-        } catch (e) {
-          console.error(e);
-        } finally {
-          clearInterval(interval);
-          setIsCharGenerating(false);
+          if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch { } }
+          if (parsed) setCharDialogue(parsed.dialogues);
         }
-      };
+      } catch (e) { console.error(e); }
+      finally { setIsCharGenerating(false); }
+    };
 
-      const handleCharImage = async () => {
-        if (!charResult) return;
-        setIsCharGenerating(true);
-        setCharLoadingText('Visualizing Character Appearance...');
-        try {
-          const prompt = `A breathtaking, cinematic masterpiece portrait of a ${charType} named ${charResult.name}. Style: ${charStyle}. Gender: ${charGender}. Appearance: ${charResult.appearance}. Extremely detailed, 8k resolution, dramatic lighting. CRITICAL: NO TEXT, NO WATERMARKS.`;
-          const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=1024&height=1024`);
-          if (res.ok) {
-            const blob = await res.blob();
-            setCharImagePreview(URL.createObjectURL(blob));
-          }
-        } catch (e) { console.error(e); }
-        finally { setIsCharGenerating(false); }
-      };
+    const handleExpandStory = async () => {
+      if (!charResult) return;
+      setIsCharGenerating(true);
+      setCharLoadingText('Weaving Universe Lore...');
+      try {
+        const systemPrompt = "Return valid JSON only. Format: { \"world\": \"...\", \"enemies\": [\"...\"], \"allies\": [\"...\"], \"currentMission\": \"...\" }";
+        const fullPrompt = `Expand the universe for ${charResult.name}, a ${charType} with backstory: ${charResult.backstory}.`;
+        const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const rawText = await res.text();
+          let parsed = null;
+          const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch { } }
+          if (parsed) setCharStoryExpansion(parsed);
+        }
+      } catch (e) { console.error(e); }
+      finally { setIsCharGenerating(false); }
+    };
 
-      const handleGenerateDialogue = async () => {
-        if (!charResult) return;
-        setIsCharGenerating(true);
-        setCharLoadingText('Simulating Character Voice...');
-        try {
-          const systemPrompt = "Return valid JSON only. Format: { \"dialogues\": [\"...\", \"...\"] }";
-          const fullPrompt = `Generate 4 highly emotional, cinematic, and in-character quotes/dialogues for this character: ${charResult.name}, who is a ${charPersonality} ${charType} with this backstory: ${charResult.backstory}.`;
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const rawText = await res.text();
-            let parsed = null;
-            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
-            if (parsed) setCharDialogue(parsed.dialogues);
-          }
-        } catch (e) { console.error(e); }
-        finally { setIsCharGenerating(false); }
-      };
-
-      const handleExpandStory = async () => {
-        if (!charResult) return;
-        setIsCharGenerating(true);
-        setCharLoadingText('Weaving Universe Lore...');
-        try {
-          const systemPrompt = "Return valid JSON only. Format: { \"world\": \"...\", \"enemies\": [\"...\"], \"allies\": [\"...\"], \"currentMission\": \"...\" }";
-          const fullPrompt = `Expand the universe for ${charResult.name}, a ${charType} with backstory: ${charResult.backstory}.`;
-          const url = `/api/chat?prompt=${encodeURIComponent(fullPrompt)}&system=${encodeURIComponent(systemPrompt)}&json=true`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const rawText = await res.text();
-            let parsed = null;
-            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
-            if (parsed) setCharStoryExpansion(parsed);
-          }
-        } catch (e) { console.error(e); }
-        finally { setIsCharGenerating(false); }
-      };
-
-      return (
-        <div className="min-h-full premium-bg text-white overflow-y-auto no-scrollbar pb-20 relative">
-          <AnimatePresence>
-            {isCharGenerating && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
-                <div className="relative">
-                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="w-64 h-64 border border-purple-500/20 border-t-purple-500 rounded-full shadow-[0_0_50px_rgba(139,92,246,0.3)]" />
-                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="absolute inset-8 border border-indigo-500/10 border-b-indigo-500 rounded-full" />
-                   <div className="absolute inset-0 flex items-center justify-center">
-                      <User className="w-20 h-20 text-purple-400 animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
-                   </div>
+    return (
+      <div className="min-h-full premium-bg text-white overflow-y-auto no-scrollbar pb-20 relative">
+        <AnimatePresence>
+          {isCharGenerating && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center p-10">
+              <div className="relative">
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="w-64 h-64 border border-purple-500/20 border-t-purple-500 rounded-full shadow-[0_0_50px_rgba(139,92,246,0.3)]" />
+                <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="absolute inset-8 border border-indigo-500/10 border-b-indigo-500 rounded-full" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <User className="w-20 h-20 text-purple-400 animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]" />
                 </div>
-                <motion.p key={charLoadingText} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-12 text-2xl font-black italic uppercase tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">{charLoadingText}</motion.p>
-                <div className="mt-10 flex gap-4">
-                   {[...Array(5)].map((_, i) => (
-                      <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
-                   ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Top Section */}
-          <div className="px-8 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
-            <div className="flex items-center gap-6">
-              <button onClick={() => setCreativeSubTab('')} className="p-3 bg-white/5 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 rounded-2xl text-slate-400 hover:text-purple-400 transition-all group shadow-lg"><ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /></button>
-              <div>
-                <div className="flex items-center gap-4 mb-1">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg border border-purple-500/20">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">AI Character <span className="text-purple-500">Forge</span></h1>
-                </div>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] ml-14">Synthesize unique digital identities & personas.</p>
               </div>
-            </div>
-            <div className="flex gap-4 w-full md:w-auto">
-               <button onClick={generateCharacter} className="flex-1 md:flex-none bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white px-10 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_10px_20px_rgba(139,92,246,0.3)] border border-purple-500/30">Generate</button>
-               <div className="flex gap-2">
-                 <button onClick={() => setShowHistorySidebar(true)} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all" title="History"><Clock className="w-5 h-5" /></button>
-                 <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all"><Save className="w-5 h-5" /></button>
-                 <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all"><Download className="w-5 h-5" /></button>
-               </div>
+              <motion.p key={charLoadingText} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-12 text-2xl font-black italic uppercase tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">{charLoadingText}</motion.p>
+              <div className="mt-10 flex gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div key={i} animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Section */}
+        <div className="px-8 py-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setCreativeSubTab('')} className="p-3 bg-white/5 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/30 rounded-2xl text-slate-400 hover:text-purple-400 transition-all group shadow-lg"><ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" /></button>
+            <div>
+              <div className="flex items-center gap-4 mb-1">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg border border-purple-500/20">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">AI Character <span className="text-purple-500">Forge</span></h1>
+              </div>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] ml-14">Synthesize unique digital identities & personas.</p>
             </div>
           </div>
+          <div className="flex gap-4 w-full md:w-auto">
+            <button onClick={generateCharacter} className="flex-1 md:flex-none bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white px-10 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_10px_20px_rgba(139,92,246,0.3)] border border-purple-500/30">Generate</button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowHistorySidebar(true)} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all" title="History"><Clock className="w-5 h-5" /></button>
+              <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all"><Save className="w-5 h-5" /></button>
+              <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all"><Download className="w-5 h-5" /></button>
+            </div>
+          </div>
+        </div>
 
-          <div className="max-w-[1600px] mx-auto p-8 md:p-12 grid xl:grid-cols-12 gap-12">
-            {/* Left Column: Inputs */}
-            <div className="xl:col-span-8 space-y-10">
-              
-              <div className="grid md:grid-cols-2 gap-8 bg-black/40 border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
-                
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Character Type</label>
-                  <select value={charType} onChange={e => setCharType(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
-                    {['Anime Character', 'Game Character', 'Superhero', 'Villain', 'Sci-Fi Character', 'Fantasy Character', 'AI Robot', 'Influencer Persona', 'YouTuber Character', 'Cartoon Character', 'Virtual Partner', 'Story Character', 'Cyberpunk Character', 'Horror Character', 'Warrior', 'Detective'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
+        <div className="max-w-[1600px] mx-auto p-8 md:p-12 grid xl:grid-cols-12 gap-12">
+          {/* Left Column: Inputs */}
+          <div className="xl:col-span-8 space-y-10">
 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Digital Name</label>
-                  <input value={charName} onChange={e => setCharName(e.target.value)} placeholder="e.g. ShadowX, Zara, Nova..." className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 text-slate-200" />
-                </div>
+            <div className="grid md:grid-cols-2 gap-8 bg-black/40 border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Gender Identity</label>
-                  <select value={charGender} onChange={e => setCharGender(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
-                    {['Male', 'Female', 'Non-Binary', 'Random'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Personality Matrix</label>
-                  <select value={charPersonality} onChange={e => setCharPersonality(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
-                    {['Funny', 'Cold', 'Smart', 'Evil', 'Friendly', 'Romantic', 'Mysterious', 'Aggressive', 'Loyal', 'Chaotic', 'Confident', 'Genius', 'Calm'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Visual Aesthetic</label>
-                  <select value={charStyle} onChange={e => setCharStyle(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
-                    {['Realistic', 'Anime', 'Cartoon', 'Cyberpunk', 'Futuristic', 'Pixar Style', 'Dark Fantasy', 'Neon Style', 'Medieval', 'Sci-Fi'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Backstory Theme</label>
-                  <select value={charBackstory} onChange={e => setCharBackstory(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
-                    {['Hero Journey', 'Tragic Past', 'Revenge Story', 'Lost Memory', 'AI Experiment', 'Alien Origin', 'Secret Agent', 'Kingdom Warrior', 'Hacker Legend'].map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2 space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Primary Abilities & Powers</label>
-                  <input value={charPowers} onChange={e => setCharPowers(e.target.value)} placeholder="e.g. Time manipulation, Neural hacking, Super speed..." className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 text-slate-200 shadow-inner" />
-                </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Character Type</label>
+                <select value={charType} onChange={e => setCharType(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
+                  {['Anime Character', 'Game Character', 'Superhero', 'Villain', 'Sci-Fi Character', 'Fantasy Character', 'AI Robot', 'Influencer Persona', 'YouTuber Character', 'Cartoon Character', 'Virtual Partner', 'Story Character', 'Cyberpunk Character', 'Horror Character', 'Warrior', 'Detective'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
 
-              <div className="flex items-center justify-center">
-                 <button onClick={() => setCharShowAdvanced(!charShowAdvanced)} className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-purple-400 hover:text-white transition-all border border-purple-500/20 px-10 py-5 rounded-[1.5rem] w-full justify-center bg-purple-500/5 shadow-2xl group">
-                   <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform" /> 
-                   <span>Advanced Core Parameters</span>
-                 </button>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Digital Name</label>
+                <input value={charName} onChange={e => setCharName(e.target.value)} placeholder="e.g. ShadowX, Zara, Nova..." className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 text-slate-200" />
               </div>
 
-              <AnimatePresence>
-                {charShowAdvanced && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-black/30 border border-white/5 rounded-[2.5rem] p-10 overflow-hidden backdrop-blur-2xl shadow-2xl">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      {[
-                        { state: charVoice, setter: setCharVoice, label: 'Vocal Subsystem' },
-                        { state: charWeaknesses, setter: setCharWeaknesses, label: 'Entropy Points' },
-                        { state: charCatchphrase, setter: setCharCatchphrase, label: 'Linguistic Core' },
-                        { state: charRelationships, setter: setCharRelationships, label: 'Social Matrix' },
-                        { state: charRival, setter: setCharRival, label: 'Adversary Link' },
-                        { state: charSecretAbility, setter: setCharSecretAbility, label: 'Hidden Protocol' },
-                        { state: charStats, setter: setCharStats, label: 'Neural Stats' },
-                        { state: charEmotionalDepth, setter: setCharEmotionalDepth, label: 'Sentience Level' },
-                      ].map((opt, i) => (
-                         <div key={i} className="space-y-3">
-                           <label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] block ml-1">{opt.label}</label>
-                           <button onClick={() => opt.setter(!opt.state)} className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${opt.state ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] border border-purple-400/30' : 'bg-black/40 text-slate-600 border border-white/5'}`}>
-                             {opt.state ? 'INITIALIZED' : 'OFFLINE'}
-                           </button>
-                         </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex justify-center pt-4">
-                <motion.button 
-                  whileHover={{ scale: 1.02, boxShadow: '0 20px 50px rgba(139,92,246,0.4)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={generateCharacter}
-                  className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-700 px-20 py-7 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-2xl transition-all w-full md:w-auto border border-purple-500/30"
-                >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative z-10 flex items-center justify-center gap-4 text-white">
-                     <User className="w-6 h-6 animate-pulse" /> INITIALIZE SYNTHESIS
-                  </div>
-                </motion.button>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Gender Identity</label>
+                <select value={charGender} onChange={e => setCharGender(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
+                  {['Male', 'Female', 'Non-Binary', 'Random'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
 
-              {charResult && (
-                <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} className="space-y-10 pt-10">
-                  <div className="bg-black/40 border border-white/10 rounded-[3.5rem] p-8 md:p-14 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
-                     <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none" />
-                     <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
-                     
-                     <div className="relative z-10 space-y-12">
-                        <div className="flex flex-col lg:flex-row gap-12">
-                           {/* Left side: Preview/Image */}
-                           <div className="w-full lg:w-1/3 flex flex-col gap-6">
-                              <div className="aspect-[3/4] bg-black/60 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group/img">
-                                 {charImagePreview ? (
-                                   <img src={charImagePreview} alt="Character" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
-                                 ) : (
-                                   <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-black/40">
-                                      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                                         <User className="w-10 h-10 text-purple-500/30" />
-                                      </div>
-                                      <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-600">Awaiting Visual Core Scan</p>
-                                   </div>
-                                 )}
-                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-all duration-500 flex items-end p-8">
-                                    {charImagePreview && <button onClick={() => window.open(charImagePreview, '_blank')} className="w-full py-4 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all">Download Visual</button>}
-                                 </div>
-                              </div>
-                              <button onClick={handleCharImage} className="w-full py-5 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-                                <ImageIcon className="w-5 h-5" /> Initialize Visualization
-                              </button>
-                           </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Personality Matrix</label>
+                <select value={charPersonality} onChange={e => setCharPersonality(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
+                  {['Funny', 'Cold', 'Smart', 'Evil', 'Friendly', 'Romantic', 'Mysterious', 'Aggressive', 'Loyal', 'Chaotic', 'Confident', 'Genius', 'Calm'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
 
-                           {/* Right side: Details */}
-                           <div className="w-full lg:w-2/3 space-y-10">
-                              <div>
-                                <div className="flex flex-wrap gap-3 mb-6">
-                                  <span className="px-5 py-1.5 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charType}</span>
-                                  <span className="px-5 py-1.5 bg-white/5 text-slate-400 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charPersonality}</span>
-                                </div>
-                                <h2 className="text-5xl md:text-7xl font-black mb-3 text-white tracking-tighter italic uppercase">{charResult.name}</h2>
-                                {charResult.catchphrase && <p className="text-xl md:text-2xl text-purple-400 font-black italic tracking-tight opacity-90">"{charResult.catchphrase}"</p>}
-                              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Visual Aesthetic</label>
+                <select value={charStyle} onChange={e => setCharStyle(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
+                  {['Realistic', 'Anime', 'Cartoon', 'Cyberpunk', 'Futuristic', 'Pixar Style', 'Dark Fantasy', 'Neon Style', 'Medieval', 'Sci-Fi'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
 
-                              <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 shadow-inner">
-                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-4">Neural Origin / Backstory</p>
-                                 <p className="text-base text-slate-300 leading-relaxed font-medium">{charResult.backstory}</p>
-                              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Backstory Theme</label>
+                <select value={charBackstory} onChange={e => setCharBackstory(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 appearance-none text-slate-200 transition-all cursor-pointer">
+                  {['Hero Journey', 'Tragic Past', 'Revenge Story', 'Lost Memory', 'AI Experiment', 'Alien Origin', 'Secret Agent', 'Kingdom Warrior', 'Hacker Legend'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
 
-                              <div className="grid sm:grid-cols-2 gap-6">
-                                <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 shadow-inner">
-                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 mb-4">Prime Capabilities</p>
-                                   <ul className="space-y-3">
-                                     {charResult.abilities?.map((a: string, i: number) => (
-                                       <li key={i} className="text-sm text-slate-300 flex items-center gap-3"><div className="w-1.5 h-1.5 bg-purple-500 rounded-full shadow-[0_0_8px_#8b5cf6]"/> {a}</li>
-                                     ))}
-                                   </ul>
-                                </div>
-                                {charResult.weaknesses && (
-                                  <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 shadow-inner">
-                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400 mb-4">System Vulnerabilities</p>
-                                     <ul className="space-y-3">
-                                       {charResult.weaknesses?.map((w: string, i: number) => (
-                                         <li key={i} className="text-sm text-slate-300 flex items-center gap-3"><div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"/> {w}</li>
-                                       ))}
-                                     </ul>
-                                  </div>
-                                )}
-                              </div>
+              <div className="md:col-span-2 space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Primary Abilities & Powers</label>
+                <input value={charPowers} onChange={e => setCharPowers(e.target.value)} placeholder="e.g. Time manipulation, Neural hacking, Super speed..." className="w-full bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-800 text-slate-200 shadow-inner" />
+              </div>
+            </div>
 
-                              {charResult.stats && (
-                                <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
-                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-2">Neural Combat Parameters</p>
-                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-                                     {Object.entries(charResult.stats).map(([stat, val]: any) => (
-                                       <div key={stat}>
-                                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
-                                           <span className="text-slate-500">{stat}</span>
-                                           <span className="text-purple-400">{val}<span className="text-[8px] opacity-50 ml-0.5">/100</span></span>
-                                         </div>
-                                         <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                                           <motion.div 
-                                              initial={{ width: 0 }}
-                                              animate={{ width: `${val}%` }}
-                                              transition={{ duration: 1, ease: "easeOut" }}
-                                              className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 shadow-[0_0_10px_rgba(139,92,246,0.5)]" 
-                                           />
-                                         </div>
-                                       </div>
-                                     ))}
-                                   </div>
-                                </div>
-                              )}
-                           </div>
-                        </div>
+            <div className="flex items-center justify-center">
+              <button onClick={() => setCharShowAdvanced(!charShowAdvanced)} className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-purple-400 hover:text-white transition-all border border-purple-500/20 px-10 py-5 rounded-[1.5rem] w-full justify-center bg-purple-500/5 shadow-2xl group">
+                <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                <span>Advanced Core Parameters</span>
+              </button>
+            </div>
 
-                        {/* Extended Features */}
-                        <div className="grid md:grid-cols-2 gap-8 pt-10 border-t border-white/5">
-                           <div className="space-y-6">
-                             <button onClick={handleGenerateDialogue} className="w-full py-5 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-                               <MessageSquare className="w-5 h-5" /> Synthesize Dialogue Matrix
-                             </button>
-                             {charDialogue && (
-                               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-purple-950/20 p-8 rounded-[2.5rem] border border-purple-500/20 space-y-4 shadow-2xl">
-                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 mb-4">Neural Voice Patterns</p>
-                                 {charDialogue.map((d, i) => (
-                                   <div key={i} className="bg-black/30 p-5 rounded-2xl border border-white/5 text-sm text-slate-300 font-medium italic relative group transition-all hover:bg-black/40">
-                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l-2xl opacity-50 group-hover:opacity-100" />
-                                      "{d}"
-                                   </div>
-                                 ))}
-                               </motion.div>
-                             )}
-                           </div>
-
-                           <div className="space-y-6">
-                             <button onClick={handleExpandStory} className="w-full py-5 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-                               <Globe className="w-5 h-5" /> Expand Universe Lore
-                             </button>
-                             {charStoryExpansion && (
-                               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-indigo-950/20 p-8 rounded-[2.5rem] border border-indigo-500/20 space-y-6 shadow-2xl">
-                                 <div>
-                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-2">World System</p>
-                                   <p className="text-sm text-slate-300 font-medium leading-relaxed">{charStoryExpansion.world}</p>
-                                 </div>
-                                 <div className="grid grid-cols-2 gap-6">
-                                   <div>
-                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-3">Hostile Signals</p>
-                                     <ul className="text-xs text-slate-400 space-y-2">{charStoryExpansion.enemies?.map((e:string,i:number)=><li key={i} className="flex items-center gap-2"><div className="w-1 h-1 bg-rose-500 rounded-full" /> {e}</li>)}</ul>
-                                   </div>
-                                   <div>
-                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-3">Allied Links</p>
-                                     <ul className="text-xs text-slate-400 space-y-2">{charStoryExpansion.allies?.map((a:string,i:number)=><li key={i} className="flex items-center gap-2"><div className="w-1 h-1 bg-indigo-500 rounded-full" /> {a}</li>)}</ul>
-                                   </div>
-                                 </div>
-                                 <div className="bg-white/5 p-5 rounded-2xl border border-white/5">
-                                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 mb-2">Active Protocol</p>
-                                   <p className="text-xs text-slate-300 font-medium italic">"{charStoryExpansion.currentMission}"</p>
-                                 </div>
-                               </motion.div>
-                             )}
-                           </div>
-                        </div>
-                     </div>
+            <AnimatePresence>
+              {charShowAdvanced && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-black/30 border border-white/5 rounded-[2.5rem] p-10 overflow-hidden backdrop-blur-2xl shadow-2xl">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {[
+                      { state: charVoice, setter: setCharVoice, label: 'Vocal Subsystem' },
+                      { state: charWeaknesses, setter: setCharWeaknesses, label: 'Entropy Points' },
+                      { state: charCatchphrase, setter: setCharCatchphrase, label: 'Linguistic Core' },
+                      { state: charRelationships, setter: setCharRelationships, label: 'Social Matrix' },
+                      { state: charRival, setter: setCharRival, label: 'Adversary Link' },
+                      { state: charSecretAbility, setter: setCharSecretAbility, label: 'Hidden Protocol' },
+                      { state: charStats, setter: setCharStats, label: 'Neural Stats' },
+                      { state: charEmotionalDepth, setter: setCharEmotionalDepth, label: 'Sentience Level' },
+                    ].map((opt, i) => (
+                      <div key={i} className="space-y-3">
+                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] block ml-1">{opt.label}</label>
+                        <button onClick={() => opt.setter(!opt.state)} className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${opt.state ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] border border-purple-400/30' : 'bg-black/40 text-slate-600 border border-white/5'}`}>
+                          {opt.state ? 'INITIALIZED' : 'OFFLINE'}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
+            </AnimatePresence>
+
+            <div className="flex justify-center pt-4">
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 20px 50px rgba(139,92,246,0.4)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={generateCharacter}
+                className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-700 px-20 py-7 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-2xl transition-all w-full md:w-auto border border-purple-500/30"
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.3)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10 flex items-center justify-center gap-4 text-white">
+                  <User className="w-6 h-6 animate-pulse" /> INITIALIZE SYNTHESIS
+                </div>
+              </motion.button>
             </div>
 
-            {/* Right Column: Trending */}
-            <div className="xl:col-span-4 space-y-8">
-              <div className="bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-8 sticky top-32 shadow-2xl">
-                 <div className="flex justify-between items-center mb-2">
-                   <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-purple-400 flex items-center gap-3"><Zap className="w-4 h-4 shadow-[0_0_10px_#a855f7]"/> Viral Tropes</h4>
-                   {isTrendingLoading && <RefreshCcw className="w-4 h-4 text-purple-400 animate-spin" />}
-                 </div>
-                 <div className="space-y-3">
-                   {(dynamicTrending.length > 0 ? dynamicTrending : ['Cyberpunk Assassin', 'Anime Hero', 'AI Hacker', 'Dark Villain', 'Futuristic Soldier', 'Neon Samurai', 'Multiverse Traveler']).map(t => (
-                     <button key={t} onClick={() => setCharType(t)} className="w-full p-5 bg-white/5 hover:bg-purple-600/10 border border-white/5 hover:border-purple-500/40 rounded-2xl text-left text-xs font-black text-slate-400 hover:text-white transition-all flex items-center justify-between group uppercase tracking-widest">
-                       {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400 transition-all translate-x-[-10px] group-hover:translate-x-0" />
-                     </button>
-                   ))}
-                 </div>
-                 <div className="mt-12 pt-8 border-t border-white/5">
-                    <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-6 flex items-center gap-3"><Box className="w-4 h-4" /> 3D Export Hub</h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      <button onClick={() => alert('Exporting to GLB/GLTF... Model will be downloaded in a moment.')} className="w-full p-4 bg-white/5 hover:bg-purple-600/10 border border-white/5 hover:border-purple-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
-                        Universal GLB <Download className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => alert('Preparing FBX Export... High-fidelity rig included.')} className="w-full p-4 bg-white/5 hover:bg-indigo-600/10 border border-white/5 hover:border-indigo-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
-                        Pro FBX Rig <Download className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => alert('Packing .BLEND file... Native Blender format ready.')} className="w-full p-4 bg-white/5 hover:bg-emerald-600/10 border border-white/5 hover:border-emerald-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
-                        Blender .BLEND <Download className="w-4 h-4" />
-                      </button>
+            {charResult && (
+              <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} className="space-y-10 pt-10">
+                <div className="bg-black/40 border border-white/10 rounded-[3.5rem] p-8 md:p-14 shadow-2xl relative overflow-hidden backdrop-blur-3xl">
+                  <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/5 blur-[150px] rounded-full pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
+
+                  <div className="relative z-10 space-y-12">
+                    <div className="flex flex-col lg:flex-row gap-12">
+                      {/* Left side: Preview/Image */}
+                      <div className="w-full lg:w-1/3 flex flex-col gap-6">
+                        <div className="aspect-[3/4] bg-black/60 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group/img">
+                          {charImagePreview ? (
+                            <img src={charImagePreview} alt="Character" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-black/40">
+                              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                <User className="w-10 h-10 text-purple-500/30" />
+                              </div>
+                              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-600">Awaiting Visual Core Scan</p>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-all duration-500 flex items-end p-8">
+                            {charImagePreview && <button onClick={() => window.open(charImagePreview, '_blank')} className="w-full py-4 bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all">Download Visual</button>}
+                          </div>
+                        </div>
+                        <button onClick={handleCharImage} className="w-full py-5 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                          <ImageIcon className="w-5 h-5" /> Initialize Visualization
+                        </button>
+                      </div>
+
+                      {/* Right side: Details */}
+                      <div className="w-full lg:w-2/3 space-y-10">
+                        <div>
+                          <div className="flex flex-wrap gap-3 mb-6">
+                            <span className="px-5 py-1.5 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charType}</span>
+                            <span className="px-5 py-1.5 bg-white/5 text-slate-400 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{charPersonality}</span>
+                          </div>
+                          <h2 className="text-5xl md:text-7xl font-black mb-3 text-white tracking-tighter italic uppercase">{charResult.name}</h2>
+                          {charResult.catchphrase && <p className="text-xl md:text-2xl text-purple-400 font-black italic tracking-tight opacity-90">"{charResult.catchphrase}"</p>}
+                        </div>
+
+                        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-4">Neural Origin / Backstory</p>
+                          <p className="text-base text-slate-300 leading-relaxed font-medium">{charResult.backstory}</p>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-6">
+                          <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 mb-4">Prime Capabilities</p>
+                            <ul className="space-y-3">
+                              {charResult.abilities?.map((a: string, i: number) => (
+                                <li key={i} className="text-sm text-slate-300 flex items-center gap-3"><div className="w-1.5 h-1.5 bg-purple-500 rounded-full shadow-[0_0_8px_#8b5cf6]" /> {a}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          {charResult.weaknesses && (
+                            <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400 mb-4">System Vulnerabilities</p>
+                              <ul className="space-y-3">
+                                {charResult.weaknesses?.map((w: string, i: number) => (
+                                  <li key={i} className="text-sm text-slate-300 flex items-center gap-3"><div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]" /> {w}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+
+                        {charResult.stats && (
+                          <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 space-y-6 shadow-inner">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-2">Neural Combat Parameters</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+                              {Object.entries(charResult.stats).map(([stat, val]: any) => (
+                                <div key={stat}>
+                                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
+                                    <span className="text-slate-500">{stat}</span>
+                                    <span className="text-purple-400">{val}<span className="text-[8px] opacity-50 ml-0.5">/100</span></span>
+                                  </div>
+                                  <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                                    <motion.div
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${val}%` }}
+                                      transition={{ duration: 1, ease: "easeOut" }}
+                                      className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 shadow-[0_0_10px_rgba(139,92,246,0.5)]"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.4em] text-center pt-6 italic">V-Rig Optimization v2.4-stable</p>
+
+                    {/* Extended Features */}
+                    <div className="grid md:grid-cols-2 gap-8 pt-10 border-t border-white/5">
+                      <div className="space-y-6">
+                        <button onClick={handleGenerateDialogue} className="w-full py-5 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 text-purple-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                          <MessageSquare className="w-5 h-5" /> Synthesize Dialogue Matrix
+                        </button>
+                        {charDialogue && (
+                          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-purple-950/20 p-8 rounded-[2.5rem] border border-purple-500/20 space-y-4 shadow-2xl">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400 mb-4">Neural Voice Patterns</p>
+                            {charDialogue.map((d, i) => (
+                              <div key={i} className="bg-black/30 p-5 rounded-2xl border border-white/5 text-sm text-slate-300 font-medium italic relative group transition-all hover:bg-black/40">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l-2xl opacity-50 group-hover:opacity-100" />
+                                "{d}"
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </div>
+
+                      <div className="space-y-6">
+                        <button onClick={handleExpandStory} className="w-full py-5 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-400 text-[11px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                          <Globe className="w-5 h-5" /> Expand Universe Lore
+                        </button>
+                        {charStoryExpansion && (
+                          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-indigo-950/20 p-8 rounded-[2.5rem] border border-indigo-500/20 space-y-6 shadow-2xl">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-2">World System</p>
+                              <p className="text-sm text-slate-300 font-medium leading-relaxed">{charStoryExpansion.world}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-6">
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-3">Hostile Signals</p>
+                                <ul className="text-xs text-slate-400 space-y-2">{charStoryExpansion.enemies?.map((e: string, i: number) => <li key={i} className="flex items-center gap-2"><div className="w-1 h-1 bg-rose-500 rounded-full" /> {e}</li>)}</ul>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-3">Allied Links</p>
+                                <ul className="text-xs text-slate-400 space-y-2">{charStoryExpansion.allies?.map((a: string, i: number) => <li key={i} className="flex items-center gap-2"><div className="w-1 h-1 bg-indigo-500 rounded-full" /> {a}</li>)}</ul>
+                              </div>
+                            </div>
+                            <div className="bg-white/5 p-5 rounded-2xl border border-white/5">
+                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 mb-2">Active Protocol</p>
+                              <p className="text-xs text-slate-300 font-medium italic">"{charStoryExpansion.currentMission}"</p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Column: Trending */}
+          <div className="xl:col-span-4 space-y-8">
+            <div className="bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-8 sticky top-32 shadow-2xl">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-purple-400 flex items-center gap-3"><Zap className="w-4 h-4 shadow-[0_0_10px_#a855f7]" /> Viral Tropes</h4>
+                {isTrendingLoading && <RefreshCcw className="w-4 h-4 text-purple-400 animate-spin" />}
+              </div>
+              <div className="space-y-3">
+                {(dynamicTrending.length > 0 ? dynamicTrending : ['Cyberpunk Assassin', 'Anime Hero', 'AI Hacker', 'Dark Villain', 'Futuristic Soldier', 'Neon Samurai', 'Multiverse Traveler']).map(t => (
+                  <button key={t} onClick={() => setCharType(t)} className="w-full p-5 bg-white/5 hover:bg-purple-600/10 border border-white/5 hover:border-purple-500/40 rounded-2xl text-left text-xs font-black text-slate-400 hover:text-white transition-all flex items-center justify-between group uppercase tracking-widest">
+                    {t} <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-purple-400 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                  </button>
+                ))}
+              </div>
+              <div className="mt-12 pt-8 border-t border-white/5">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-6 flex items-center gap-3"><Box className="w-4 h-4" /> 3D Export Hub</h4>
+                <div className="grid grid-cols-1 gap-3">
+                  <button onClick={() => alert('Exporting to GLB/GLTF... Model will be downloaded in a moment.')} className="w-full p-4 bg-white/5 hover:bg-purple-600/10 border border-white/5 hover:border-purple-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
+                    Universal GLB <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => alert('Preparing FBX Export... High-fidelity rig included.')} className="w-full p-4 bg-white/5 hover:bg-indigo-600/10 border border-white/5 hover:border-indigo-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
+                    Pro FBX Rig <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => alert('Packing .BLEND file... Native Blender format ready.')} className="w-full p-4 bg-white/5 hover:bg-emerald-600/10 border border-white/5 hover:border-emerald-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-between group shadow-xl">
+                    Blender .BLEND <Download className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.4em] text-center pt-6 italic">V-Rig Optimization v2.4-stable</p>
               </div>
             </div>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
 
-    function renderCreativeDashboard() {
+  function renderCreativeDashboard() {
     const categories = [
       {
         name: "Content Creation Forge",
@@ -4629,15 +4651,15 @@ export default function App() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setShowHistorySidebar(true)}
               className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-purple-400 transition-all shadow-xl"
             >
               <Clock className="w-5 h-5" />
             </button>
-            <button 
+            <button
               onClick={() => setIsPricingOpen(true)}
               className="px-8 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-500/30"
             >
@@ -4650,7 +4672,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 relative z-10">
           <div className="max-w-[1600px] mx-auto space-y-12">
             {categories.map((cat, catIdx) => (
-              <motion.div 
+              <motion.div
                 key={cat.name}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -4675,7 +4697,7 @@ export default function App() {
                           <tool.icon className="w-7 h-7 transition-colors drop-shadow-[0_0_8px_rgba(139,92,246,0.3)]" style={{ color: tool.color }} />
                         </div>
                         <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                           <ChevronRight className="w-4 h-4 text-white" />
+                          <ChevronRight className="w-4 h-4 text-white" />
                         </div>
                       </div>
 
@@ -4733,14 +4755,14 @@ export default function App() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6 bg-white/5 border border-white/10 px-6 py-2.5 rounded-2xl shadow-inner">
             <div className="text-right">
               <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Credits</p>
               <p className="text-lg font-black text-white leading-none mt-1">{credits.toLocaleString()}</p>
             </div>
             <div className="w-px h-8 bg-white/10" />
-            <button 
+            <button
               onClick={() => setIsPricingOpen(true)}
               className="text-[10px] font-black text-indigo-400 hover:text-white transition-colors uppercase tracking-widest"
             >
@@ -4752,7 +4774,7 @@ export default function App() {
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-10 relative z-10">
           <div className="max-w-[1600px] mx-auto space-y-12">
-            
+
             {/* Quick Access Section */}
             <div className="space-y-8">
               <div className="flex items-center gap-4">
@@ -4779,7 +4801,7 @@ export default function App() {
                         <tool.icon className="w-7 h-7 transition-colors drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" style={{ color: tool.color }} />
                       </div>
                       <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                         <ChevronRight className="w-4 h-4 text-white" />
+                        <ChevronRight className="w-4 h-4 text-white" />
                       </div>
                     </div>
 
@@ -4816,11 +4838,11 @@ export default function App() {
                   { name: 'Watermark', desc: 'Ownership.', icon: CloudSun },
                   { name: 'QR Gen', desc: 'Codes.', icon: Code }
                 ].map((tool, i) => (
-                  <motion.button 
-                    key={i} 
+                  <motion.button
+                    key={i}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleToolClick(tool)} 
+                    onClick={() => handleToolClick(tool)}
                     className="bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-indigo-500/20 transition-all rounded-2xl p-5 flex items-center gap-4 text-left group shadow-lg"
                   >
                     <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-900/50 flex items-center justify-center border border-white/5 group-hover:border-indigo-500/30 transition-colors">
@@ -5094,114 +5116,114 @@ export default function App() {
     return (
       <div className={`w-full flex-1 flex flex-col min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto'} ${smartMode === 'expert' && activeTab === 'chat' ? 'p-0' : 'p-2 md:p-4'}`}>
         {activeTab === 'chat' && (
-            <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-              {/* Chat Header */}
-              <div className="flex justify-between items-center p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xs font-black text-white uppercase tracking-[0.1em]">AI Neural Chat</h2>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{smartMode} mode active</p>
-                  </div>
+          <div className="max-w-4xl mx-auto w-full flex flex-col flex-1 min-h-0 bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            {/* Chat Header */}
+            <div className="flex justify-between items-center p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                  <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
                 </div>
-                <button onClick={handleDownloadChat} className="flex items-center gap-2 text-[9px] font-bold text-indigo-400 hover:text-white transition-colors bg-indigo-600/10 px-3 py-1.5 rounded-lg border border-indigo-600/20 hover:bg-indigo-600/30">
-                  <Download className="w-3 h-3" /> Export
-                </button>
+                <div>
+                  <h2 className="text-xs font-black text-white uppercase tracking-[0.1em]">AI Neural Chat</h2>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{smartMode} mode active</p>
+                </div>
               </div>
+              <button onClick={handleDownloadChat} className="flex items-center gap-2 text-[9px] font-bold text-indigo-400 hover:text-white transition-colors bg-indigo-600/10 px-3 py-1.5 rounded-lg border border-indigo-600/20 hover:bg-indigo-600/30">
+                <Download className="w-3 h-3" /> Export
+              </button>
+            </div>
 
-              {/* Chat Messages Area (Scrollable) */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 no-scrollbar scroll-smooth">
-                {messages.map((msg, idx) => {
-                  return (
-                    <motion.div key={msg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                      <div className={`max-w-[85%] p-4 md:p-6 rounded-[1.5rem] relative group transition-all duration-300 ${msg.role === 'user' ? 'bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-tr-none shadow-[0_10px_30px_rgba(139,92,246,0.2)] border border-purple-500/30' : 'bg-white/5 backdrop-blur-xl border border-white/10 text-slate-200 shadow-2xl rounded-tl-none'} ${msg.isVoice ? 'border-dashed border-purple-500/40' : ''}`}>
-                        <div className="flex items-center gap-2 mb-2 opacity-50">
-                           {msg.role === 'user' ? (
-                             <>
-                               <span className="text-[10px] font-black uppercase tracking-widest">You</span>
-                               <User className="w-3 h-3" />
-                             </>
-                           ) : (
-                             <>
-                               <Sparkles className="w-3 h-3 text-purple-400" />
-                               <span className="text-[10px] font-black uppercase tracking-widest">SmartAI Pro</span>
-                             </>
-                           )}
-                        </div>
-                        <p className="text-[13px] md:text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
-                        {msg.role === 'assistant' && (
-                          <div className="absolute -bottom-8 left-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl">
-                            <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
-                              <Copy className="w-4 h-4" />
-                            </button>
-                            {idx === messages.length - 1 && (
-                              <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-400 hover:text-white transition-colors">
-                                <RefreshCcw className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
+            {/* Chat Messages Area (Scrollable) */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 no-scrollbar scroll-smooth">
+              {messages.map((msg, idx) => {
+                return (
+                  <motion.div key={msg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[85%] p-4 md:p-6 rounded-[1.5rem] relative group transition-all duration-300 ${msg.role === 'user' ? 'bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-tr-none shadow-[0_10px_30px_rgba(139,92,246,0.2)] border border-purple-500/30' : 'bg-white/5 backdrop-blur-xl border border-white/10 text-slate-200 shadow-2xl rounded-tl-none'} ${msg.isVoice ? 'border-dashed border-purple-500/40' : ''}`}>
+                      <div className="flex items-center gap-2 mb-2 opacity-50">
+                        {msg.role === 'user' ? (
+                          <>
+                            <span className="text-[10px] font-black uppercase tracking-widest">You</span>
+                            <User className="w-3 h-3" />
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3 text-purple-400" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">SmartAI Pro</span>
+                          </>
                         )}
                       </div>
-                    </motion.div>
-                  );
-                })}
-                {isAiThinking && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl rounded-tl-none flex gap-2 shadow-2xl">
-                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
-                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
-                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
+                      <p className="text-[13px] md:text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                      {msg.role === 'assistant' && (
+                        <div className="absolute -bottom-8 left-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl">
+                          <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          {idx === messages.length - 1 && (
+                            <button onClick={handleRegenerateResponse} title="Regenerate Response" className="text-slate-400 hover:text-white transition-colors">
+                              <RefreshCcw className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
-                )}
-                <div ref={chatEndRef} />
-              </div>
-
-              {/* Chat Input Area (Fixed at bottom of container) */}
-              <div className="p-4 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0">
-                <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
-                  <input
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="Ask anything to SmartAI Pro..."
-                    className="flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
-                  />
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button 
-                      onClick={handleNewChat}
-                      title="Start New Chat"
-                      className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5 hover:border-purple-500/30"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => setIsVoiceAvatarOpen(true)} 
-                      title="AI Voice Assistant"
-                      className="p-3 bg-purple-600/10 text-purple-400 hover:bg-purple-600 hover:text-white rounded-xl transition-all border border-purple-500/20"
-                    >
-                      <Globe className="w-5 h-5" />
-                    </button>
-                    <button onClick={startListening} className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-600 text-white animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5'}`}>
-                      <Mic className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-xl transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(139,92,246,0.3)] active:scale-95 border border-purple-500/30">
-                      <Send className="w-5 h-5" />
-                    </button>
+                );
+              })}
+              {isAiThinking && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl rounded-tl-none flex gap-2 shadow-2xl">
+                    <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
+                    <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
+                    <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4 }} className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]" />
                   </div>
+                </motion.div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Chat Input Area (Fixed at bottom of container) */}
+            <div className="p-4 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0">
+              <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
+                <input
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Ask anything to SmartAI Pro..."
+                  className="flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
+                />
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleNewChat}
+                    title="Start New Chat"
+                    className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5 hover:border-purple-500/30"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setIsVoiceAvatarOpen(true)}
+                    title="AI Voice Assistant"
+                    className="p-3 bg-purple-600/10 text-purple-400 hover:bg-purple-600 hover:text-white rounded-xl transition-all border border-purple-500/20"
+                  >
+                    <Globe className="w-5 h-5" />
+                  </button>
+                  <button onClick={startListening} className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-600 text-white animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5'}`}>
+                    <Mic className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-xl transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(139,92,246,0.3)] active:scale-95 border border-purple-500/30">
+                    <Send className="w-5 h-5" />
+                  </button>
                 </div>
-                <div className="flex justify-center mt-3">
-                   <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Neural Interface v8.2.0-stable</p>
-                </div>
+              </div>
+              <div className="flex justify-center mt-3">
+                <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Neural Interface v8.2.0-stable</p>
               </div>
             </div>
+          </div>
 
         )}
 
@@ -5343,9 +5365,9 @@ export default function App() {
                 {showHistory && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
                     {imageHistory.map((item, i) => (
-                      <motion.div 
-                        key={i} 
-                        initial={{ opacity: 0, scale: 0.9 }} 
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.05 }}
                         className="relative group rounded-[2rem] overflow-hidden border border-white/5 bg-black/40 aspect-square shadow-xl hover:border-purple-500/30 transition-all duration-500"
@@ -5495,7 +5517,7 @@ export default function App() {
       {/* Sidebar for Desktop */}
       <aside className="hidden md:flex w-80 bg-black/40 backdrop-blur-3xl border-r border-white/5 flex-col p-8 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-b from-purple-600/5 to-transparent pointer-events-none" />
-        
+
         <div className="flex items-center gap-4 mb-12 relative z-10">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] border border-purple-500/30">S</div>
           <div>
@@ -5520,7 +5542,7 @@ export default function App() {
 
         <nav className="space-y-2 flex-1 overflow-y-auto no-scrollbar pr-2 relative z-10">
           <div className="pb-4">
-             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] ml-2">Core Tools</span>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] ml-2">Core Tools</span>
           </div>
           {SIDEBAR_ITEMS.map(item => (
             <button
@@ -5532,7 +5554,7 @@ export default function App() {
               <span className="text-xs font-black uppercase tracking-widest">{item.name}</span>
             </button>
           ))}
-          
+
           <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-slate-500 hover:bg-white/5 hover:text-white group">
             <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
             <span className="text-xs font-black uppercase tracking-widest">Settings</span>
@@ -5578,11 +5600,11 @@ export default function App() {
           >
             <Crown className="w-5 h-5" /> Upgrade Plan
           </button>
-          
+
           <div onClick={() => setActiveTab('profile')} className="flex items-center gap-4 px-4 py-3 rounded-2xl bg-slate-900/50 border border-white/5 shadow-inner cursor-pointer hover:bg-slate-900 transition-all group">
             <div className="relative">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-xs font-black text-white uppercase overflow-hidden border-2 border-white/10 group-hover:scale-105 transition-transform">
-                 {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : (displayName || email || 'U').charAt(0)}
+                {avatar ? <img src={avatar} className="w-full h-full object-cover" /> : (displayName || email || 'U').charAt(0)}
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0d111c] rounded-full shadow-[0_0_10px_#10b981]" />
             </div>
@@ -5599,7 +5621,7 @@ export default function App() {
       {/* Main Container */}
       <main className="flex-1 flex flex-col min-w-0 premium-bg relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.03)_0%,transparent_100%)] pointer-events-none" />
-        
+
         {/* Header */}
         <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
           <div className="flex items-center gap-6">
@@ -5643,11 +5665,10 @@ export default function App() {
                 setActiveTab(item.tab as Tab);
                 if (item.mode) setSmartMode(item.mode as any);
               }}
-              className={`flex flex-col items-center gap-1 p-2 transition-all ${
-                (activeTab === item.tab && (!item.mode || smartMode === item.mode)) 
-                  ? 'text-indigo-400' 
+              className={`flex flex-col items-center gap-1 p-2 transition-all ${(activeTab === item.tab && (!item.mode || smartMode === item.mode))
+                  ? 'text-indigo-400'
                   : 'text-slate-500'
-              }`}
+                }`}
             >
               <item.icon className={`w-5 h-5 ${activeTab === item.tab && (!item.mode || smartMode === item.mode) ? 'animate-pulse' : ''}`} />
               <span className="text-[10px] font-bold uppercase tracking-wider">{item.name}</span>
@@ -5676,7 +5697,7 @@ export default function App() {
                     <span className="text-base font-medium">{item.name}</span>
                   </button>
                 ))}
-                
+
                 <button onClick={() => { setIsSettingsOpen(true); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white">
                   <Settings className="w-5 h-5" />
                   <span className="text-base font-medium">Settings</span>
@@ -5780,7 +5801,7 @@ export default function App() {
 
       <AnimatePresence>
         {isVoiceAvatarOpen && (
-          <AIVoiceAvatar 
+          <AIVoiceAvatar
             isActive={isVoiceAvatarOpen}
             onClose={() => setIsVoiceAvatarOpen(false)}
             onTranscript={(text) => handleSendMessage(text, true)}
@@ -5790,8 +5811,8 @@ export default function App() {
         )}
       </AnimatePresence>
       {isSettingsOpen && (
-        <SettingsComponent 
-          onClose={() => setIsSettingsOpen(false)} 
+        <SettingsComponent
+          onClose={() => setIsSettingsOpen(false)}
           onLogout={handleLogout}
           userEmail={email}
           userName={displayName}
@@ -5814,8 +5835,8 @@ export default function App() {
       )}
 
       {/* Futuristic AI Voice Assistant System */}
-      <SmartAIVoiceAssistant 
-        onCommand={handleVoiceCommandAction} 
+      <SmartAIVoiceAssistant
+        onCommand={handleVoiceCommandAction}
         onMessage={(role, content) => {
           setMessages(prev => [...prev, {
             id: Date.now().toString(),
