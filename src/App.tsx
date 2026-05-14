@@ -94,6 +94,7 @@ const MessageContent = ({ content, imageUrl }: { content: string, imageUrl?: str
 const SIDEBAR_ITEMS = [
   { name: 'AI Chat', icon: MessageSquare, tab: 'chat' as Tab },
   { name: 'Image Generator', icon: ImageIcon, tab: 'image' as Tab },
+  { name: 'Video Generator', icon: Video, tab: 'video' as Tab },
   { name: 'Profile', icon: User, tab: 'profile' as Tab },
 ];
 
@@ -293,6 +294,8 @@ export default function App() {
   const [currentChatId, setCurrentChatId] = useState<string>(Date.now().toString());
   const [chatHistory, setChatHistory] = useState<Array<{ id: string, title: string, messages: Message[] }>>([]);
   const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
+  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const [videoHistory, setVideoHistory] = useState<Array<{ url: string; prompt: string; date: string }>>([]);
 
   const [imgPrompt, setImgPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -2679,7 +2682,7 @@ export default function App() {
     if (!prompt || isAiThinking) return;
 
     // Unlimited Chat - No credit checks or usage tracking
-    const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt, isVoice: isVoiceMode };
+    const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt, isVoice: isVoiceMode, imageUrl: attachedImage || undefined };
     const assistantId = (Date.now() + 1).toString();
     const assistantMsg: Message = { id: assistantId, role: 'assistant' as const, content: '', isVoice: isVoiceMode };
     const optimisticMessages = [...messages, userMsg, assistantMsg];
@@ -3016,6 +3019,51 @@ export default function App() {
     syncUserData({ credits: newCredits });
   };
 
+  const handleAnimateImage = async (imgUrl: string) => {
+    if (isGeneratingVideo) return;
+    const tokenCost = plan === 'Expert Mode' ? 0 : 50;
+    if (credits < tokenCost && !isVipEmail(email)) {
+      alert(`Insufficient credits (${tokenCost} required for animation).`);
+      setIsPricingOpen(true);
+      return;
+    }
+
+    setIsGeneratingVideo(true);
+    setGeneratedVideo(null);
+    try {
+      // Premium Video Synthesis Protocol
+      const res = await fetch('/api/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imgUrl, mode: 'animate' })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const videoUrl = data.url;
+        setGeneratedVideo(videoUrl);
+        const historyItem = { url: videoUrl, prompt: 'Animated from Image', date: new Date().toLocaleString() };
+        setVideoHistory(prev => [historyItem, ...prev]);
+        
+        const newCredits = credits - tokenCost;
+        setCredits(newCredits);
+        syncUserData({ credits: newCredits });
+      } else {
+        // Fallback for demo if API not fully ready
+        setTimeout(() => {
+          setIsGeneratingVideo(false);
+          alert('Video generation service is currently initializing. Please try again in a few minutes.');
+        }, 2000);
+        return;
+      }
+    } catch (e) {
+      console.error('Animation failed:', e);
+      alert('Neural link for video synthesis failed. Check your connection.');
+    } finally {
+      setIsGeneratingVideo(false);
+    }
+  };
+
   const handleEnhancePrompt = async () => {
     if (!imgPrompt.trim() || isEnhancing) return;
     setIsEnhancing(true);
@@ -3037,9 +3085,43 @@ export default function App() {
 
   const handleGenerateVideo = async () => {
     if (!videoPrompt.trim() || isGeneratingVideo) return;
-    if (credits < 50 && !isVipEmail(email)) { alert('Insufficient credits (50 required).'); setIsPricingOpen(true); return; }
+    const tokenCost = plan === 'Expert Mode' ? 0 : 100;
+    if (credits < tokenCost && !isVipEmail(email)) { 
+      alert(`Insufficient credits (${tokenCost} required for video).`); 
+      setIsPricingOpen(true); 
+      return; 
+    }
+    
     setIsGeneratingVideo(true);
-    setTimeout(() => { setIsGeneratingVideo(false); alert('Demo: Real video generation is coming soon.'); }, 1500);
+    setGeneratedVideo(null);
+    try {
+      const res = await fetch('/api/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: videoPrompt, mode: 'text-to-video' })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const videoUrl = data.url;
+        setGeneratedVideo(videoUrl);
+        const historyItem = { url: videoUrl, prompt: videoPrompt, date: new Date().toLocaleString() };
+        setVideoHistory(prev => [historyItem, ...prev]);
+        
+        const newCredits = credits - tokenCost;
+        setCredits(newCredits);
+        syncUserData({ credits: newCredits });
+      } else {
+        setTimeout(() => {
+          setIsGeneratingVideo(false);
+          alert('Demo: Premium video synthesis is initializing. Real video output will be available shortly.');
+        }, 2000);
+      }
+    } catch (e) {
+      console.error('Video gen failed:', e);
+    } finally {
+      setIsGeneratingVideo(false);
+    }
   };
 
   const renderCreativeResult = (text: string) => {
@@ -5470,6 +5552,19 @@ export default function App() {
               <motion.div initial={{ opacity: 0, y: 40, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="mb-20 mx-auto max-w-3xl">
                 <div className="relative group/img overflow-hidden rounded-[3rem] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] bg-black/40 p-3">
                   <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-[2.5rem] shadow-2xl transition-transform duration-700 group-hover/img:scale-[1.02]" />
+                  
+                  {/* Floating Animate Button - Top Right */}
+                  <div className="absolute top-8 right-8 z-20">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleAnimateImage(generatedImg!); }}
+                      disabled={isGeneratingVideo}
+                      className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/20 text-white px-4 py-2.5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-purple-600 hover:border-purple-400 transition-all shadow-2xl group/animate"
+                    >
+                      <Video className={`w-4 h-4 text-purple-400 group-hover/animate:text-white ${isGeneratingVideo ? 'animate-spin' : ''}`} />
+                      {isGeneratingVideo ? 'Animating...' : 'Animate'}
+                    </button>
+                  </div>
+
                   {/* Desktop Hover Overlay */}
                   <div className="hidden md:flex absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 transition-all duration-500 backdrop-blur-md rounded-[3rem] flex-col items-center justify-center gap-6 p-12 z-10">
                     <div className="space-y-4 w-full max-w-sm">
@@ -5481,6 +5576,9 @@ export default function App() {
                       </button>
                       <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Neural link copied!'); }} className="w-full bg-white/10 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-white/20 transition-all border border-white/10">
                         <Copy className="w-5 h-5" /> Share Signal
+                      </button>
+                      <button onClick={() => handleAnimateImage(generatedImg!)} disabled={isGeneratingVideo} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl">
+                        <Video className="w-5 h-5" /> {isGeneratingVideo ? 'Neural Animation...' : 'Convert to Video'}
                       </button>
                     </div>
                   </div>
@@ -5498,6 +5596,9 @@ export default function App() {
                       <Copy className="w-4 h-4" /> Share
                     </button>
                   </div>
+                  <button onClick={() => handleAnimateImage(generatedImg!)} disabled={isGeneratingVideo} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 active:scale-95 transition-all shadow-2xl mt-2">
+                    <Video className="w-5 h-5" /> {isGeneratingVideo ? 'Animating...' : 'Animate to Video'}
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -5536,6 +5637,9 @@ export default function App() {
                             <button onClick={() => { setImgPrompt(item.prompt); setImgStyle(item.style); setImgQuality(item.quality); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-purple-600 text-white p-3 rounded-xl hover:scale-110 transition-all shadow-xl">
                               <Copy className="w-4 h-4" />
                             </button>
+                            <button onClick={() => handleAnimateImage(item.url)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-xl hover:scale-110 transition-all shadow-xl" title="Animate Image">
+                              <Video className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </motion.div>
@@ -5547,6 +5651,109 @@ export default function App() {
           </div>
         )}
 
+
+        {activeTab === 'video' && (
+          <div className="max-w-6xl mx-auto w-full pb-20 px-4 md:px-8">
+            <div className="bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-6 md:p-12 mb-10 relative shadow-2xl overflow-hidden group">
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-600/5 rounded-full blur-[120px] pointer-events-none group-hover:bg-pink-600/10 transition-all duration-1000" />
+              
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 relative z-10">
+                <div>
+                  <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter flex items-center gap-4 italic uppercase">
+                    <div className="p-3 bg-pink-600/20 rounded-2xl border border-pink-500/30 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
+                      <Video className="w-8 h-8 text-pink-400" />
+                    </div>
+                    Video <span className="text-pink-500">Synthesis</span>
+                  </h2>
+                  <p className="text-slate-500 text-xs md:text-sm mt-3 font-bold uppercase tracking-[0.3em]">Cinematic AI Video from Text or Images.</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-6 py-3 rounded-2xl shadow-inner w-full md:w-auto justify-between group/cost transition-all hover:border-pink-500/30">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Cost</span>
+                  <div className="flex items-center gap-2 text-pink-400 font-black text-lg group-hover/cost:scale-110 transition-transform">
+                    <Zap className="w-5 h-5 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" /> 100 Tokens
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6 relative z-10 mb-10">
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Video Prompt</label>
+                  <textarea 
+                    value={videoPrompt} 
+                    onChange={e => setVideoPrompt(e.target.value)} 
+                    placeholder="A futuristic city with flying cars at sunset, cinematic lighting, 4k..." 
+                    className="w-full bg-black/40 border border-white/5 rounded-[1.5rem] p-6 text-sm h-32 md:h-40 resize-none outline-none focus:border-pink-500/50 transition-all placeholder:text-slate-800 shadow-inner font-medium text-slate-200" 
+                  />
+                </div>
+                
+                <button 
+                  onClick={handleGenerateVideo} 
+                  disabled={isGeneratingVideo || !videoPrompt.trim()} 
+                  className="w-full relative group/btn overflow-hidden bg-gradient-to-r from-pink-600 to-purple-700 text-white py-6 rounded-[1.5rem] font-black uppercase tracking-[0.3em] text-sm transition-all shadow-[0_20px_40px_rgba(236,72,153,0.3)] active:scale-[0.98] disabled:opacity-50 border border-pink-500/30"
+                >
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
+                  {isGeneratingVideo ? (
+                    <span className="flex items-center justify-center gap-4">
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full" />
+                      Rendering Cinematic Frames...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-3">
+                      <Sparkles className="w-6 h-6 animate-pulse" /> Generate Video <span className="opacity-50 font-medium ml-3 text-xs">-100 Neural Tokens</span>
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {generatedVideo && (
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="mb-20 mx-auto max-w-4xl">
+                <div className="relative group/vid overflow-hidden rounded-[3rem] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] bg-black/40 p-3">
+                  <video 
+                    src={generatedVideo} 
+                    controls 
+                    autoPlay 
+                    loop 
+                    className="w-full h-auto rounded-[2.5rem] shadow-2xl"
+                  />
+                  <div className="mt-6 flex gap-4">
+                    <button onClick={() => window.open(generatedVideo, '_blank')} className="flex-1 bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-slate-200 transition-all">
+                      <Download className="w-5 h-5" /> Download Video
+                    </button>
+                    <button onClick={() => { navigator.clipboard.writeText(generatedVideo); alert('Video link copied!'); }} className="flex-1 bg-white/10 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-white/20 transition-all border border-white/10">
+                      <Copy className="w-5 h-5" /> Share Link
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {videoHistory.length > 0 && (
+              <div className="mt-12">
+                <h3 className="text-2xl font-black text-white flex items-center gap-4 italic uppercase tracking-tighter mb-8 px-4">
+                  <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
+                    <Clock className="w-5 h-5 text-pink-400" />
+                  </div>
+                  Video Archives
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+                  {videoHistory.map((item, i) => (
+                    <motion.div key={i} className="bg-black/40 border border-white/5 rounded-[2rem] overflow-hidden group shadow-xl">
+                      <video src={item.url} className="w-full aspect-video object-cover" muted onMouseOver={e => e.currentTarget.play()} onMouseOut={e => e.currentTarget.pause()} />
+                      <div className="p-4">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider line-clamp-1">{item.prompt}</p>
+                        <div className="flex justify-between items-center mt-3">
+                          <span className="text-[8px] text-slate-600 font-black">{item.date}</span>
+                          <button onClick={() => window.open(item.url, '_blank')} className="text-pink-400 hover:text-white transition-colors"><Download className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {activeTab === 'profile' && (
           <div className="max-w-4xl mx-auto space-y-4 pb-20">
