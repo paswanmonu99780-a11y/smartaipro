@@ -293,7 +293,7 @@ export default function App() {
   const [currentChatId, setCurrentChatId] = useState<string>(Date.now().toString());
   const [chatHistory, setChatHistory] = useState<Array<{ id: string, title: string, messages: Message[] }>>([]);
   const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'assistant', content: 'Neural link established. I am SmartAI Pro. How can I assist your creative process?' }]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [imgPrompt, setImgPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImg, setGeneratedImg] = useState<string | null>(null);
