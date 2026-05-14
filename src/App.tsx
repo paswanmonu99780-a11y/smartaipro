@@ -2665,11 +2665,7 @@ export default function App() {
     const prompt = normalizePrompt(promptText);
     if (!prompt || isAiThinking) return;
 
-    // Limits removed as requested
-
-    // Check and process referral reward on first message
-    processReferralReward();
-
+    // Unlimited Chat - No credit checks or usage tracking
     const userMsg: Message = { id: Date.now().toString(), role: 'user' as const, content: prompt, isVoice: isVoiceMode };
     const assistantId = (Date.now() + 1).toString();
     const assistantMsg: Message = { id: assistantId, role: 'assistant' as const, content: '', isVoice: isVoiceMode };
@@ -2680,7 +2676,6 @@ export default function App() {
     if (!isVoiceMode) setChatInput('');
     setIsAiThinking(true);
     updateCurrentChatHistory(currentChatId, title, optimisticMessages);
-    if (smartMode === 'normal' || smartMode === 'creative') updateUsage('messages');
 
     let systemPrompt = `You are SmartAI Pro, a powerful and premium AI assistant. 
     Your identity details:
@@ -5286,7 +5281,20 @@ export default function App() {
 
             {/* Chat Input Area (Fixed at bottom of container) */}
             <div className="p-3 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0 mb-[60px] md:mb-0">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileUpload} 
+                accept="image/*,.pdf,.doc,.docx,.txt"
+              />
               <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3 text-slate-400 hover:text-indigo-400 transition-colors bg-white/5 rounded-xl border border-white/5"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </button>
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
@@ -5782,41 +5790,6 @@ export default function App() {
                   </button>
                 ))}
 
-                <button onClick={() => { setIsSettingsOpen(true); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-white">
-                  <Settings className="w-5 h-5" />
-                  <span className="text-base font-medium">Settings</span>
-                </button>
-
-                <div className="my-4 px-2">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dashboards</span>
-                </div>
-
-                <button onClick={() => { setSmartMode('normal'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'normal' && activeTab === 'home' ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                  <Send className="w-5 h-5" />
-                  <span className="text-base font-medium">Normal Mode</span>
-                </button>
-                <button onClick={() => { setSmartMode('creative'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'creative' && activeTab === 'home' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                  <Lightbulb className="w-5 h-5" />
-                  <span className="text-base font-medium">Creative Mode</span>
-                </button>
-                <button onClick={() => { setSmartMode('expert'); setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${smartMode === 'expert' && activeTab === 'home' ? 'bg-orange-600/10 text-orange-400 border border-orange-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                  <Zap className="w-5 h-5" />
-                  <span className="text-base font-medium">Expert Mode</span>
-                </button>
-
-                {isAdmin && (
-                  <>
-                    <div className="my-4 px-2">
-                      <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Admin</span>
-                    </div>
-                    <button onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-rose-600/10 text-rose-400 border border-rose-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-                      <Shield className="w-5 h-5" />
-                      <span className="text-base font-medium">Admin Panel</span>
-                    </button>
-                  </>
-                )}
-              </nav>
-
               <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
                 <button
                   onClick={() => { setIsPricingOpen(true); setIsMobileMenuOpen(false); }}
@@ -5830,14 +5803,8 @@ export default function App() {
                     <div className="text-[10px] font-bold text-white truncate">{displayName || email?.split('@')[0] || 'User'}</div>
                     <div className="text-[9px] text-slate-500 truncate">{email}</div>
                   </div>
-                  <button onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Settings className="w-4 h-4" /></button>
+                  <button onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }} className="p-1.5 text-slate-500 hover:text-white transition-colors"><User className="w-4 h-4" /></button>
                 </div>
-
-                {!isAdmin && (
-                  <button onClick={() => { setActiveTab('admin'); setIsMobileMenuOpen(false); }} className="w-full mt-2 flex items-center justify-center gap-1 opacity-30 hover:opacity-100 transition-opacity text-[8px] text-slate-600 uppercase tracking-widest">
-                    <Shield className="w-2 h-2" /> Admin Access
-                  </button>
-                )}
               </div>
             </motion.div>
           </>
