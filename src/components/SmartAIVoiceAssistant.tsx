@@ -57,7 +57,7 @@ const SmartAIVoiceAssistant: React.FC<SmartAIVoiceAssistantProps> = ({ onCommand
               isProcessingRef.current = true;
               recognition.stop();
             }
-          }, 1800); 
+          }, 800); 
         };
 
         recognition.onend = () => {

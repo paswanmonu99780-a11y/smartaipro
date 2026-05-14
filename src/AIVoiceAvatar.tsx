@@ -228,11 +228,7 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
     let voice: SpeechSynthesisVoice | null = null;
 
     if (language === 'hi-IN') {
-      // Priority order for Hindi voices
-      voice = voices.find(v => v.lang === 'hi-IN' && (v.name.includes('Google') || v.name.includes('Premium'))) || null;
-      if (!voice) voice = voices.find(v => v.lang === 'hi-IN') || null;
-      if (!voice) voice = voices.find(v => v.lang.startsWith('hi')) || null;
-      if (!voice) voice = voices.find(v => v.name.toLowerCase().includes('hindi') || v.name.includes('Kalpana') || v.name.includes('Hemant')) || null;
+      voice = voices.find(v => v.lang.includes('hi')) || null;
     } else {
       voice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) || null;
       if (!voice) voice = voices.find(v => v.lang === 'en-US') || null;
@@ -267,7 +263,7 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
       // CRITICAL: Create a new utterance for each chunk
       const utterance = new SpeechSynthesisUtterance(chunkText);
       utterance.lang = language; // always set the language tag
-      utterance.rate = language === 'hi-IN' ? 0.85 : 1.0;
+      utterance.rate = 1.0;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       if (voice) utterance.voice = voice;

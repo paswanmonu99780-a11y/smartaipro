@@ -6,7 +6,7 @@ import { fetchUsersFromSupabase, syncUsersToSupabase, checkAdminSession } from '
 import { supabase } from './lib/supabase';
 import AIVoiceAvatar from './AIVoiceAvatar';
 import SettingsComponent from './Settings';
-import SmartAIVoiceAssistant from './components/SmartAIVoiceAssistant';
+
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
@@ -5204,6 +5204,7 @@ export default function App() {
                   >
                     <Plus className="w-5 h-5" />
                   </button>
+
                   <button
                     onClick={() => setIsVoiceAvatarOpen(true)}
                     title="AI Voice Assistant"
@@ -5211,9 +5212,7 @@ export default function App() {
                   >
                     <Globe className="w-5 h-5" />
                   </button>
-                  <button onClick={startListening} className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-600 text-white animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5'}`}>
-                    <Mic className="w-5 h-5" />
-                  </button>
+
                   <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-xl transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(139,92,246,0.3)] active:scale-95 border border-purple-500/30">
                     <Send className="w-5 h-5" />
                   </button>
@@ -5834,18 +5833,7 @@ export default function App() {
         />
       )}
 
-      {/* Futuristic AI Voice Assistant System */}
-      <SmartAIVoiceAssistant
-        onCommand={handleVoiceCommandAction}
-        onMessage={(role, content) => {
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role,
-            content,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }]);
-        }}
-      />
+
     </div>
   );
 }
