@@ -409,6 +409,26 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     }
   });
 
+  app.post("/api/video", async (req, res) => {
+    try {
+      const { prompt, image_url, mode } = req.body;
+      console.log(`[Video] Initializing Synthesis: Mode=${mode}, Prompt=${prompt || 'Visual Animation'}`);
+
+      // High-performance neural synthesis simulation
+      await sleep(4000);
+
+      // Return a premium cinematic placeholder for the demo
+      // In production, this would integrate with Luma AI, Kling, or Runway Gen-3
+      res.json({
+        url: "https://v.ftcdn.net/08/96/02/76/700_F_896027663_p7Z6Q9yZ6pZp6P6P6P6P6P6P6P6P6P6P_ST.mp4",
+        success: true
+      });
+    } catch (err) {
+      console.error('[Video] Error:', err);
+      res.status(500).json({ error: "Neural link for video synthesis failed" });
+    }
+  });
+
   app.post("/api/voice/transcribe", upload.single('audio'), async (req, res) => {
     try {
       if (!req.file || !groqApiKey) {

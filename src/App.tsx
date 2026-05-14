@@ -3021,7 +3021,7 @@ export default function App() {
 
   const handleAnimateImage = async (imgUrl: string) => {
     if (isGeneratingVideo) return;
-    const tokenCost = plan === 'Expert Mode' ? 0 : 50;
+    const tokenCost = plan === 'Expert Mode' ? 0 : 7;
     if (credits < tokenCost && !isVipEmail(email)) {
       alert(`Insufficient credits (${tokenCost} required for animation).`);
       setIsPricingOpen(true);
@@ -3085,7 +3085,7 @@ export default function App() {
 
   const handleGenerateVideo = async () => {
     if (!videoPrompt.trim() || isGeneratingVideo) return;
-    const tokenCost = plan === 'Expert Mode' ? 0 : 100;
+    const tokenCost = plan === 'Expert Mode' ? 0 : 7;
     if (credits < tokenCost && !isVipEmail(email)) { 
       alert(`Insufficient credits (${tokenCost} required for video).`); 
       setIsPricingOpen(true); 
@@ -5554,7 +5554,7 @@ export default function App() {
                   <img src={generatedImg} alt="Generated" className="w-full h-auto rounded-[2.5rem] shadow-2xl transition-transform duration-700 group-hover/img:scale-[1.02]" />
                   
                   {/* Floating Animate Button - Top Right */}
-                  <div className="absolute top-8 right-8 z-20">
+                  <div className="absolute top-8 right-8 z-[100]">
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleAnimateImage(generatedImg!); }}
                       disabled={isGeneratingVideo}
@@ -5577,7 +5577,11 @@ export default function App() {
                       <button onClick={() => { navigator.clipboard.writeText(generatedImg); alert('Neural link copied!'); }} className="w-full bg-white/10 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-white/20 transition-all border border-white/10">
                         <Copy className="w-5 h-5" /> Share Signal
                       </button>
-                      <button onClick={() => handleAnimateImage(generatedImg!)} disabled={isGeneratingVideo} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleAnimateImage(generatedImg!); }} 
+                        disabled={isGeneratingVideo} 
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl relative z-[100]"
+                      >
                         <Video className="w-5 h-5" /> {isGeneratingVideo ? 'Neural Animation...' : 'Convert to Video'}
                       </button>
                     </div>
@@ -5596,7 +5600,11 @@ export default function App() {
                       <Copy className="w-4 h-4" /> Share
                     </button>
                   </div>
-                  <button onClick={() => handleAnimateImage(generatedImg!)} disabled={isGeneratingVideo} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 active:scale-95 transition-all shadow-2xl mt-2">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleAnimateImage(generatedImg!); }} 
+                    disabled={isGeneratingVideo} 
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 active:scale-95 transition-all shadow-2xl mt-2 relative z-[100]"
+                  >
                     <Video className="w-5 h-5" /> {isGeneratingVideo ? 'Animating...' : 'Animate to Video'}
                   </button>
                 </div>
@@ -5670,7 +5678,7 @@ export default function App() {
                 <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-6 py-3 rounded-2xl shadow-inner w-full md:w-auto justify-between group/cost transition-all hover:border-pink-500/30">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Cost</span>
                   <div className="flex items-center gap-2 text-pink-400 font-black text-lg group-hover/cost:scale-110 transition-transform">
-                    <Zap className="w-5 h-5 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" /> 100 Tokens
+                    <Zap className="w-5 h-5 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" /> 7 Tokens
                   </div>
                 </div>
               </div>
@@ -5699,7 +5707,7 @@ export default function App() {
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-3">
-                      <Sparkles className="w-6 h-6 animate-pulse" /> Generate Video <span className="opacity-50 font-medium ml-3 text-xs">-100 Neural Tokens</span>
+                      <Sparkles className="w-6 h-6 animate-pulse" /> Generate Video <span className="opacity-50 font-medium ml-3 text-xs">-7 Neural Tokens</span>
                     </span>
                   )}
                 </button>
