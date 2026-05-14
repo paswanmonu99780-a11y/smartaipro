@@ -23,6 +23,53 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  const generateOllamaStream = async (prompt: string, system: string, res: express.Response) => {
+    const models = ['qwen3-coder', 'deepseek-coder'];
+    for (const model of models) {
+      try {
+        const response = await fetch('http://localhost:11434/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            prompt: `System: ${system}\n\nUser: ${prompt}`,
+            stream: true,
+            options: { temperature: 0.7, top_p: 0.9 }
+          })
+        });
+
+        if (!response.ok) throw new Error(`Ollama ${model} error: ${response.status}`);
+        if (!response.body) throw new Error(`Ollama ${model} body null`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('X-AI-Source', `Ollama (${model})`);
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const json = JSON.parse(line);
+              if (json.response) res.write(json.response);
+              if (json.done) break;
+            } catch { }
+          }
+        }
+        res.end();
+        return true;
+      } catch (err: any) {
+        console.warn(`[Ollama] Failed with ${model}: ${err.message}`);
+        continue;
+      }
+    }
+    return false;
+  };
+
   const generateGeminiChatText = async (prompt: string, system?: string) => {
     if (!genAI) return null;
     const modelCandidates = ['gemini-2.5-flash', 'gemini-2.0-flash'];
@@ -134,6 +181,12 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     try {
       const { prompt, seed, system } = req.body || {};
       if (!prompt || !String(prompt).trim()) return res.status(400).json({ error: "Prompt is required" });
+
+      // 1. Try Ollama First (Local)
+      const ollamaSuccess = await generateOllamaStream(String(prompt), String(system || ''), res);
+      if (ollamaSuccess) return;
+
+      // 2. Cloud Fallback (Pollinations OpenAI)
       const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&model=openai&json=false`;
       const upstream = await fetch(chatUrl, { headers: { 'Accept': 'text/plain' } });
       if (!upstream.ok) {
@@ -144,6 +197,8 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       if (!upstream.body) return res.type('text/plain').send(await upstream.text());
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('X-AI-Source', 'Cloud (OpenAI)');
+      
       const reader = upstream.body.getReader();
       while (true) {
         const { value, done } = await reader.read();
@@ -161,7 +216,30 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   app.get("/api/chat", async (req, res) => {
     try {
       const { prompt, seed, system, json } = req.query;
-      const url = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed}&system=${encodeURIComponent(String(system))}&model=openai&json=${json}`;
+      const promptStr = String(prompt || '');
+      const systemStr = String(system || '');
+
+      // 1. Try Ollama (Non-streaming)
+      const models = ['qwen3-coder', 'deepseek-coder'];
+      for (const model of models) {
+        try {
+          const ollamaRes = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, prompt: `System: ${systemStr}\n\nUser: ${promptStr}`, stream: false })
+          });
+          if (ollamaRes.ok) {
+            const data = await ollamaRes.json();
+            if (data.response) {
+              res.setHeader('X-AI-Source', `Ollama (${model})`);
+              return res.send(data.response);
+            }
+          }
+        } catch { continue; }
+      }
+
+      // 2. Cloud Fallback
+      const url = `https://text.pollinations.ai/${encodeURIComponent(promptStr)}?seed=${seed}&system=${encodeURIComponent(systemStr)}&model=openai&json=${json}`;
       const response = await fetch(url);
       if (!response.ok) {
         const fallbackText = await generateGeminiChatText(String(prompt || ''), String(system || ''));
