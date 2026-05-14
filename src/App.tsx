@@ -5802,6 +5802,7 @@ export default function App() {
                     <span className="text-base font-medium">{item.name}</span>
                   </button>
                 ))}
+              </nav>
 
               <div className="mt-auto pt-6 border-t border-slate-800 space-y-4 shrink-0">
                 <button
