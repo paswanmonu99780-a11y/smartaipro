@@ -300,9 +300,13 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
 
       // CRITICAL: Create a new utterance for each chunk
       const utterance = new SpeechSynthesisUtterance(chunkText);
-      utterance.lang = language; // always set the language tag
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang; 
+      } else {
+        utterance.lang = language === 'hi-IN' ? 'hi-IN' : 'en-US';
+      }
+      utterance.rate = language === 'hi-IN' ? 1.0 : 1.1;utterance.pitch = 1.0;
       utterance.volume = 1.0;
       if (voice) utterance.voice = voice;
 

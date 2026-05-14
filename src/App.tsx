@@ -2756,6 +2756,21 @@ export default function App() {
             if (chunk) {
               renderedText += chunk;
               setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: renderedText } : msg));
+              
+              // Early Image Trigger (Detect prompt while streaming)
+              if (renderedText.includes('[IMAGE_PROMPT:') && renderedText.includes(']')) {
+                const match = renderedText.match(/\[IMAGE_PROMPT:\s*(.*?)\]/);
+                if (match && match[1]) {
+                   setMessages(prev => {
+                     const updated = [...prev];
+                     const idx = updated.findIndex(m => m.id === assistantId);
+                     if (idx !== -1 && !updated[idx].imageUrl) {
+                       handleGenerateChatImage(match[1], assistantId);
+                     }
+                     return updated;
+                   });
+                }
+              }
             }
           }
 

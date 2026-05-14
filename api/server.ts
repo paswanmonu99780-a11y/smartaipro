@@ -24,7 +24,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const generateOllamaStream = async (prompt: string, system: string, res: express.Response) => {
-    const models = ['mistral:latest'];
+    const models = ['qwen2.5-coder:latest', 'qwen2.5-coder:7b', 'mistral:latest'];
     for (const model of models) {
       try {
         const response = await fetch('http://localhost:11434/api/generate', {
@@ -220,7 +220,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       const systemStr = String(system || '');
 
       // 1. Try Ollama (Non-streaming)
-      const models = ['mistral:latest'];
+      const models = ['qwen2.5-coder:latest', 'qwen2.5-coder:7b', 'mistral:latest'];
       for (const model of models) {
         try {
           const ollamaRes = await fetch('http://localhost:11434/api/generate', {
