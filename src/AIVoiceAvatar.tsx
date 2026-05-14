@@ -98,7 +98,35 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
 
       return () => clearInterval(voiceInterval);
     }
-  }, [onTranscript, language]);
+  }, [onTranscript, language, voicesLoaded]);
+
+  // Force voice loading and periodic check
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const synth = window.speechSynthesis;
+    
+    const updateVoices = () => {
+      const v = synth.getVoices();
+      if (v.length > 0) {
+        console.log("Voices loaded:", v.length);
+        setVoicesLoaded(true);
+      }
+    };
+
+    updateVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = updateVoices;
+    }
+
+    const interval = setInterval(() => {
+      if (!voicesLoaded && synth.getVoices().length > 0) {
+        updateVoices();
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [voicesLoaded]);
 
   // Handle listening loop
   useEffect(() => {
@@ -228,9 +256,17 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
     let voice: SpeechSynthesisVoice | null = null;
 
     if (language === 'hi-IN') {
-      voice = voices.find(v => v.lang === 'hi-IN') || 
-              voices.find(v => v.lang.startsWith('hi')) || 
-              voices.find(v => v.name.toLowerCase().includes('hindi')) || null;
+      const allVoices = voices;
+      voice = allVoices.find(v => v.lang === 'hi-IN') || 
+              allVoices.find(v => v.lang.startsWith('hi')) || 
+              allVoices.find(v => v.name.toLowerCase().includes('hindi')) || 
+              allVoices.find(v => v.name.includes('Kalpana')) ||
+              allVoices.find(v => v.name.includes('Hemant')) || null;
+      
+      // If still no Hindi voice, just pick any and hope the browser can synthesize it
+      if (!voice && allVoices.length > 0) {
+        voice = allVoices.find(v => v.default) || allVoices[0];
+      }
     } else {
       voice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) || null;
       if (!voice) voice = voices.find(v => v.lang === 'en-US') || null;

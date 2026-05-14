@@ -134,7 +134,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     try {
       const { prompt, seed, system } = req.body || {};
       if (!prompt || !String(prompt).trim()) return res.status(400).json({ error: "Prompt is required" });
-      const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&json=false`;
+      const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&model=qwen&json=false`;
       const upstream = await fetch(chatUrl, { headers: { 'Accept': 'text/plain' } });
       if (!upstream.ok) {
         const fallbackText = await generateGeminiChatText(String(prompt), String(system || ''));
@@ -161,7 +161,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   app.get("/api/chat", async (req, res) => {
     try {
       const { prompt, seed, system, json } = req.query;
-      const url = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed}&system=${encodeURIComponent(String(system))}&json=${json}`;
+      const url = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed}&system=${encodeURIComponent(String(system))}&model=qwen&json=${json}`;
       const response = await fetch(url);
       if (!response.ok) {
         const fallbackText = await generateGeminiChatText(String(prompt || ''), String(system || ''));

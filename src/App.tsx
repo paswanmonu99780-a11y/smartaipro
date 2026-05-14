@@ -2706,7 +2706,7 @@ export default function App() {
     // Explicitly handle language for voice mode
     if (isVoiceMode && voiceLang) {
       if (voiceLang === 'hi-IN') {
-        systemPrompt += " \n\nCRITICAL: The user is speaking HINDI. You MUST respond ONLY in HINDI using Devanagari script. Do not use English in your response.";
+        systemPrompt += " \n\nCRITICAL: The user is speaking HINDI. You MUST respond ONLY in HINDI using Devanagari script. DO NOT USE ANY ENGLISH WORDS. Your entire output must be in Hindi.";
       } else {
         systemPrompt += " \n\nThe user is speaking English. Respond in English.";
       }
