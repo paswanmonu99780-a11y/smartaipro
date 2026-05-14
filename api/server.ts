@@ -24,7 +24,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const generateOllamaStream = async (prompt: string, system: string, res: express.Response) => {
-    const models = ['qwen3-coder', 'deepseek-coder'];
+    const models = ['mistral:latest'];
     for (const model of models) {
       try {
         const response = await fetch('http://localhost:11434/api/generate', {
@@ -220,7 +220,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       const systemStr = String(system || '');
 
       // 1. Try Ollama (Non-streaming)
-      const models = ['qwen3-coder', 'deepseek-coder'];
+      const models = ['mistral:latest'];
       for (const model of models) {
         try {
           const ollamaRes = await fetch('http://localhost:11434/api/generate', {
@@ -261,12 +261,12 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       const width = String(req.query.width || '768');
       const height = String(req.query.height || '768');
       const seed = String(req.query.seed || Math.floor(Math.random() * 999999));
-      const model = String(req.query.model || 'flux');
-      const commonParams = new URLSearchParams({ width, height, seed, model, nologo: 'true' });
+      const model = String(req.query.model || 'flux-realism');
+      const commonParams = new URLSearchParams({ width, height, seed, model, nologo: 'true', enhance: 'true' });
       const candidates = [
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${commonParams.toString()}`,
-        `https://image.pollinations.ai/generate?prompt=${encodeURIComponent(prompt)}&${commonParams.toString()}&enhance=true`,
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`
+        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${commonParams.toString()}&quality=100`,
+        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true&enhance=true`,
+        `https://image.pollinations.ai/generate?prompt=${encodeURIComponent(prompt)}&width=${width}&height=${height}&seed=${seed}&model=flux-pro`
       ];
       for (const imageUrl of candidates) {
         for (let attempt = 0; attempt < 2; attempt++) {
