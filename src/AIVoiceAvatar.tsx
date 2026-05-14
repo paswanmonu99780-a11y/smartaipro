@@ -228,7 +228,9 @@ const AIVoiceAvatar: React.FC<AIVoiceAvatarProps> = ({
     let voice: SpeechSynthesisVoice | null = null;
 
     if (language === 'hi-IN') {
-      voice = voices.find(v => v.lang.includes('hi')) || null;
+      voice = voices.find(v => v.lang === 'hi-IN') || 
+              voices.find(v => v.lang.startsWith('hi')) || 
+              voices.find(v => v.name.toLowerCase().includes('hindi')) || null;
     } else {
       voice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) || null;
       if (!voice) voice = voices.find(v => v.lang === 'en-US') || null;

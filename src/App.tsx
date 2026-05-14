@@ -10,8 +10,84 @@ import SettingsComponent from './Settings';
 
 type Tab = 'home' | 'chat' | 'image' | 'video' | 'profile' | 'admin';
 type SmartMode = 'normal' | 'creative' | 'expert';
-interface Message { id: string; role: 'user' | 'assistant'; content: string; isVoice?: boolean; }
+interface Message { id: string; role: 'user' | 'assistant'; content: string; isVoice?: boolean; imageUrl?: string; }
 
+
+const CodeBox = ({ code, language }: { code: string, language: string }) => {
+  const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [editableCode, setEditableCode] = useState(code);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editableCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="bg-black/60 rounded-2xl border border-white/10 overflow-hidden my-6 group/code shadow-2xl">
+      <div className="bg-white/5 px-5 py-3 flex justify-between items-center border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <div className="w-2 h-2 rounded-full bg-amber-500" />
+          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-2">{language}</span>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setShowPreview(!showPreview)} className={`p-2 rounded-lg transition-all ${showPreview ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`} title="Preview Output">
+            <Eye className="w-4 h-4" />
+          </button>
+          <button onClick={handleCopy} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" title="Copy Code">
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+      <div className="relative">
+        {showPreview ? (
+          <div className="bg-white p-4 h-[400px] overflow-auto rounded-b-2xl">
+            <iframe srcDoc={editableCode} className="w-full h-full border-none" title="preview" />
+          </div>
+        ) : (
+          <textarea
+            value={editableCode}
+            onChange={(e) => setEditableCode(e.target.value)}
+            spellCheck={false}
+            className="w-full p-6 bg-transparent font-mono text-[13px] text-indigo-300 leading-relaxed outline-none min-h-[150px] resize-none overflow-hidden"
+            style={{ height: (editableCode.split('\n').length * 20 + 50) + 'px' }}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MessageContent = ({ content, imageUrl }: { content: string, imageUrl?: string }) => {
+  const parts = content.split(/(```[\s\S]*?```)/g);
+  return (
+    <div className="space-y-4">
+      {parts.map((part, index) => {
+        if (part.startsWith('```')) {
+          const match = part.match(/```(\w+)?\n([\s\S]*?)```/);
+          const lang = match?.[1] || 'text';
+          const code = match?.[2] || part.slice(3, -3);
+          return <CodeBox key={index} code={code} language={lang} />;
+        }
+        const cleanPart = part.replace(/\[IMAGE_PROMPT:.*?\]/g, '').trim();
+        if (!cleanPart && !imageUrl) return null;
+        return <p key={index} className="text-[14px] leading-relaxed whitespace-pre-wrap font-medium">{cleanPart}</p>;
+      })}
+      {imageUrl && (
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-4 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black/20">
+          <img src={imageUrl} alt="AI Generated" className="w-full h-auto" />
+          <div className="bg-black/60 p-3 flex justify-between items-center border-t border-white/5">
+             <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Neural Synthesis Complete</span>
+             <button onClick={() => window.open(imageUrl, '_blank')} className="text-[9px] font-black uppercase tracking-widest text-indigo-400 hover:text-white transition-colors">Download HD</button>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
 
 const SIDEBAR_ITEMS = [
   { name: 'AI Chat', icon: MessageSquare, tab: 'chat' as Tab },
@@ -2612,28 +2688,20 @@ export default function App() {
     - Creator's Age: 18 years old (as of 2026)
     - Tone: ${tone}
 
-    Your features and tools include:
-    1. Smart Chat AI: Advanced conversational interface with Normal, Creative, and Expert modes.
-    2. Image Synthesis: State-of-the-art AI image generation using Imagen and Flux models.
-    3. Expert Debugger: Advanced neural AST scanning and code analysis for developers.
-    4. Creative Studio: Tools for viral hooks, character creation, story generation, and more.
-    5. Polyglot Terminal: Multi-language code execution and real-time translation.
-    6. AI Voice Assistant: Natural bilingual voice interaction (Hindi & English).
-    7. SmartAI Pro Dashboard: Real-time credit tracking and project history.
-    8. Enterprise Lab: Experimental high-end AI research tools.
+    Your Features & Intelligence Protocols:
+    - Smart Neural Chat: Normal, Creative, and Expert tiers.
+    - Image Synthesis Engine: Generate premium visuals with Flux & Imagen.
+    - Expert Debugger Lab: Advanced AST code analysis and security auditing.
+    - Creative Matrix: Hooks, characters, stories, and viral optimization.
+    - Voice Assistant: Seamless bilingual interaction (Hindi & English).
 
-    Guidelines:
-    - Never mention you are from OpenAI, Google (unless referring to models), or any other company. You are SmartAI Pro.
-    - If asked about your creator, always say Monu Paswan.
-    - Always provide professional, premium, and futuristic responses.
+    Operational Guidelines:
+    - BE CONCISE AND UNIQUE. Don't be boring. Use a futuristic, premium tone.
+    - Use Markdown (bold, italic, lists) for readability.
+    - CODE BLOCKS: Always use triple backticks with language identifier.
+    - IMAGES: If a user asks for something visual, generate an image prompt by starting your response with "[IMAGE_PROMPT: description]".
+    - NO PLACEHOLDERS. Be specific.
     - Maintain a ${tone} tone.`;
-
-    // Plan-based intelligence
-    if (plan === 'Expert Mode') {
-      systemPrompt += " \n\nYou are in EXPERT MODE. Provide extremely detailed, technical, and high-level professional responses. Use advanced terminology and provide step-by-step logic. You have access to the Neural Link and Enterprise Intelligence Lab.";
-    } else if (plan === 'Creative Mode') {
-      systemPrompt += " \n\nYou are in CREATIVE MODE. Be highly imaginative, artistic, and expressive. Focus on storytelling, brainstorming, and creative problem solving.";
-    }
 
     // Explicitly handle language for voice mode
     if (isVoiceMode && voiceLang) {
@@ -2740,7 +2808,29 @@ export default function App() {
       updateCurrentChatHistory(currentChatId, title, fallbackMessages);
     } finally {
       setIsAiThinking(false);
+      
+      // Auto-Image Detection
+      const lastMsg = renderedText || '';
+      if (lastMsg.includes('[IMAGE_PROMPT:')) {
+        const match = lastMsg.match(/\[IMAGE_PROMPT:\s*(.*?)\]/);
+        if (match && match[1]) {
+          const imgPrompt = match[1];
+          handleGenerateChatImage(imgPrompt, assistantId);
+        }
+      }
     }
+  };
+
+  const handleGenerateChatImage = async (prompt: string, msgId: string) => {
+    try {
+      const [w, h] = [768, 768];
+      const res = await fetch(`/api/image?prompt=${encodeURIComponent(prompt)}&width=${w}&height=${h}&seed=${Math.floor(Math.random() * 999999)}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        setMessages(prev => prev.map(msg => msg.id === msgId ? { ...msg, imageUrl: url } : msg));
+      }
+    } catch (e) { console.error('Chat image gen failed:', e); }
   };
 
   const handleVoiceCommandAction = (action: string, data?: any) => {
@@ -5152,7 +5242,7 @@ export default function App() {
                           </>
                         )}
                       </div>
-                      <p className="text-[13px] md:text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+                      <MessageContent content={msg.content} imageUrl={msg.imageUrl} />
                       {msg.role === 'assistant' && (
                         <div className="absolute -bottom-8 left-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl shadow-2xl">
                           <button onClick={() => copyToClipboard(msg.content, 'code')} title="Copy Message" className="text-slate-400 hover:text-white transition-colors">
