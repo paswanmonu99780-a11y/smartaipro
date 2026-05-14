@@ -1357,7 +1357,7 @@ export default function App() {
       else { setCopiedText(true); setTimeout(() => setCopiedText(false), 2000); }
     }
   };
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -2659,7 +2659,7 @@ export default function App() {
     );
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setAttachedFile(file);
@@ -2709,7 +2709,7 @@ export default function App() {
     - BE CONCISE AND UNIQUE. Don't be boring. Use a futuristic, premium tone.
     - EMOJIS: Always use at least 2-3 relevant emojis in every single response to make it feel alive and unique. 🚀✨
     - Use Markdown (bold, italic, lists) for readability.
-    - CODE BLOCKS: Always use triple backticks with language identifier (e.g. ```javascript).
+    - CODE BLOCKS: Always use triple backticks with language identifier (e.g. \`\`\`javascript).
     - IMAGES: If a user asks for something visual, generate an image prompt by starting your response with "[IMAGE_PROMPT: description]".
     - NO PLACEHOLDERS. Be specific.
     - Maintain a ${tone} tone.`;
@@ -5298,7 +5298,7 @@ export default function App() {
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
-                onChange={handleFileUpload} 
+                onChange={handleChatFileUpload} 
                 accept="image/*,.pdf,.doc,.docx,.txt"
               />
               <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
@@ -5532,7 +5532,7 @@ export default function App() {
                     id="profile-upload"
                     className="hidden"
                     accept="image/*"
-                    onChange={handleFileUpload}
+                    onChange={handleAvatarUpload}
                   />
                   <button
                     onClick={() => document.getElementById('profile-upload')?.click()}
