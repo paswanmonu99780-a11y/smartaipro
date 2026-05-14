@@ -2717,17 +2717,7 @@ export default function App() {
     const contextualPrompt = buildContextualPrompt(messages, prompt);
 
     let renderedText = '';
-    const appendWithTyping = async (text: string) => {
-      const step = 6;
-      for (let i = 0; i < text.length; i += step) {
-        renderedText += text.slice(i, i + step);
-        const partialText = renderedText;
-        // Optimization: only update UI state if NOT in voice mode to save cycles
-        // But we need to update it anyway if we want lastAiMessage to work correctly at the end
-        setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: partialText } : msg));
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-    };
+
 
     const fetchLegacyChatText = async (seed: number, promptText: string) => {
       const legacyUrl = `/api/chat?prompt=${encodeURIComponent(promptText)}&seed=${seed}&system=${encodeURIComponent(systemPrompt)}&json=false`;
@@ -2761,24 +2751,28 @@ export default function App() {
 
             const chunk = decoder.decode(value, { stream: true });
             if (chunk) {
-              await appendWithTyping(chunk);
+              renderedText += chunk;
+              setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: renderedText } : msg));
             }
           }
 
           const tail = decoder.decode();
           if (tail) {
-            await appendWithTyping(tail);
+            renderedText += tail;
+            setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: renderedText } : msg));
           }
 
           return renderedText.trim();
         }
 
         const legacyText = await fetchLegacyChatText(seed, promptText);
-        await appendWithTyping(legacyText);
+        renderedText = legacyText;
+        setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: renderedText } : msg));
         return renderedText.trim();
       } catch {
         const legacyText = await fetchLegacyChatText(seed, promptText);
-        await appendWithTyping(legacyText);
+        renderedText = legacyText;
+        setMessages(prev => prev.map(msg => msg.id === assistantId ? { ...msg, content: renderedText } : msg));
         return renderedText.trim();
       }
     };
