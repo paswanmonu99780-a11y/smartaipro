@@ -2817,14 +2817,7 @@ export default function App() {
       const fallbackMessages = optimisticMessages.map(msg => msg.id === assistantId ? { ...msg, content: fallbackText } : msg);
       setMessages(fallbackMessages);
       setLastAiMessage(fallbackText);
-      const utterance = new SpeechSynthesisUtterance(chunkText);
-      if (voice) {
-        utterance.voice = voice;
-        utterance.lang = voice.lang; 
-      } else {
-        utterance.lang = language === 'hi-IN' ? 'hi-IN' : 'en-US';
-      }
-      utterance.rate = language === 'hi-IN' ? 1.0 : 1.1;
+
       updateCurrentChatHistory(currentChatId, title, fallbackMessages);
     } finally {
       setIsAiThinking(false);
