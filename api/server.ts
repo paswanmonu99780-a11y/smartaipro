@@ -186,26 +186,10 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       const ollamaSuccess = await generateOllamaStream(String(prompt), String(system || ''), res);
       if (ollamaSuccess) return;
 
-      // 2. Cloud Fallback (Pollinations OpenAI)
-      const chatUrl = `https://text.pollinations.ai/${encodeURIComponent(String(prompt))}?seed=${seed || Math.floor(Math.random() * 0xFFFFFFFF)}&system=${encodeURIComponent(String(system || 'You are a helpful AI assistant.'))}&model=openai&json=false`;
-      const upstream = await fetch(chatUrl, { headers: { 'Accept': 'text/plain' } });
-      if (!upstream.ok) {
-        const fallbackText = await generateGeminiChatText(String(prompt), String(system || ''));
-        if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
-        return res.status(upstream.status).send(await upstream.text() || 'Chat generation failed');
-      }
-      if (!upstream.body) return res.type('text/plain').send(await upstream.text());
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache, no-transform');
-      res.setHeader('X-AI-Source', 'Cloud (OpenAI)');
-      
-      const reader = upstream.body.getReader();
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) res.write(Buffer.from(value));
-      }
-      res.end();
+      // 2. Cloud Fallback (Gemini)
+      const fallbackText = await generateGeminiChatText(String(prompt), String(system || ''));
+      if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
+      return res.status(500).send('Neural link failure. Please check your API keys or run local AI.');
     } catch (err: any) {
       const fallbackText = await generateGeminiChatText(String(req.body?.prompt || ''), String(req.body?.system || ''));
       if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
@@ -238,15 +222,11 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
         } catch { continue; }
       }
 
-      // 2. Cloud Fallback
-      const url = `https://text.pollinations.ai/${encodeURIComponent(promptStr)}?seed=${seed}&system=${encodeURIComponent(systemStr)}&model=openai&json=${json}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        const fallbackText = await generateGeminiChatText(String(prompt || ''), String(system || ''));
-        if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
-      }
-      res.setHeader('Content-Type', 'text/plain');
-      res.send(await response.text());
+      // 2. Cloud Fallback (Gemini Only since Pollinations is failing with ENOSPC)
+      const fallbackText = await generateGeminiChatText(String(prompt || ''), String(system || ''));
+      if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);
+      
+      res.status(500).send('Neural link failure. Please check your API keys or run local AI.');
     } catch (err: any) {
       const fallbackText = await generateGeminiChatText(String(req.query?.prompt || ''), String(req.query?.system || ''));
       if (fallbackText) return res.type('text/plain; charset=utf-8').send(fallbackText);

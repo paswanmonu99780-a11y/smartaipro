@@ -4836,16 +4836,16 @@ export default function App() {
         </div>
 
         {/* Premium Header */}
-        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.3)] border border-purple-500/30">
-              <Sparkles className="w-6 h-6 text-white" />
+        <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-3 md:gap-5">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.3)] border border-purple-500/30">
+              <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Creative Studio</h2>
-              <div className="flex items-center gap-2 mt-1">
+              <h2 className="text-lg md:text-xl font-black text-white uppercase tracking-tighter italic">Creative Studio</h2>
+              <div className="flex items-center gap-2 mt-0.5 md:mt-1">
                 <span className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse shadow-[0_0_10px_#ec4899]" />
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Creative Link: Synchronized</p>
+                <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] truncate max-w-[150px] md:max-w-none">Creative Link: Synchronized</p>
               </div>
             </div>
           </div>
@@ -4940,16 +4940,16 @@ export default function App() {
         </div>
 
         {/* Premium Header */}
-        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.3)] border border-indigo-500/30">
-              <Zap className="w-6 h-6 text-white" />
+        <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-3 md:gap-5">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.3)] border border-indigo-500/30">
+              <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Normal <span className="text-slate-500 font-light not-italic tracking-normal">Mode</span></h2>
-              <div className="flex items-center gap-2 mt-1">
+              <h2 className="text-lg md:text-xl font-black text-white uppercase tracking-tighter italic">Normal <span className="text-slate-500 font-light not-italic tracking-normal">Mode</span></h2>
+              <div className="flex items-center gap-2 mt-0.5 md:mt-1">
                 <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_10px_#6366f1]" />
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Neural Load: Balanced</p>
+                <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] truncate max-w-[150px] md:max-w-none">Neural Load: Balanced</p>
               </div>
             </div>
           </div>
@@ -6000,35 +6000,9 @@ export default function App() {
         </header>
 
         {/* Dynamic Content */}
-        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 pb-20 md:pb-0 no-scrollbar">
+        <div className="flex-1 relative flex flex-col overflow-hidden min-h-0 no-scrollbar">
           {renderContent()}
         </div>
-
-
-        {/* Mobile Bottom Navigation */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/80 backdrop-blur-xl border-t border-slate-800/50 flex items-center justify-around p-2 z-[45] safe-area-inset-bottom">
-          {[
-            { name: 'Chat', icon: MessageSquare, tab: 'chat' },
-            { name: 'Image', icon: ImageIcon, tab: 'image' },
-            { name: 'Creative', icon: Lightbulb, tab: 'home', mode: 'creative' },
-            { name: 'Profile', icon: User, tab: 'profile' }
-          ].map((item) => (
-            <button
-              key={item.name}
-              onClick={() => {
-                setActiveTab(item.tab as Tab);
-                if (item.mode) setSmartMode(item.mode as any);
-              }}
-              className={`flex flex-col items-center gap-1 p-2 transition-all ${(activeTab === item.tab && (!item.mode || smartMode === item.mode))
-                  ? 'text-indigo-400'
-                  : 'text-slate-500'
-                }`}
-            >
-              <item.icon className={`w-5 h-5 ${activeTab === item.tab && (!item.mode || smartMode === item.mode) ? 'animate-pulse' : ''}`} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{item.name}</span>
-            </button>
-          ))}
-        </nav>
       </main>
 
       {/* Mobile Drawer */}
