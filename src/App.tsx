@@ -2545,16 +2545,16 @@ export default function App() {
         </div>
 
         {/* Premium Header */}
-        <div className="px-8 py-6 flex items-center justify-between bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.3)] border border-purple-500/30">
-              <Crown className="w-6 h-6 text-white" />
+        <div className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-black/40 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-50">
+          <div className="flex items-center gap-3 md:gap-5">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl md:rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.3)] border border-purple-500/30">
+              <Crown className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Expert Console</h2>
-              <div className="flex items-center gap-2 mt-1">
+              <h2 className="text-lg md:text-xl font-black text-white uppercase tracking-tighter italic">Expert Console</h2>
+              <div className="flex items-center gap-2 mt-0.5 md:mt-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]" />
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Neural Link Status: Active</p>
+                <p className="text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] truncate max-w-[150px] md:max-w-none">Neural Link Status: Active</p>
               </div>
             </div>
           </div>
@@ -5380,7 +5380,7 @@ export default function App() {
             </div>
 
             {/* Chat Input Area (Fixed at bottom of container) */}
-            <div className="p-3 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0 mb-[60px] md:mb-0">
+            <div className="p-3 md:p-8 bg-black/40 backdrop-blur-3xl border-t border-white/5 shrink-0">
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -5417,12 +5417,12 @@ export default function App() {
                 </div>
               )}
 
-              <div className="flex gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
+              <div className="flex gap-1.5 md:gap-3 items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 md:p-2 shadow-2xl focus-within:border-purple-500/50 transition-all duration-300 group">
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-3 text-slate-400 hover:text-indigo-400 transition-colors bg-white/5 rounded-xl border border-white/5"
+                  className="p-2 md:p-3 text-slate-400 hover:text-indigo-400 transition-colors bg-white/5 rounded-xl border border-white/5"
                 >
-                  <Paperclip className="w-5 h-5" />
+                  <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
                 <input
                   value={chatInput}
@@ -5433,33 +5433,30 @@ export default function App() {
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Ask anything to SmartAI Pro..."
-                  className="flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
+                  placeholder="Ask anything..."
+                  className="flex-1 bg-transparent px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm outline-none placeholder:text-slate-600 text-slate-200 font-medium"
                 />
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1 md:gap-2 shrink-0">
                   <button
                     onClick={handleNewChat}
                     title="Start New Chat"
-                    className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5 hover:border-purple-500/30"
+                    className="p-2 md:p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5 hover:border-purple-500/30"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4 md:w-5 md:h-5" />
                   </button>
 
                   <button
                     onClick={() => setIsVoiceAvatarOpen(true)}
                     title="AI Voice Assistant"
-                    className="p-3 bg-purple-600/10 text-purple-400 hover:bg-purple-600 hover:text-white rounded-xl transition-all border border-purple-500/20"
+                    className="p-2 md:p-3 bg-purple-600/10 text-purple-400 hover:bg-purple-600 hover:text-white rounded-xl transition-all border border-purple-500/20"
                   >
-                    <Globe className="w-5 h-5" />
+                    <Globe className="w-4 h-4 md:w-5 md:h-5" />
                   </button>
 
-                  <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-xl transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(139,92,246,0.3)] active:scale-95 border border-purple-500/30">
-                    <Send className="w-5 h-5" />
+                  <button onClick={() => handleSendMessage()} disabled={isAiThinking || !chatInput.trim()} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-105 text-white p-2.5 md:p-3.5 rounded-xl transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(139,92,246,0.3)] active:scale-95 border border-purple-500/30">
+                    <Send className="w-4 h-4 md:w-5 md:h-5" />
                   </button>
                 </div>
-              </div>
-              <div className="flex justify-center mt-3">
-                <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">Neural Interface v8.2.0-stable</p>
               </div>
             </div>
           </div>
@@ -5978,11 +5975,11 @@ export default function App() {
 
         {/* Header */}
         <header className="h-16 md:h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
-          <div className="flex items-center gap-6">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="p-3 -ml-3 text-slate-400 hover:text-white md:hidden bg-white/5 rounded-xl border border-white/10"><Menu className="w-6 h-6" /></button>
-            <div className="md:hidden flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-lg flex items-center justify-center font-black text-white shadow-lg">S</div>
-              <span className="text-lg font-black uppercase tracking-tight">SmartAI</span>
+          <div className="flex items-center gap-2 md:gap-6">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 md:p-3 -ml-2 md:-ml-3 text-slate-400 hover:text-white md:hidden bg-white/5 rounded-xl border border-white/10"><Menu className="w-5 h-5 md:w-6 md:h-6" /></button>
+            <div className="md:hidden flex items-center gap-2">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-md md:rounded-lg flex items-center justify-center font-black text-white shadow-lg text-xs md:text-base">S</div>
+              <span className="hidden sm:block text-sm md:text-lg font-black uppercase tracking-tight">SmartAI</span>
             </div>
             <div onClick={() => !isAdmin && setActiveTab('admin')} className="hidden md:flex items-center gap-3 text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] cursor-pointer hover:text-white transition-all group">
               <span className="group-hover:text-purple-400 transition-colors">Core Engine</span>
@@ -5990,12 +5987,12 @@ export default function App() {
               <span className="text-white bg-white/5 px-3 py-1 rounded-lg border border-white/10">{activeTab}</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all shadow-lg ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20 shadow-indigo-600/5' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20 shadow-emerald-600/5' : 'bg-purple-600/20 text-purple-400 border-purple-500/30 shadow-purple-600/10'}`}>
-              {smartMode} mode active
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className={`hidden sm:block px-2 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] border transition-all shadow-lg ${smartMode === 'normal' ? 'bg-indigo-600/10 text-indigo-400 border-indigo-600/20 shadow-indigo-600/5' : smartMode === 'creative' ? 'bg-emerald-600/10 text-emerald-400 border-emerald-600/20 shadow-emerald-600/5' : 'bg-purple-600/20 text-purple-400 border-purple-500/30 shadow-purple-600/10'}`}>
+              {smartMode} mode
             </div>
             <div className="h-8 w-px bg-white/5 hidden sm:block" />
-            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95">Upgrade</button>
+            <button onClick={() => setIsPricingOpen(true)} className="bg-white text-black px-3 py-1.5 md:px-6 md:py-2 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95">Upgrade</button>
           </div>
         </header>
 

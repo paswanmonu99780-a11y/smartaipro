@@ -420,7 +420,7 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
       // Return a premium cinematic placeholder for the demo
       // In production, this would integrate with Luma AI, Kling, or Runway Gen-3
       res.json({
-        url: "https://v.ftcdn.net/08/96/02/76/700_F_896027663_p7Z6Q9yZ6pZp6P6P6P6P6P6P6P6P6P6P_ST.mp4",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
         success: true
       });
     } catch (err) {
