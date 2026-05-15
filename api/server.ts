@@ -278,6 +278,22 @@ export async function createApp(options: { serveStatic?: boolean } = {}) {
     }
   });
 
+  app.post("/api/video", async (req, res) => {
+    try {
+      const { prompt, image_url, mode } = req.body;
+      console.log(`[Video] Initializing Synthesis: Mode=${mode}, Prompt=${prompt || 'Visual Animation'}`);
+
+      // Return a premium cinematic placeholder for the demo
+      res.json({
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        success: true
+      });
+    } catch (err) {
+      console.error('[Video] Error:', err);
+      res.status(500).json({ error: "Neural link for video synthesis failed" });
+    }
+  });
+
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(`[Error] ${err.stack}`);
     res.status(500).json({ error: "Internal server error" });
